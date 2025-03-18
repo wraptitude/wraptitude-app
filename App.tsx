@@ -116,8 +116,8 @@ function App(): React.JSX.Element {
               </Section>
               <LearnMoreLinks />
             </View>
+            <SignOutButton />
           </ScrollView>
-          <SignOutButton />
         </View>
       </Authenticator>
     </Authenticator.Provider>
