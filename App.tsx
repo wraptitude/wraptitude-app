@@ -8,6 +8,7 @@ import {
   useColorScheme,
   View,
   Platform,
+  Image,
 } from 'react-native';
 import SplashScreen from 'react-native-splash-screen';
 import {
@@ -19,7 +20,7 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 import { Button } from 'react-native';
 import { Amplify } from 'aws-amplify';
-import { Authenticator, useAuthenticator } from '@aws-amplify/ui-react-native';
+import { Authenticator, ThemeProvider, useAuthenticator, useTheme } from '@aws-amplify/ui-react-native';
 import awsconfig from './src/aws-exports';
 
 // Configure Amplify at the top
@@ -83,9 +84,54 @@ function App(): React.JSX.Element {
     }
   }, []);
 
+  const components = {
+    Header() {
+      return (
+        <View style={styles.headerContainer}>
+          <Image
+            source={require('./src/assets/images/wraptitude.jpg')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+        </View>
+      );
+    },
+  };
   return (
+    <ThemeProvider  
+    theme={{
+      tokens: {
+        colors: {
+          background: {
+            primary: '#040404',
+            secondary: '#040404',
+          },
+          primary: {
+            10: '#FF0000',
+            20: '#FF0000',
+            40: '#FF0000',
+            60: '#FF0000',
+            80: '#c70628',//sign in button & forgot password & create account
+            90: '#FF0000',
+            100: '#FF0000',
+          },
+          neutral: {
+            // 10: '#ff4b4b',
+            // 20: '#ff4b4b',  
+            // 40: '#ff4b4b',
+            60: '#7c7c7c',//email &PW框
+            80: '#7c7c7c',//enter your email & enter your password
+            90: '#FFFFFF',//email &PW
+            100: '#FFFFFF',//sign in
+          },
+        },
+      },
+    }}
+  >
     <Authenticator.Provider>
-      <Authenticator>
+      <Authenticator
+      Header={components.Header}
+    >
         <View style={backgroundStyle}>
           <StatusBar
             barStyle={isDarkMode ? 'light-content' : 'dark-content'}
@@ -121,6 +167,7 @@ function App(): React.JSX.Element {
         </View>
       </Authenticator>
     </Authenticator.Provider>
+    </ThemeProvider>
   );
 }
 
@@ -141,6 +188,16 @@ const styles = StyleSheet.create({
   highlight: {
     fontWeight: '700',
   },
+  headerContainer: {
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#040404',
+  },
+  logoImage: {
+    width: 200,
+    height: 100, // Adjust these dimensions based on your logo's aspect ratio
+  },
+  
 });
 
 export default App;
