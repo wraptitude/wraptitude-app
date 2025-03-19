@@ -31,6 +31,12 @@
           "userPoolName": "User pool - vnjyt-",
           "webClientId": "1fkb5vblp3t7qqgiihs4780tpe",
           "nativeClientId": "1fkb5vblp3t7qqgiihs4780tpe"
+        },
+        "wraptitudeapp40ccf075": {
+          "userPoolId": "us-east-2_HZwsHN2dD",
+          "userPoolName": "User pool - vnjyt-",
+          "webClientId": "1fkb5vblp3t7qqgiihs4780tpe",
+          "nativeClientId": "1fkb5vblp3t7qqgiihs4780tpe"
         }
       }
     }
