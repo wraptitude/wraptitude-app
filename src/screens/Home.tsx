@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { signOut } from 'aws-amplify/auth';
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
+import ServiceTracking from './ServiceTracking';
 
 interface HomeProps {
   onSignOut: () => void;
@@ -52,18 +53,7 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
           </Pressable>
         </View>
 
-        <ScrollView style={styles.content}>
-          {/* Add your home page content here */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Your Dashboard</Text>
-            {/* Add dashboard items */}
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
-            {/* Add activity items */}
-          </View>
-        </ScrollView>
+        <ServiceTracking />
       </SafeAreaView>
     </View>
   );
@@ -93,19 +83,6 @@ const styles = StyleSheet.create({
   signOutText: {
     color: '#c70628',
     fontSize: 16,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  section: {
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 15,
   },
   loadingContainer: {
     flex: 1,
