@@ -255,7 +255,7 @@ function App(): React.JSX.Element {
 
         <Pressable 
           style={[
-            styles.signInButton,
+            styles.signUpButton,
             isLoading && styles.signInButtonDisabled
           ]}
           onPress={handleSubmit}
@@ -264,24 +264,13 @@ function App(): React.JSX.Element {
           {isLoading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.signInButtonText}>Sign In</Text>
+            <Text style={styles.signUpButtonText}>Sign In</Text>
           )}
         </Pressable>
-
-        <View style={styles.linksContainer}>
-          {/* <Pressable onPress={toForgotPassword}>
-            <Text style={styles.linkText}>Forgot Password?</Text>
-          </Pressable> */}
-          <Pressable onPress={toSignUp}>
-            <Text style={styles.linkText}>Create Account</Text>
+          {/* Sign In Link */}
+          <Pressable onPress={toSignUp} style={styles.signInLink}>
+            <Text style={styles.signInLinkText}>Create Account</Text>
           </Pressable>
-        </View>
-
-        {/* <Authenticator.SignIn
-          {...props}
-          headerText=""
-          hideSignIn={true}
-        /> */}
       </View>
     );
   };

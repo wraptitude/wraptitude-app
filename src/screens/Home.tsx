@@ -195,12 +195,14 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
               </Pressable>
             )}
           </Text>
-          <Pressable 
-            style={styles.signOutButton}
-            onPress={handleSignOut}
-          >
-            <Text style={styles.signOutText}>Sign Out</Text>
-          </Pressable>
+            {currentScreen === 'menu' && (
+              <Pressable 
+                style={styles.signOutButton}
+                onPress={handleSignOut}
+              >
+                <Text style={styles.signOutText}>Sign Out</Text>
+              </Pressable>
+            )}
         </View>
 
         {renderScreen()}
