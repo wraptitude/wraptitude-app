@@ -15,16 +15,16 @@ interface FAQ {
 
 const FAQS: FAQ[] = [
   {
-    question: '車膜有什麼好處？',
-    answer: '車膜可以提供多重保護：阻隔紫外線、增強玻璃安全性、提升隱私度、減少眩光、降低車內溫度，同時還能提升車輛外觀。',
+    question: 'What are the benefits of car film?',
+    answer: 'Car film provides multiple benefits: UV protection, enhanced glass safety, increased privacy, reduced glare, lower interior temperature, and improved vehicle appearance.',
   },
   {
-    question: '如何保養車膜？',
-    answer: '1. 安裝後48小時內避免開窗\n2. 使用柔軟的毛巾和中性清潔劑清洗\n3. 避免使用含氨或磨砂的清潔產品\n4. 定期進行專業清潔和檢查',
+    question: 'How to maintain car film?',
+    answer: '1. Avoid opening windows for 48 hours after installation\n2. Clean with soft cloth and neutral detergent\n3. Avoid ammonia-based or abrasive cleaning products\n4. Schedule regular professional cleaning and inspection',
   },
   {
-    question: '車膜的使用壽命是多久？',
-    answer: '優質車膜在正常使用和保養下可持續5-10年。但具體壽命取決於使用環境、保養方式和車膜品質。',
+    question: 'How long does car film last?',
+    answer: 'Quality car film can last 5-10 years with proper maintenance. However, actual lifespan depends on environmental conditions, maintenance, and film quality.',
   },
 ];
 
@@ -34,7 +34,7 @@ const KnowledgeBase: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>車膜知識庫</Text>
+        <Text style={styles.headerTitle}>Knowledge Base</Text>
       </View>
       <ScrollView style={styles.content}>
         {FAQS.map((faq, index) => (

@@ -21,7 +21,7 @@ const ContactUs: React.FC = () => {
   const contactInfo: ContactInfo[] = [
     {
       icon: '📞',
-      label: '電話',
+      label: 'Phone',
       value: '0912-345-678',
       action: () => Linking.openURL('tel:0912345678'),
     },
@@ -33,21 +33,21 @@ const ContactUs: React.FC = () => {
     },
     {
       icon: '📍',
-      label: '地址',
-      value: '台北市信義區信義路五段7號',
-      action: () => Linking.openURL('https://maps.google.com/?q=台北市信義區信義路五段7號'),
+      label: 'Address',
+      value: '7 Xinyi Road Section 5, Xinyi District, Taipei',
+      action: () => Linking.openURL('https://maps.google.com/?q=7 Xinyi Road Section 5, Xinyi District, Taipei'),
     },
     {
       icon: '⏰',
-      label: '營業時間',
-      value: '週一至週六 10:00-19:00',
+      label: 'Business Hours',
+      value: 'Mon-Sat 10:00-19:00',
     },
   ];
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>聯絡我們</Text>
+        <Text style={styles.headerTitle}>Contact Us</Text>
       </View>
       <ScrollView style={styles.content}>
         {contactInfo.map((info, index) => (

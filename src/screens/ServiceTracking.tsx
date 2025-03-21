@@ -29,8 +29,8 @@ interface ServiceStep {
 const INITIAL_STEPS: ServiceStep[] = [
   {
     id: '1',
-    title: '車輛檢查和清潔',
-    description: '詳細檢查車輛狀況，進行深層清潔',
+    title: 'Vehicle Inspection and Cleaning',
+    description: 'Detailed vehicle condition check and deep cleaning',
     status: 'completed',
     estimatedTime: 60,
     actualTime: 55,
@@ -38,32 +38,32 @@ const INITIAL_STEPS: ServiceStep[] = [
   },
   {
     id: '2',
-    title: '貼膜準備',
-    description: '準備貼膜材料，確認尺寸和裁切',
+    title: 'Film Preparation',
+    description: 'Prepare film materials, confirm measurements and cutting',
     status: 'in_progress',
     estimatedTime: 45,
     images: ['preparation1.jpg'],
   },
   {
     id: '3',
-    title: '貼膜施工',
-    description: '專業施工貼膜過程',
+    title: 'Film Installation',
+    description: 'Professional film installation process',
     status: 'pending',
     estimatedTime: 180,
     images: [],
   },
   {
     id: '4',
-    title: '品質檢查',
-    description: '全面檢查貼膜品質',
+    title: 'Quality Check',
+    description: 'Comprehensive film quality inspection',
     status: 'pending',
     estimatedTime: 30,
     images: [],
   },
   {
     id: '5',
-    title: '完工展示',
-    description: '最終成果展示和客戶確認',
+    title: 'Final Presentation',
+    description: 'Final result presentation and customer confirmation',
     status: 'pending',
     estimatedTime: 20,
     images: [],
@@ -153,7 +153,7 @@ const ServiceTracking: React.FC = () => {
           />
           <Text style={styles.stepTitle}>{step.title}</Text>
           <Text style={styles.stepTime}>
-            {step.actualTime || step.estimatedTime}分鐘
+            {step.actualTime || step.estimatedTime} minutes
           </Text>
         </View>
         
@@ -188,7 +188,7 @@ const ServiceTracking: React.FC = () => {
                     }
                   ]}
                 >
-                  <Text style={styles.imageText}>圖片 {index + 1}</Text>
+                  <Text style={styles.imageText}>Image {index + 1}</Text>
                 </Animated.View>
               ))}
             </ScrollView>
@@ -211,7 +211,7 @@ const ServiceTracking: React.FC = () => {
           }
         ]}
       >
-        服務進度追蹤
+        Service Progress Tracking
       </Animated.Text>
       <View style={styles.progressSection}>
         <Animated.Text 
@@ -227,7 +227,7 @@ const ServiceTracking: React.FC = () => {
             }
           ]}
         >
-          總進度: {Math.round(calculateProgress())}%
+          Overall Progress: {Math.round(calculateProgress())}%
         </Animated.Text>
         <ProgressBar progress={calculateProgress()} />
       </View>

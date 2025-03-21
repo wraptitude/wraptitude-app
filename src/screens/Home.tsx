@@ -118,7 +118,7 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
                   }}
                 >
                   <Text style={styles.menuIcon}>🚗</Text>
-                  <Text style={styles.menuText}>服務進度追蹤</Text>
+                  <Text style={styles.menuText}>Service Tracking</Text>
                 </Pressable>
               </Animated.View>
 
@@ -131,7 +131,7 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
                   }}
                 >
                   <Text style={styles.menuIcon}>📋</Text>
-                  <Text style={styles.menuText}>服務記錄</Text>
+                  <Text style={styles.menuText}>Service History</Text>
                 </Pressable>
               </Animated.View>
 
@@ -144,7 +144,7 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
                   }}
                 >
                   <Text style={styles.menuIcon}>📚</Text>
-                  <Text style={styles.menuText}>車膜知識庫</Text>
+                  <Text style={styles.menuText}>Knowledge Base</Text>
                 </Pressable>
               </Animated.View>
 
@@ -157,7 +157,7 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
                   }}
                 >
                   <Text style={styles.menuIcon}>📞</Text>
-                  <Text style={styles.menuText}>聯絡我們</Text>
+                  <Text style={styles.menuText}>Contact Us</Text>
                 </Pressable>
               </Animated.View>
             </View>

@@ -11,10 +11,10 @@ const ServiceHistory: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>服務記錄</Text>
+        <Text style={styles.headerTitle}>Service History</Text>
       </View>
       <ScrollView style={styles.content}>
-        <Text style={styles.emptyText}>暫無服務記錄</Text>
+        <Text style={styles.emptyText}>No service history available</Text>
       </ScrollView>
     </SafeAreaView>
   );
