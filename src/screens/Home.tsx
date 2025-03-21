@@ -9,6 +9,7 @@ import {
   Alert,
   Dimensions,
   Animated,
+  Image,
 } from 'react-native';
 import { signOut } from 'aws-amplify/auth';
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
@@ -188,22 +189,48 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
     <View style={styles.container}>
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>
-            {currentScreen === 'menu' ? 'Welcome' : (
-              <Pressable onPress={() => setCurrentScreen('menu')}>
-                <Text style={styles.backButton}>← Back</Text>
-              </Pressable>
+          <View style={styles.headerContent}>
+            {currentScreen === 'menu' ? (
+              <>
+                <Image 
+                  source={require('../assets/images/wraptitude.jpg')}
+                  style={styles.logo}
+                  resizeMode="contain"
+                />
+                <Pressable 
+                  style={styles.signOutButton}
+                  onPress={handleSignOut}
+                >
+                  <Text style={styles.signOutText}>Sign Out</Text>
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <Pressable 
+                  style={styles.backButton}
+                  onPress={() => setCurrentScreen('menu')}
+                >
+                  <Text style={styles.backButtonText}>← Back</Text>
+                </Pressable>
+                <Text style={styles.screenTitle}>
+                  {currentScreen === 'tracking' ? 'Service Tracking' :
+                   currentScreen === 'history' ? 'Service History' :
+                   currentScreen === 'knowledge' ? 'Knowledge Base' : 'Contact Us'}
+                </Text>
+              </>
             )}
-          </Text>
-            {currentScreen === 'menu' && (
-              <Pressable 
-                style={styles.signOutButton}
-                onPress={handleSignOut}
-              >
-                <Text style={styles.signOutText}>Sign Out</Text>
-              </Pressable>
-            )}
+          </View>
         </View>
+
+        {currentScreen === 'menu' && (
+          <View style={styles.welcomeSection}>
+            <Text style={styles.welcomeText}>Welcome to Wraptitude</Text>
+            <Text style={styles.welcomeDescription}>
+              Professional car wrapping services with 5-10+ years of experience. 
+              We guarantee results that exceed your expectations.
+            </Text>
+          </View>
+        )}
 
         {renderScreen()}
       </SafeAreaView>
@@ -220,28 +247,63 @@ const styles = StyleSheet.create({
     backgroundColor: '#040404',
   },
   header: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    backgroundColor: '#0a0a0a',
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+  logo: {
+    width: 140,
+    height: 50,
   },
   backButton: {
+    padding: 8,
+  },
+  backButtonText: {
     fontSize: 18,
     color: '#FFFFFF',
   },
+  screenTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    flex: 1,
+    textAlign: 'center',
+    marginRight: 40,
+  },
   signOutButton: {
     padding: 10,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#333',
   },
   signOutText: {
     color: '#c70628',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  welcomeSection: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    backgroundColor: '#1a1a1a',
+  },
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  welcomeDescription: {
+    color: '#7c7c7c',
+    fontSize: 14,
+    lineHeight: 20,
   },
   loadingContainer: {
     flex: 1,
@@ -261,17 +323,22 @@ const styles = StyleSheet.create({
     width: buttonWidth,
     height: buttonWidth,
     backgroundColor: '#1a1a1a',
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 20,
     padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#333333',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   menuIcon: {
     fontSize: 32,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   menuText: {
     color: '#FFFFFF',

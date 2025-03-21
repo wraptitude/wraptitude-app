@@ -120,6 +120,12 @@ const ServiceTracking: React.FC = () => {
       completed: '#4CAF50',
     }[step.status];
 
+    const statusText = {
+      pending: 'Scheduled',
+      in_progress: 'In Progress',
+      completed: 'Completed',
+    }[step.status];
+
     const cardHeight = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -133,27 +139,32 @@ const ServiceTracking: React.FC = () => {
 
     return (
       <Pressable
-        style={[styles.stepCard]}
+        style={[styles.stepCard, isExpanded && styles.stepCardExpanded]}
         onPress={() => setExpandedStep(isExpanded ? null : step.id)}
       >
         <View style={styles.stepHeader}>
-          <Animated.View 
-            style={[
-              styles.statusDot, 
-              { 
-                backgroundColor: statusColor,
-                transform: [{
-                  scale: cardHeight.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [1, 1.2],
-                  })
-                }]
-              }
-            ]} 
-          />
-          <Text style={styles.stepTitle}>{step.title}</Text>
+          <View style={styles.stepHeaderLeft}>
+            <Animated.View 
+              style={[
+                styles.statusDot, 
+                { 
+                  backgroundColor: statusColor,
+                  transform: [{
+                    scale: cardHeight.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 1.2],
+                    })
+                  }]
+                }
+              ]} 
+            />
+            <View>
+              <Text style={styles.stepTitle}>{step.title}</Text>
+              <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
+            </View>
+          </View>
           <Text style={styles.stepTime}>
-            {step.actualTime || step.estimatedTime} minutes
+            {step.actualTime || step.estimatedTime} min
           </Text>
         </View>
         
@@ -172,7 +183,11 @@ const ServiceTracking: React.FC = () => {
         >
           <Text style={styles.stepDescription}>{step.description}</Text>
           {step.images.length > 0 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.imagesScroll}
+            >
               {step.images.map((image, index) => (
                 <Animated.View 
                   key={index} 
@@ -200,19 +215,6 @@ const ServiceTracking: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Animated.Text 
-        style={[
-          styles.title,
-          {
-            opacity: progressAnim.interpolate({
-              inputRange: [0, 100],
-              outputRange: [0.8, 1],
-            })
-          }
-        ]}
-      >
-        Service Progress Tracking
-      </Animated.Text>
       <View style={styles.progressSection}>
         <Animated.Text 
           style={[
@@ -227,8 +229,9 @@ const ServiceTracking: React.FC = () => {
             }
           ]}
         >
-          Overall Progress: {Math.round(calculateProgress())}%
+          Project Progress
         </Animated.Text>
+        <Text style={styles.progressPercentage}>{Math.round(calculateProgress())}%</Text>
         <ProgressBar progress={calculateProgress()} />
       </View>
 
@@ -245,21 +248,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#040404',
-    padding: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 20,
   },
   progressSection: {
-    marginBottom: 20,
+    padding: 20,
+    backgroundColor: '#1a1a1a',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
   },
   progressText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    marginBottom: 8,
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  progressPercentage: {
+    color: '#c70628',
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginBottom: 12,
   },
   progressBarContainer: {
     height: 8,
@@ -274,55 +280,84 @@ const styles = StyleSheet.create({
   },
   stepsContainer: {
     flex: 1,
+    padding: 20,
   },
   stepCard: {
     backgroundColor: '#1a1a1a',
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#333333',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  stepCardExpanded: {
+    borderColor: '#c70628',
   },
   stepHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  stepHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   statusDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    marginRight: 8,
+    marginRight: 12,
   },
   stepTitle: {
-    flex: 1,
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+    marginBottom: 4,
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   stepTime: {
     color: '#7c7c7c',
     fontSize: 14,
+    fontWeight: '500',
   },
   stepDetails: {
-    marginTop: 12,
+    marginTop: 16,
   },
   stepDescription: {
     color: '#FFFFFF',
     fontSize: 14,
-    marginBottom: 12,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  imagesScroll: {
+    marginHorizontal: -16,
+    paddingHorizontal: 16,
   },
   imageContainer: {
-    width: 120,
-    height: 80,
+    width: 160,
+    height: 100,
     backgroundColor: '#333333',
-    borderRadius: 4,
-    marginRight: 8,
+    borderRadius: 8,
+    marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#444444',
   },
   imageText: {
     color: '#FFFFFF',
     fontSize: 12,
+    fontWeight: '500',
   },
 });
 
