@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Dimensions,
   ActivityIndicator,
   Platform,
+  Animated,
+  Easing,
 } from 'react-native';
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
 import { post } from 'aws-amplify/api';
@@ -72,6 +74,10 @@ const ServiceTracking: React.FC = () => {
   const [steps, setSteps] = useState<ServiceStep[]>(INITIAL_STEPS);
   const [loading, setLoading] = useState(false);
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
+  
+  // Animation values
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const expandAnim = useRef(new Animated.Value(0)).current;
 
   // Calculate overall progress
   const calculateProgress = () => {
@@ -80,9 +86,29 @@ const ServiceTracking: React.FC = () => {
     return ((completed + inProgress * 0.5) / steps.length) * 100;
   };
 
+  useEffect(() => {
+    // Animate progress bar when progress changes
+    Animated.timing(progressAnim, {
+      toValue: calculateProgress(),
+      duration: 1000,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: false,
+    }).start();
+  }, [steps]);
+
   const ProgressBar = ({ progress }: { progress: number }) => (
     <View style={styles.progressBarContainer}>
-      <View style={[styles.progressBar, { width: `${progress}%` }]} />
+      <Animated.View 
+        style={[
+          styles.progressBar, 
+          { 
+            width: progressAnim.interpolate({
+              inputRange: [0, 100],
+              outputRange: ['0%', '100%'],
+            })
+          }
+        ]} 
+      />
     </View>
   );
 
@@ -94,44 +120,115 @@ const ServiceTracking: React.FC = () => {
       completed: '#4CAF50',
     }[step.status];
 
+    const cardHeight = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+      Animated.timing(cardHeight, {
+        toValue: isExpanded ? 1 : 0,
+        duration: 300,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: false,
+      }).start();
+    }, [isExpanded]);
+
     return (
       <Pressable
-        style={[styles.stepCard, isExpanded && styles.stepCardExpanded]}
+        style={[styles.stepCard]}
         onPress={() => setExpandedStep(isExpanded ? null : step.id)}
       >
         <View style={styles.stepHeader}>
-          <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+          <Animated.View 
+            style={[
+              styles.statusDot, 
+              { 
+                backgroundColor: statusColor,
+                transform: [{
+                  scale: cardHeight.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [1, 1.2],
+                  })
+                }]
+              }
+            ]} 
+          />
           <Text style={styles.stepTitle}>{step.title}</Text>
           <Text style={styles.stepTime}>
             {step.actualTime || step.estimatedTime}分鐘
           </Text>
         </View>
         
-        {isExpanded && (
-          <View style={styles.stepDetails}>
-            <Text style={styles.stepDescription}>{step.description}</Text>
-            {step.images.length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {step.images.map((image, index) => (
-                  <View key={index} style={styles.imageContainer}>
-                    <Text style={styles.imageText}>圖片 {index + 1}</Text>
-                  </View>
-                ))}
-              </ScrollView>
-            )}
-          </View>
-        )}
+        <Animated.View 
+          style={[
+            styles.stepDetails,
+            {
+              maxHeight: cardHeight.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 300],
+              }),
+              opacity: cardHeight,
+              overflow: 'hidden',
+            }
+          ]}
+        >
+          <Text style={styles.stepDescription}>{step.description}</Text>
+          {step.images.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {step.images.map((image, index) => (
+                <Animated.View 
+                  key={index} 
+                  style={[
+                    styles.imageContainer,
+                    {
+                      transform: [{
+                        scale: cardHeight.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0.8, 1],
+                        })
+                      }]
+                    }
+                  ]}
+                >
+                  <Text style={styles.imageText}>圖片 {index + 1}</Text>
+                </Animated.View>
+              ))}
+            </ScrollView>
+          )}
+        </Animated.View>
       </Pressable>
     );
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>服務進度追蹤</Text>
+      <Animated.Text 
+        style={[
+          styles.title,
+          {
+            opacity: progressAnim.interpolate({
+              inputRange: [0, 100],
+              outputRange: [0.8, 1],
+            })
+          }
+        ]}
+      >
+        服務進度追蹤
+      </Animated.Text>
       <View style={styles.progressSection}>
-        <Text style={styles.progressText}>
+        <Animated.Text 
+          style={[
+            styles.progressText,
+            {
+              transform: [{
+                scale: progressAnim.interpolate({
+                  inputRange: [0, 100],
+                  outputRange: [1, 1.1],
+                })
+              }]
+            }
+          ]}
+        >
           總進度: {Math.round(calculateProgress())}%
-        </Text>
+        </Animated.Text>
         <ProgressBar progress={calculateProgress()} />
       </View>
 
@@ -185,9 +282,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#333333',
-  },
-  stepCardExpanded: {
-    minHeight: 200,
   },
   stepHeader: {
     flexDirection: 'row',
