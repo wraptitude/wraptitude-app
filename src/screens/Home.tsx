@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,14 +11,31 @@ import {
 } from 'react-native';
 import { signOut } from 'aws-amplify/auth';
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
+import { fetchUserAttributes } from 'aws-amplify/auth';
 import ServiceTracking from './ServiceTracking';
+import { getCurrentUser} from 'aws-amplify/auth';
+
 
 interface HomeProps {
   onSignOut: () => void;
 }
 
 const Home: React.FC<HomeProps> = ({ onSignOut }) => {
-  const { toSignIn } = useAuthenticator();
+  const [userAttributes, setUserAttributes] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const attributes = await fetchUserAttributes();
+        setUserAttributes(attributes);
+        console.log('User:', attributes);
+      } catch (error) {
+        console.error('Error fetching user:', error);
+      }
+    };
+    fetchUser();
+  }, []);
+  
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSignOut = async () => {
@@ -44,7 +61,7 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
     <View style={styles.container}>
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Welcome</Text>
+          <Text style={styles.headerTitle}>Welcome {userAttributes?.name}</Text>
           <Pressable 
             style={styles.signOutButton}
             onPress={handleSignOut}
