@@ -28,11 +28,38 @@ import { Authenticator, ThemeProvider, useAuthenticator, useTheme } from '@aws-a
 import awsconfig from './src/aws-exports';
 import { SignIn } from '@aws-amplify/ui-react-native/dist/Authenticator/Defaults/SignIn';
 import { Picker } from '@react-native-picker/picker';
-import { signIn, getCurrentUser } from 'aws-amplify/auth';
+import { signIn, getCurrentUser, signUp, forgotPassword } from 'aws-amplify/auth';
 import Home from './src/screens/Home';
 
 // Configure Amplify
 Amplify.configure(awsconfig);
+
+// Add this theme object before your App component
+const theme = {
+  tokens: {
+    colors: {
+      background: {
+        primary: '#040404',
+        secondary: '#040404',
+      },
+      primary: {
+        10: '#FF0000',
+        20: '#FF0000',
+        40: '#FF0000',
+        60: '#FF0000',
+        80: '#c70628', //sign in button & forgot password & create account
+        90: '#FF0000',
+        100: '#FF0000',
+      },
+      neutral: {
+        60: '#7c7c7c', //email &PW框
+        80: '#7c7c7c', //enter your email & enter your password
+        90: '#FFFFFF', //email &PW
+        100: '#FFFFFF', //sign in
+      },
+    },
+  },
+};
 
 // SignOutButton component
 function SignOutButton() {
@@ -114,13 +141,6 @@ function App(): React.JSX.Element {
       );
     },
   };
-  const MySignIn = () => {
-    return (
-      <View>
-        <Text style={styles.signInText}>My Sign In</Text>
-      </View>
-    );
-  };
 // const { toForgotPassword } = useAuthenticator();
   // Custom Sign In component
   const CustomSignIn = ({ fields, ...props }) => {
@@ -178,6 +198,7 @@ function App(): React.JSX.Element {
               break;
             default:
               console.log('Additional step required:', nextStep.signInStep);
+              setIsAuthenticated(true); // Update auth state
           }
         }
       } catch (error: any) {
@@ -248,9 +269,9 @@ function App(): React.JSX.Element {
         </Pressable>
 
         <View style={styles.linksContainer}>
-          <Pressable onPress={toForgotPassword}>
+          {/* <Pressable onPress={toForgotPassword}>
             <Text style={styles.linkText}>Forgot Password?</Text>
-          </Pressable>
+          </Pressable> */}
           <Pressable onPress={toSignUp}>
             <Text style={styles.linkText}>Create Account</Text>
           </Pressable>
@@ -265,7 +286,7 @@ function App(): React.JSX.Element {
     );
   };
 
-  const CustomSignUp = ({ fields, ...props }) => {
+  const CustomSignUp = (props: AuthenticatorProps) => {
     const [phoneNumber, setPhoneNumber] = React.useState('');
     const [selectedCode, setSelectedCode] = React.useState('+1');
     const [password, setPassword] = React.useState('');
@@ -309,20 +330,29 @@ function App(): React.JSX.Element {
       setIsLoading(true);
       try {
         const fullNumber = `${selectedCode}${phoneNumber.replace(/\D/g, '')}`;
-        await Auth.signUp({
+        const { isSignUpComplete, userId, nextStep } = await signUp({
           username: fullNumber,
-          password,
-          attributes: {
-            email,
-            name,
-            phone_number: fullNumber
-          }
+          password: password,
+          options: {
+            userAttributes: {
+              email: email,
+              name: name,
+            },
+          },
         });
-        RNAlert.alert(
-          'Success',
-          'Account created successfully! Please check your phone for verification code.',
-          [{ text: 'OK', onPress: toSignIn }]
-        );
+
+        if (isSignUpComplete) {
+          RNAlert.alert(
+            'Success',
+            'Account created successfully! Please sign in.',
+            [{ text: 'OK', onPress: () => toSignIn() }]
+          );
+        } else if (nextStep?.signUpStep === 'CONFIRM_SIGN_UP') {
+          RNAlert.alert(
+            'Verification Required',
+            'Please check your phone for the verification code.'
+          );
+        }
       } catch (error: any) {
         console.error('Sign up error:', error);
         RNAlert.alert('Error', error.message || 'Failed to create account');
@@ -522,7 +552,7 @@ function App(): React.JSX.Element {
           disabled={isLoading}
         >
           {isLoading ? (
-            <ActivityIndicator color="#FFFFFF" />
+            <ActivityIndicator color="#000000" />
           ) : (
             <Text style={styles.buttonText}>Send code</Text>
           )}
@@ -536,54 +566,41 @@ function App(): React.JSX.Element {
   };
   // If authenticated, show Home directly
   if (isAuthenticated) {
-    return <Home onSignOut={() => setIsAuthenticated(false)} />;
+    return (
+      <ThemeProvider>
+        <Authenticator.Provider>
+          <View style={{ flex: 1, backgroundColor: '#040404' }}>
+            <Home onSignOut={() => setIsAuthenticated(false)} />
+          </View>
+        </Authenticator.Provider>
+      </ThemeProvider>
+    );
   }
 
   return (
-    <ThemeProvider  
-    theme={{
-      tokens: {
-        colors: {
-          background: {
-            primary: '#040404',
-            secondary: '#040404',
-          },
-          primary: {
-            10: '#FF0000',
-            20: '#FF0000',
-            40: '#FF0000',
-            60: '#FF0000',
-            80: '#c70628',//sign in button & forgot password & create account
-            90: '#FF0000',
-            100: '#FF0000',
-          },
-          neutral: {
-            // 10: '#ff4b4b',
-            // 20: '#ff4b4b',  
-            // 40: '#ff4b4b',
-            60: '#7c7c7c',//email &PW框
-            80: '#7c7c7c',//enter your email & enter your password
-            90: '#FFFFFF',//email &PW
-            100: '#FFFFFF',//sign in
-          },
-        },
-      },
-    }}
-  >
-    <Authenticator.Provider>
-    <Authenticator
-    Header={components.Header}
-        components={{
-          SignIn: CustomSignIn,
-          SignUp: CustomSignUp,
-          ForgotPassword: CustomForgotPassword,
-        }}
-      >
-
-        <View />
-      </Authenticator>
-    </Authenticator.Provider>
-    </ThemeProvider>
+    <View style={styles.rootContainer}>
+      <ThemeProvider theme={theme}>
+        <Authenticator.Provider>
+          <Text>Hello</Text>
+          {isAuthenticated ? (
+            <Home onSignOut={() => setIsAuthenticated(false)} />
+          ) : (
+            <View style={styles.rootContainer}>
+              <Authenticator
+                Header={components.Header}
+                components={{
+                  SignIn: CustomSignIn,
+                  SignUp: CustomSignUp,
+                  ForgotPassword: CustomForgotPassword,
+                }}
+              >
+                <View />
+              </Authenticator>
+            </View>
+          )}
+        </Authenticator.Provider>
+      </ThemeProvider>
+    </View>
   );
 }
 
@@ -778,6 +795,10 @@ const styles = StyleSheet.create({
     color: '#c70628',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  rootContainer: {
+    flex: 1,
+    backgroundColor: '#040404',
   },
 });
 

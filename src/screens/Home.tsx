@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,48 +6,66 @@ import {
   Pressable,
   ScrollView,
   SafeAreaView,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { signOut } from 'aws-amplify/auth';
+import { useAuthenticator } from '@aws-amplify/ui-react-native';
 
 interface HomeProps {
   onSignOut: () => void;
 }
 
 const Home: React.FC<HomeProps> = ({ onSignOut }) => {
+  const { toSignIn } = useAuthenticator();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
   const handleSignOut = async () => {
     try {
+      // Then update state and clean up auth
+      onSignOut();
       await signOut();
-      onSignOut(); // Update parent's auth state
+      console.log('Signed out');
     } catch (error) {
       console.error('Error signing out:', error);
     }
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Welcome</Text>
-        <Pressable 
-          style={styles.signOutButton}
-          onPress={handleSignOut}
-        >
-          <Text style={styles.signOutText}>Sign Out</Text>
-        </Pressable>
+  if (isSigningOut) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator color="#c70628" size="large" />
       </View>
+    );
+  }
 
-      <ScrollView style={styles.content}>
-        {/* Add your home page content here */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Dashboard</Text>
-          {/* Add dashboard items */}
+  return (
+    <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Welcome</Text>
+          <Pressable 
+            style={styles.signOutButton}
+            onPress={handleSignOut}
+          >
+            <Text style={styles.signOutText}>Sign Out</Text>
+          </Pressable>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          {/* Add activity items */}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        <ScrollView style={styles.content}>
+          {/* Add your home page content here */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Your Dashboard</Text>
+            {/* Add dashboard items */}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+            {/* Add activity items */}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 };
 
@@ -88,6 +106,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 15,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#040404',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
