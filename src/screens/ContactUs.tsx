@@ -22,25 +22,25 @@ const ContactUs: React.FC = () => {
     {
       icon: '📞',
       label: 'Phone',
-      value: '0912-345-678',
-      action: () => Linking.openURL('tel:0912345678'),
+      value: '437-340-1121',
+      action: () => Linking.openURL('tel:4373401121'),
     },
     {
       icon: '📧',
       label: 'Email',
-      value: 'info@wraptitude.com',
-      action: () => Linking.openURL('mailto:info@wraptitude.com'),
+      value: 'wraptitude.ca@gmail.com',
+      action: () => Linking.openURL('mailto:wraptitude.ca@gmail.com'),
     },
     {
       icon: '📍',
       label: 'Address',
-      value: '7 Xinyi Road Section 5, Xinyi District, Taipei',
-      action: () => Linking.openURL('https://maps.google.com/?q=7 Xinyi Road Section 5, Xinyi District, Taipei'),
+      value: '23 Laidlaw Blvd Unit 3, Markham, ON L3P 1W5',
+      action: () => Linking.openURL('https://maps.app.goo.gl/fu4c8t3dBP48Jnrd8'),
     },
     {
       icon: '⏰',
       label: 'Business Hours',
-      value: 'Mon-Sat 10:00-19:00',
+      value: 'Mon-Sat 11:00-19:00',
     },
   ];
 
