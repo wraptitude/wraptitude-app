@@ -20,10 +20,9 @@ interface ServiceStep {
   title: string;
   description: string;
   status: 'pending' | 'in_progress' | 'completed';
-  estimatedTime: number; // in minutes
-  actualTime?: number;
   images: string[];
   videos?: string[];
+  weight: number;
 }
 
 const INITIAL_STEPS: ServiceStep[] = [
@@ -32,41 +31,40 @@ const INITIAL_STEPS: ServiceStep[] = [
     title: 'Vehicle Inspection and Cleaning',
     description: 'Detailed vehicle condition check and deep cleaning',
     status: 'completed',
-    estimatedTime: 60,
-    actualTime: 55,
     images: ['inspection1.jpg', 'cleaning1.jpg'],
+    weight: 20,
   },
   {
     id: '2',
     title: 'Film Preparation',
     description: 'Prepare film materials, confirm measurements and cutting',
-    status: 'in_progress',
-    estimatedTime: 45,
+    status: 'completed',
     images: ['preparation1.jpg'],
+    weight: 20,
   },
   {
     id: '3',
     title: 'Film Installation',
     description: 'Professional film installation process',
-    status: 'pending',
-    estimatedTime: 180,
-    images: [],
+    status: 'in_progress',
+    images: ['preparation1.jpg'],
+    weight: 50,
   },
   {
     id: '4',
     title: 'Quality Check',
     description: 'Comprehensive film quality inspection',
     status: 'pending',
-    estimatedTime: 30,
     images: [],
+    weight: 5,
   },
   {
     id: '5',
     title: 'Final Presentation',
     description: 'Final result presentation and customer confirmation',
     status: 'pending',
-    estimatedTime: 20,
     images: [],
+    weight: 5,
   },
 ];
 
@@ -81,9 +79,14 @@ const ServiceTracking: React.FC = () => {
 
   // Calculate overall progress
   const calculateProgress = () => {
-    const completed = steps.filter(step => step.status === 'completed').length;
-    const inProgress = steps.filter(step => step.status === 'in_progress').length;
-    return ((completed + inProgress * 0.5) / steps.length) * 100;
+    return steps.reduce((total, step) => {
+      if (step.status === 'completed') {
+        return total + step.weight;
+      } else if (step.status === 'in_progress') {
+        return total + (step.weight * 0.5);
+      }
+      return total;
+    }, 0);
   };
 
   useEffect(() => {
@@ -163,9 +166,6 @@ const ServiceTracking: React.FC = () => {
               <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
             </View>
           </View>
-          <Text style={styles.stepTime}>
-            {step.actualTime || step.estimatedTime} min
-          </Text>
         </View>
         
         <Animated.View 
