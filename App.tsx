@@ -13,6 +13,7 @@ import {
   Pressable,
   Alert as RNAlert,
   ActivityIndicator,
+  ImageBackground,
 } from 'react-native';
 import SplashScreen from 'react-native-splash-screen';
 import {
@@ -24,13 +25,13 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 import { Button } from 'react-native';
 import { Amplify, Auth } from 'aws-amplify';
-import { Authenticator, ThemeProvider, useAuthenticator, useTheme } from '@aws-amplify/ui-react-native';
+import { Authenticator, AuthenticatorProps, ThemeProvider, useAuthenticator, useTheme } from '@aws-amplify/ui-react-native';
 import awsconfig from './src/aws-exports';
 import { SignIn } from '@aws-amplify/ui-react-native/dist/Authenticator/Defaults/SignIn';
 import { Picker } from '@react-native-picker/picker';
-import { signIn, getCurrentUser, signUp, forgotPassword } from 'aws-amplify/auth';
+import { signIn, getCurrentUser, signUp } from 'aws-amplify/auth';
 import Home from './src/screens/Home';
-
+import { appStyles } from './src/styles/appStyles';
 // Configure Amplify
 Amplify.configure(awsconfig);
 
@@ -39,8 +40,8 @@ const theme = {
   tokens: {
     colors: {
       background: {
-        primary: '#040404',
-        secondary: '#040404',
+        primary: 'transparent', // Ensure Authenticator background is transparent
+        secondary: 'transparent',
       },
       primary: {
         10: '#FF0000',
@@ -61,11 +62,6 @@ const theme = {
   },
 };
 
-// SignOutButton component
-function SignOutButton() {
-  const { signOut } = useAuthenticator();
-  return <Button title="Sign Out" onPress={signOut} />;
-}
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -74,10 +70,10 @@ type SectionProps = PropsWithChildren<{
 function Section({ children, title }: SectionProps): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
   return (
-    <View style={styles.sectionContainer}>
+    <View style={appStyles.sectionContainer}>
       <Text
         style={[
-          styles.sectionTitle,
+          appStyles.sectionTitle,
           {
             color: isDarkMode ? Colors.white : Colors.black,
           },
@@ -86,7 +82,7 @@ function Section({ children, title }: SectionProps): React.JSX.Element {
       </Text>
       <Text
         style={[
-          styles.sectionDescription,
+          appStyles.sectionDescription,
           {
             color: isDarkMode ? Colors.light : Colors.dark,
           },
@@ -131,17 +127,17 @@ function App(): React.JSX.Element {
   const components = {
     Header() {
       return (
-        <View style={styles.headerContainer}>
+        <View style={appStyles.headerContainer}>
           <Image
-            source={require('./src/assets/images/wraptitude.jpg')}
-            style={styles.logoImage}
+            source={require('./src/assets/images/wraptitude-logo.webp')}
+            style={appStyles.logoImage}
             resizeMode="contain"
           />
         </View>
       );
     },
   };
-// const { toForgotPassword } = useAuthenticator();
+  // const { toForgotPassword } = useAuthenticator();
   // Custom Sign In component
   const CustomSignIn = ({ fields, ...props }) => {
     const [phoneNumber, setPhoneNumber] = React.useState('');
@@ -150,11 +146,11 @@ function App(): React.JSX.Element {
     const [isLoading, setIsLoading] = React.useState(false);
 
     // Get navigation methods from useAuthenticator
-    const { toForgotPassword, toSignUp } = useAuthenticator();
+    const { toSignUp } = useAuthenticator();
 
     const formatPhoneNumber = (text: string) => {
       const cleaned = text.replace(/\D/g, '');
-      
+
       switch (cleaned.length) {
         case 0:
           return '';
@@ -193,7 +189,7 @@ function App(): React.JSX.Element {
             case 'CONFIRM_SIGN_IN_WITH_SMS_CODE':
               RNAlert.alert('Verification Required', 'Please check your phone for a verification code.');
               break;
-            case 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD':
+            case 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED':
               RNAlert.alert('Action Required', 'Please update your password.');
               break;
             default:
@@ -213,65 +209,74 @@ function App(): React.JSX.Element {
     };
 
     return (
-      <View style={styles.signInContainer}>
-        <Text style={styles.signInTitle}>Sign In</Text>
-        
-        <View style={styles.phoneFieldContainer}>
-          <View style={styles.countryCodePicker}>
-            <Picker
-              selectedValue={selectedCode}
-              onValueChange={setSelectedCode}
-              style={styles.picker}
-              dropdownIconColor="#FFFFFF"
-            >
-              <Picker.Item label="+1" value="+1" color="#FFFFFF" />
-              <Picker.Item label="+44" value="+44" color="#FFFFFF" />
-              <Picker.Item label="+86" value="+86" color="#FFFFFF" />
-              <Picker.Item label="+81" value="+81" color="#FFFFFF" />
-            </Picker>
+
+      <View style={appStyles.rootContainer}>
+
+        <View style={appStyles.signInContainer}>
+          <View style={appStyles.overlay} />
+          {/* <View style={appStyles.formContainer}> */}
+          <Text style={appStyles.signUpTitle}>Sign In</Text>
+
+          <View style={appStyles.phoneFieldContainer}>
+            <View style={appStyles.countryCodePicker}>
+
+              <Picker
+                selectedValue={selectedCode}
+                onValueChange={setSelectedCode}
+                style={appStyles.picker}
+                dropdownIconColor="#FFFFFF"
+              >
+                <Picker.Item label="+1" value="+1" color="#FFFFFF" />
+                <Picker.Item label="+44" value="+44" color="#FFFFFF" />
+                <Picker.Item label="+86" value="+86" color="#FFFFFF" />
+                <Picker.Item label="+81" value="+81" color="#FFFFFF" />
+              </Picker>
+            </View>
+            <TextInput
+              style={appStyles.phoneInput}
+              placeholder="(XXX) XXX-XXXX"
+              placeholderTextColor="#7c7c7c"
+              keyboardType="phone-pad"
+              maxLength={14}
+              value={phoneNumber}
+              onChangeText={(text) => {
+                const formatted = formatPhoneNumber(text);
+                setPhoneNumber(formatted);
+              }}
+            />
           </View>
+
           <TextInput
-            style={styles.phoneInput}
-            placeholder="(XXX) XXX-XXXX"
+            style={appStyles.passwordInput}
+            placeholder="Password"
             placeholderTextColor="#7c7c7c"
-            keyboardType="phone-pad"
-            maxLength={14}
-            value={phoneNumber}
-            onChangeText={(text) => {
-              const formatted = formatPhoneNumber(text);
-              setPhoneNumber(formatted);
-            }}
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
           />
-        </View>
 
-        <TextInput
-          style={styles.passwordInput}
-          placeholder="Password"
-          placeholderTextColor="#7c7c7c"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-
-        <Pressable 
-          style={[
-            styles.signUpButton,
-            isLoading && styles.signInButtonDisabled
-          ]}
-          onPress={handleSubmit}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.signUpButtonText}>Sign In</Text>
-          )}
-        </Pressable>
-          {/* Sign In Link */}
-          <Pressable onPress={toSignUp} style={styles.signInLink}>
-            <Text style={styles.signInLinkText}>Create Account</Text>
+          <Pressable
+            style={[
+              appStyles.signUpButton,
+              isLoading && appStyles.signInButtonDisabled
+            ]}
+            onPress={handleSubmit}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={appStyles.signUpButtonText}>Sign In</Text>
+            )}
           </Pressable>
+          {/* Sign In Link */}
+          <Pressable onPress={toSignUp} style={appStyles.signInLink}>
+            <Text style={appStyles.signInLinkText}>Create Account</Text>
+          </Pressable>
+          {/* </View> */}
+        </View>
       </View>
+
     );
   };
 
@@ -283,12 +288,12 @@ function App(): React.JSX.Element {
     const [email, setEmail] = React.useState('');
     const [name, setName] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
-    
+
     const { toSignIn } = useAuthenticator();
 
     const formatPhoneNumber = (text: string) => {
       const cleaned = text.replace(/\D/g, '');
-      
+
       switch (cleaned.length) {
         case 0:
           return '';
@@ -351,17 +356,18 @@ function App(): React.JSX.Element {
     };
 
     return (
-      <View style={styles.signUpContainer}>
-        <Text style={styles.signUpTitle}>Create Account</Text>
-        
+      <View style={appStyles.signUpContainer}>
+        <View style={appStyles.overlay} />
+        <Text style={appStyles.signUpTitle}>Create Account</Text>
+
         {/* Phone Number Input */}
-        <Text style={styles.inputLabel}>Phone Number</Text>
-        <View style={styles.phoneFieldContainer}>
-          <View style={styles.countryCodePicker}>
+        <Text style={appStyles.inputLabel}>Phone Number</Text>
+        <View style={appStyles.phoneFieldContainer}>
+          <View style={appStyles.countryCodePicker}>
             <Picker
               selectedValue={selectedCode}
               onValueChange={setSelectedCode}
-              style={styles.picker}
+              style={appStyles.picker}
               dropdownIconColor="#FFFFFF"
             >
               <Picker.Item label="+1" value="+1" color="#FFFFFF" />
@@ -371,7 +377,7 @@ function App(): React.JSX.Element {
             </Picker>
           </View>
           <TextInput
-            style={styles.phoneInput}
+            style={appStyles.phoneInput}
             placeholder="(XXX) XXX-XXXX"
             placeholderTextColor="#7c7c7c"
             keyboardType="phone-pad"
@@ -385,9 +391,9 @@ function App(): React.JSX.Element {
         </View>
 
         {/* Password Input */}
-        <Text style={styles.inputLabel}>Password</Text>
+        <Text style={appStyles.inputLabel}>Password</Text>
         <TextInput
-          style={styles.input}
+          style={appStyles.input}
           placeholder="Enter your Password"
           placeholderTextColor="#7c7c7c"
           secureTextEntry
@@ -396,9 +402,9 @@ function App(): React.JSX.Element {
         />
 
         {/* Confirm Password Input */}
-        <Text style={styles.inputLabel}>Confirm Password</Text>
+        <Text style={appStyles.inputLabel}>Confirm Password</Text>
         <TextInput
-          style={styles.input}
+          style={appStyles.input}
           placeholder="Please confirm your Password"
           placeholderTextColor="#7c7c7c"
           secureTextEntry
@@ -407,9 +413,9 @@ function App(): React.JSX.Element {
         />
 
         {/* Email Input */}
-        <Text style={styles.inputLabel}>Email</Text>
+        <Text style={appStyles.inputLabel}>Email</Text>
         <TextInput
-          style={styles.input}
+          style={appStyles.input}
           placeholder="Enter your Email"
           placeholderTextColor="#7c7c7c"
           keyboardType="email-address"
@@ -419,9 +425,9 @@ function App(): React.JSX.Element {
         />
 
         {/* Name Input */}
-        <Text style={styles.inputLabel}>Name</Text>
+        <Text style={appStyles.inputLabel}>Name</Text>
         <TextInput
-          style={styles.input}
+          style={appStyles.input}
           placeholder="Enter your Name"
           placeholderTextColor="#7c7c7c"
           value={name}
@@ -429,10 +435,10 @@ function App(): React.JSX.Element {
         />
 
         {/* Sign Up Button */}
-        <Pressable 
+        <Pressable
           style={[
-            styles.signUpButton,
-            isLoading && styles.signUpButtonDisabled
+            appStyles.signUpButton,
+            isLoading && appStyles.signUpButtonDisabled
           ]}
           onPress={handleSignUp}
           disabled={isLoading}
@@ -440,115 +446,13 @@ function App(): React.JSX.Element {
           {isLoading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.signUpButtonText}>Create Account</Text>
+            <Text style={appStyles.signUpButtonText}>Create Account</Text>
           )}
         </Pressable>
 
         {/* Sign In Link */}
-        <Pressable onPress={toSignIn} style={styles.signInLink}>
-          <Text style={styles.signInLinkText}>Sign In</Text>
-        </Pressable>
-      </View>
-    );
-  };
-  const CustomForgotPassword = ({ fields, ...props }) => {
-    const [phoneNumber, setPhoneNumber] = React.useState('');
-    const [selectedCode, setSelectedCode] = React.useState('+1');
-    const [isLoading, setIsLoading] = React.useState(false);
-    
-    const { toSignIn } = useAuthenticator();
-
-    const formatPhoneNumber = (text: string) => {
-      const cleaned = text.replace(/\D/g, '');
-      
-      switch (cleaned.length) {
-        case 0:
-          return '';
-        case 1:
-        case 2:
-        case 3:
-          return `(${cleaned}`;
-        case 4:
-        case 5:
-        case 6:
-          return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
-        default:
-          return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
-      }
-    };
-
-    const handleSendCode = async () => {
-      if (!phoneNumber) {
-        RNAlert.alert('Error', 'Please enter your phone number');
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        const fullNumber = `${selectedCode}${phoneNumber.replace(/\D/g, '')}`;
-        await Auth.forgotPassword(fullNumber);
-        RNAlert.alert(
-          'Code Sent',
-          'Please check your phone for the verification code.'
-        );
-      } catch (error: any) {
-        console.error('Reset password error:', error);
-        RNAlert.alert('Error', error.message || 'Failed to send code');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    return (
-      <View style={styles.forgotPasswordContainer}>
-        <Text style={styles.forgotPasswordTitle}>Reset Password</Text>
-        
-        <Text style={styles.inputLabel}>Enter your phone number</Text>
-        <View style={styles.phoneFieldContainer}>
-          <View style={styles.countryCodePicker}>
-            <Picker
-              selectedValue={selectedCode}
-              onValueChange={setSelectedCode}
-              style={styles.picker}
-              dropdownIconColor="#FFFFFF"
-            >
-              <Picker.Item label="+1" value="+1" color="#FFFFFF" />
-              <Picker.Item label="+44" value="+44" color="#FFFFFF" />
-              <Picker.Item label="+86" value="+86" color="#FFFFFF" />
-              <Picker.Item label="+81" value="+81" color="#FFFFFF" />
-            </Picker>
-          </View>
-          <TextInput
-            style={styles.phoneInput}
-            placeholder="(XXX) XXX-XXXX"
-            placeholderTextColor="#7c7c7c"
-            keyboardType="phone-pad"
-            maxLength={14}
-            value={phoneNumber}
-            onChangeText={(text) => {
-              const formatted = formatPhoneNumber(text);
-              setPhoneNumber(formatted);
-            }}
-          />
-        </View>
-
-        <Pressable 
-          style={[
-            styles.sendCodeButton,
-            isLoading && styles.buttonDisabled
-          ]}
-          onPress={handleSendCode}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#000000" />
-          ) : (
-            <Text style={styles.buttonText}>Send code</Text>
-          )}
-        </Pressable>
-
-        <Pressable onPress={toSignIn} style={styles.backToSignIn}>
-          <Text style={styles.backToSignInText}>Back to Sign In</Text>
+        <Pressable onPress={toSignIn} style={appStyles.signInLink}>
+          <Text style={appStyles.signInLinkText}>Sign In</Text>
         </Pressable>
       </View>
     );
@@ -567,228 +471,35 @@ function App(): React.JSX.Element {
   }
 
   return (
-    <View style={styles.rootContainer}>
-      <ThemeProvider theme={theme}>
+      <ImageBackground
+        source={require('./src/assets/images/1.jpg')} // Your background image
+        style={appStyles.backgroundImage}
+        resizeMode="cover"
+      >
+        <ThemeProvider theme={theme}>
         <Authenticator.Provider>
-          <Text>Hello</Text>
           {isAuthenticated ? (
             <Home onSignOut={() => setIsAuthenticated(false)} />
           ) : (
-            <View style={styles.rootContainer}>
+            <View style={appStyles.rootContainer}>
               <Authenticator
                 Header={components.Header}
                 components={{
                   SignIn: CustomSignIn,
                   SignUp: CustomSignUp,
-                  ForgotPassword: CustomForgotPassword,
                 }}
               >
-                <View />
               </Authenticator>
+
             </View>
           )}
+
         </Authenticator.Provider>
-      </ThemeProvider>
-    </View>
+
+        </ThemeProvider>
+      </ImageBackground>
+
   );
 }
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-  headerContainer: {
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#040404',
-  },
-  logoImage: {
-    width: 200,
-    height: 100, // Adjust these dimensions based on your logo's aspect ratio
-  },
-  signInText: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginVertical: 20,
-  },
-  signInContainer: {
-    padding: 20,
-    backgroundColor: '#040404',
-  },
-  signInTitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    // fontWeight: 'bold',
-    textAlign: 'left',
-    marginBottom: 5,
-  },
-  phoneFieldContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 15,
-  },
-  countryCodePicker: {
-    width: 100,
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#7c7c7c',
-    borderRadius: 4,
-    backgroundColor: '#1a1a1a',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  picker: {
-    color: '#FFFFFF',
-    backgroundColor: '#1a1a1a',
-  },
-  phoneInput: {
-    flex: 1,
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#7c7c7c',
-    borderRadius: 4,
-    padding: 10,
-    color: '#FFFFFF',
-    backgroundColor: '#1a1a1a',
-  },
-  passwordInput: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#7c7c7c',
-    borderRadius: 4,
-    padding: 10,
-    color: '#FFFFFF',
-    backgroundColor: '#1a1a1a',
-    marginBottom: 15,
-  },
-  signInButton: {
-    backgroundColor: '#FF0000',
-    padding: 15,
-    borderRadius: 4,
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  signInButtonDisabled: {
-    opacity: 0.7,
-  },
-  signInButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  linksContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  linkText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  signUpContainer: {
-    padding: 20,
-    backgroundColor: '#040404',
-  },
-  signUpTitle: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  inputLabel: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#7c7c7c',
-    borderRadius: 4,
-    padding: 10,
-    color: '#FFFFFF',
-    backgroundColor: '#1a1a1a',
-    marginBottom: 15,
-  },
-  signUpButton: {
-    backgroundColor: '#c70628',
-    padding: 15,
-    borderRadius: 4,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  signUpButtonDisabled: {
-    opacity: 0.7,
-  },
-  signUpButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  signInLink: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  signInLinkText: {
-    color: '#c70628',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  forgotPasswordContainer: {
-    padding: 20,
-    backgroundColor: '#040404',
-  },
-  forgotPasswordTitle: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  sendCodeButton: {
-    backgroundColor: '#c70628',
-    padding: 15,
-    borderRadius: 4,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  backToSignIn: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  backToSignInText: {
-    color: '#c70628',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  rootContainer: {
-    flex: 1,
-    backgroundColor: '#040404',
-  },
-});
 
 export default App;
