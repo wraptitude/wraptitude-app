@@ -10,6 +10,8 @@ import {
   Dimensions,
   Animated,
   Image,
+  ImageBackground,
+  ScrollView,
 } from 'react-native';
 import { signOut } from 'aws-amplify/auth';
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
@@ -17,12 +19,13 @@ import ServiceTracking from './ServiceTracking';
 import ServiceHistory from './ServiceHistory';
 import KnowledgeBase from './KnowledgeBase';
 import ContactUs from './ContactUs';
+import Services from './Services';
 
 interface HomeProps {
   onSignOut: () => void;
 }
 
-type Screen = 'menu' | 'tracking' | 'history' | 'knowledge' | 'contact';
+type Screen = 'menu' | 'tracking' | 'history' | 'services' | 'knowledge' | 'gallery' | 'about' | 'contact' | 'news';
 
 const Home: React.FC<HomeProps> = ({ onSignOut }) => {
   const { toSignIn } = useAuthenticator();
@@ -35,6 +38,8 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
     history: useRef(new Animated.Value(1)).current,
     knowledge: useRef(new Animated.Value(1)).current,
     contact: useRef(new Animated.Value(1)).current,
+    services: useRef(new Animated.Value(1)).current,
+    // emergency: useRef(new Animated.Value(1)).current,
   };
 
   const screenOpacity = useRef(new Animated.Value(1)).current;
@@ -96,6 +101,63 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
     }
   };
 
+  const menuItems = [
+    {
+      id: 'tracking',
+      icon: '🚗',
+      title: 'Service Tracking',
+      description: 'Track your vehicle service progress'
+    },
+    {
+      id: 'history',
+      icon: '📋',
+      title: 'Service History',
+      description: 'View your past services'
+    },
+    {
+      id: 'services',
+      icon: '🛠️',
+      title: 'Our Services',
+      description: 'Explore our professional services'
+    },
+    {
+      id: 'knowledge',
+      icon: '📚',
+      title: 'Knowledge Base',
+      description: 'Learn about car films'
+    },
+    {
+      id: 'gallery',
+      icon: '📸',
+      title: 'Gallery',
+      description: 'View our recent work'
+    },
+    {
+      id: 'news',
+      icon: '📰',
+      title: 'News',
+      description: 'Latest updates'
+    },
+    {
+      id: 'about',
+      icon: '👥',
+      title: 'About Us',
+      description: 'Learn more about Wraptitude'
+    },
+    {
+      id: 'emergency', 
+      icon: '🚨',
+      title: 'Emergency Service',
+      description: 'Call for emergency service'
+    },
+    {
+      id: 'contact',
+      icon: '📞',
+      title: 'Contact Us',
+      description: 'Get in touch'
+    },
+  ];
+
   const renderScreen = () => {
     const content = () => {
       switch (currentScreen) {
@@ -107,60 +169,29 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
           return <KnowledgeBase />;
         case 'contact':
           return <ContactUs />;
+        case 'services':
+          return <Services />;
         default:
           return (
             <View style={styles.menuContainer}>
-              <Animated.View style={[{ transform: [{ scale: buttonScales.tracking }] }]}>
-                <Pressable 
-                  style={styles.menuButton}
-                  onPress={() => {
-                    animatePress(buttonScales.tracking);
-                    handleScreenTransition('tracking');
-                  }}
+              {menuItems.map((item) => (
+                <Animated.View 
+                  key={item.id}
+                  style={[{ transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }] }]}
                 >
-                  <Text style={styles.menuIcon}>🚗</Text>
-                  <Text style={styles.menuText}>Service Tracking</Text>
-                </Pressable>
-              </Animated.View>
-
-              <Animated.View style={[{ transform: [{ scale: buttonScales.history }] }]}>
-                <Pressable 
-                  style={styles.menuButton}
-                  onPress={() => {
-                    animatePress(buttonScales.history);
-                    handleScreenTransition('history');
-                  }}
-                >
-                  <Text style={styles.menuIcon}>📋</Text>
-                  <Text style={styles.menuText}>Service History</Text>
-                </Pressable>
-              </Animated.View>
-
-              <Animated.View style={[{ transform: [{ scale: buttonScales.knowledge }] }]}>
-                <Pressable 
-                  style={styles.menuButton}
-                  onPress={() => {
-                    animatePress(buttonScales.knowledge);
-                    handleScreenTransition('knowledge');
-                  }}
-                >
-                  <Text style={styles.menuIcon}>📚</Text>
-                  <Text style={styles.menuText}>Knowledge Base</Text>
-                </Pressable>
-              </Animated.View>
-
-              <Animated.View style={[{ transform: [{ scale: buttonScales.contact }] }]}>
-                <Pressable 
-                  style={styles.menuButton}
-                  onPress={() => {
-                    animatePress(buttonScales.contact);
-                    handleScreenTransition('contact');
-                  }}
-                >
-                  <Text style={styles.menuIcon}>📞</Text>
-                  <Text style={styles.menuText}>Contact Us</Text>
-                </Pressable>
-              </Animated.View>
+                  <Pressable 
+                    style={styles.menuButton}
+                    onPress={() => {
+                      animatePress(buttonScales[item.id]);
+                      handleScreenTransition(item.id as Screen);
+                    }}
+                  >
+                    <Text style={styles.menuIcon}>{item.icon}</Text>
+                    <Text style={styles.menuTitle}>{item.title}</Text>
+                    <Text style={styles.menuDescription}>{item.description}</Text>
+                  </Pressable>
+                </Animated.View>
+              ))}
             </View>
           );
       }
@@ -186,55 +217,88 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
   }
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            {currentScreen === 'menu' ? (
-              <>
-                <Image 
-                  source={require('../assets/images/wraptitude.jpg')}
-                  style={styles.logo}
-                  resizeMode="contain"
-                />
-                <Pressable 
-                  style={styles.signOutButton}
-                  onPress={handleSignOut}
-                >
-                  <Text style={styles.signOutText}>Sign Out</Text>
-                </Pressable>
-              </>
-            ) : (
-              <>
-                <Pressable 
-                  style={styles.backButton}
-                  onPress={() => setCurrentScreen('menu')}
-                >
-                  <Text style={styles.backButtonText}>← Back</Text>
-                </Pressable>
-                <Text style={styles.screenTitle}>
-                  {currentScreen === 'tracking' ? 'Service Tracking' :
-                   currentScreen === 'history' ? 'Service History' :
-                   currentScreen === 'knowledge' ? 'Knowledge Base' : 'Contact Us'}
+    <ImageBackground 
+      source={require('../assets/images/1.jpg')}
+      style={styles.container}
+      blurRadius={5}
+    >
+      <View style={styles.overlay}>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.header}>
+            <View style={styles.headerContent}>
+              {currentScreen === 'menu' ? (
+                <>
+                  <Image 
+                    source={require('../assets/images/wraptitude-logo.webp')}
+                    style={styles.logo}
+                    resizeMode="contain"
+                  />
+                  <Pressable 
+                    style={styles.signOutButton}
+                    onPress={handleSignOut}
+                  >
+                    <Text style={styles.signOutText}>Sign Out</Text>
+                  </Pressable>
+                </>
+              ) : (
+                <>
+                  <Pressable 
+                    style={styles.backButton}
+                    onPress={() => setCurrentScreen('menu')}
+                  >
+                    <Text style={styles.backButtonText}>← Back</Text>
+                  </Pressable>
+                  <Text style={styles.screenTitle}>
+                    {menuItems.find(item => item.id === currentScreen)?.title}
+                  </Text>
+                </>
+              )}
+            </View>
+          </View>
+
+          <ScrollView 
+            style={styles.scrollContainer}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {currentScreen === 'menu' && (
+              <View style={styles.welcomeSection}>
+                <Text style={styles.welcomeText}>Welcome to Wraptitude</Text>
+                <Text style={styles.welcomeDescription}>
+                  Professional car film services with over 10 years of experience.
+                  Specializing in window tinting, vinyl wraps, ceramic coating, and paint protection.
                 </Text>
-              </>
+              </View>
             )}
-          </View>
-        </View>
 
-        {currentScreen === 'menu' && (
-          <View style={styles.welcomeSection}>
-            <Text style={styles.welcomeText}>Welcome to Wraptitude</Text>
-            <Text style={styles.welcomeDescription}>
-              Professional car wrapping services with 5-10+ years of experience. 
-              We guarantee results that exceed your expectations.
-            </Text>
-          </View>
-        )}
-
-        {renderScreen()}
-      </SafeAreaView>
-    </View>
+            {currentScreen === 'menu' ? (
+              <View style={styles.menuContainer}>
+                {menuItems.map((item) => (
+                  <Animated.View 
+                    key={item.id}
+                    style={[{ transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }] }]}
+                  >
+                    <Pressable 
+                      style={styles.menuButton}
+                      onPress={() => {
+                        animatePress(buttonScales[item.id]);
+                        handleScreenTransition(item.id as Screen);
+                      }}
+                    >
+                      <Text style={styles.menuIcon}>{item.icon}</Text>
+                      <Text style={styles.menuTitle}>{item.title}</Text>
+                      <Text style={styles.menuDescription}>{item.description}</Text>
+                    </Pressable>
+                  </Animated.View>
+                ))}
+              </View>
+            ) : (
+              renderScreen()
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </View>
+    </ImageBackground>
   );
 };
 
@@ -249,7 +313,8 @@ const styles = StyleSheet.create({
   header: {
     borderBottomWidth: 1,
     borderBottomColor: '#333',
-    backgroundColor: '#0a0a0a',
+    backgroundColor: 'rgba(10,10,10,0.95)',
+    zIndex: 1,
   },
   headerContent: {
     flexDirection: 'row',
@@ -292,7 +357,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(26,26,26,0.9)',
   },
   welcomeText: {
     fontSize: 24,
@@ -312,7 +377,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   menuContainer: {
-    flex: 1,
     padding: 20,
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -321,8 +385,8 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     width: buttonWidth,
-    height: buttonWidth,
-    backgroundColor: '#1a1a1a',
+    height: buttonWidth * 1.2,
+    backgroundColor: 'rgba(26,26,26,0.9)',
     borderRadius: 16,
     marginBottom: 20,
     padding: 20,
@@ -338,13 +402,29 @@ const styles = StyleSheet.create({
   },
   menuIcon: {
     fontSize: 32,
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  menuText: {
+  menuTitle: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
+    marginBottom: 8,
+  },
+  menuDescription: {
+    color: '#7c7c7c',
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
 });
 
