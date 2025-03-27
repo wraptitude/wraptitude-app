@@ -482,6 +482,7 @@ function App(): React.JSX.Element {
             <Home onSignOut={() => setIsAuthenticated(false)} />
           ) : (
             <View style={appStyles.rootContainer}>
+              <Text></Text>
               <Authenticator
                 Header={components.Header}
                 components={{
