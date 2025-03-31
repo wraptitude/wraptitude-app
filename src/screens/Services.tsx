@@ -70,11 +70,12 @@ const services = [
 ];
 
 const Services: React.FC = () => {
-  // const navigation = useNavigation();
+  const navigation = useNavigation();
 
-  // const handleGetQuote = (serviceType: string) => {
-  //   navigation.navigate('FreeQuote', { selectedService: serviceType });
-  // };
+  const handleGetQuote = (serviceType: string) => {
+    console.log('serviceType', serviceType);
+    navigation.navigate('FreeQuote', { selectedService: serviceType });
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -113,7 +114,7 @@ const Services: React.FC = () => {
 
             <Pressable 
               style={styles.quoteButton}
-              // onPress={() => handleGetQuote(service.title)}
+              onPress={() => handleGetQuote(service.title)}
             >
               <Text style={styles.quoteButtonText}>Get a Quote</Text>
             </Pressable>

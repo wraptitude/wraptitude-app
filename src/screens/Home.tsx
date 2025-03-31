@@ -29,12 +29,17 @@ import EmergencyService from './EmergencyService';
 import FreeQuote from './FreeQuote';
 
 interface HomeProps {
-  onSignOut: () => void;
+  // onSignOut: () => void;
+  route: {
+    params: {
+      onSignOut: () => void;
+    };
+  };
 }
 
 type Screen = 'menu' | 'tracking' | 'history' | 'services' | 'knowledge' | 'gallery' | 'about' | 'contact' | 'news' | 'newsDetail' | 'emergency' | 'quote';
 
-const Home: React.FC<HomeProps> = ({ onSignOut }) => {
+const Home: React.FC<HomeProps> = ({ route }) => {
   const { toSignIn } = useAuthenticator();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [currentScreen, setCurrentScreen] = useState<Screen>('menu');
@@ -105,7 +110,7 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
 
   const handleSignOut = async () => {
     try {
-      onSignOut();
+      route.params.onSignOut();
       await signOut();
       console.log('Signed out');
     } catch (error) {

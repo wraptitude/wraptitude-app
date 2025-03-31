@@ -16,8 +16,8 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import { useRoute } from '@react-navigation/native';
 
 const FreeQuote: React.FC = () => {
-//   const route = useRoute();
-//   const selectedService = route.params?.selectedService;
+  const route = useRoute();
+  const selectedService = route.params?.selectedService;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -26,8 +26,8 @@ const FreeQuote: React.FC = () => {
     vehicleMake: '',
     vehicleModel: '',
     vehicleYear: '',
-    // serviceType: selectedService || 'Window Tinting',
-    serviceType: 'Window Tinting',
+    serviceType: selectedService || 'Window Tinting',
+    // serviceType: 'Window Tinting',
     message: '',
     image: null as null | { uri: string },
   });

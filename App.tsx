@@ -32,8 +32,15 @@ import { Picker } from '@react-native-picker/picker';
 import { signIn, getCurrentUser, signUp } from 'aws-amplify/auth';
 import Home from './src/screens/Home';
 import { appStyles } from './src/styles/appStyles';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import Services from './src/screens/Services';
+import FreeQuote from './src/screens/FreeQuote';
+
 // Configure Amplify
 Amplify.configure(awsconfig);
+
+const Stack = createNativeStackNavigator();
 
 // Add this theme object before your App component
 const theme = {
@@ -463,7 +470,38 @@ function App(): React.JSX.Element {
       <ThemeProvider>
         <Authenticator.Provider>
           <View style={{ flex: 1, backgroundColor: '#040404' }}>
-            <Home onSignOut={() => setIsAuthenticated(false)} />
+          <NavigationContainer>
+              <Stack.Navigator>
+                <Stack.Screen 
+                name="Home" 
+                component={Home}
+                options={{ headerShown: false }}
+                initialParams={{ onSignOut: () => setIsAuthenticated(false) }}
+              />
+              <Stack.Screen 
+                name="Services" 
+                component={Services}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen 
+                name="FreeQuote" 
+                component={FreeQuote}
+                options={{
+                  headerShown: true,
+                  headerTitle: "Free Quote",
+                  headerBackTitle: "Back",
+                  headerStyle: {
+                    backgroundColor: '#040404',
+                  },
+                  headerTintColor: '#fff',
+                  headerTitleStyle: {
+                    fontWeight: 'bold',
+                  },
+                }}
+              />
+              </Stack.Navigator>
+            </NavigationContainer>
+            {/* <Home onSignOut={() => setIsAuthenticated(false)} /> */}
           </View>
         </Authenticator.Provider>
       </ThemeProvider>
@@ -479,7 +517,37 @@ function App(): React.JSX.Element {
         <ThemeProvider theme={theme}>
         <Authenticator.Provider>
           {isAuthenticated ? (
-            <Home onSignOut={() => setIsAuthenticated(false)} />
+            <NavigationContainer>
+              <Stack.Navigator>
+                <Stack.Screen 
+                name="Home" 
+                component={Home}
+                options={{ headerShown: false }}
+                initialParams={{ onSignOut: () => setIsAuthenticated(false) }}
+              />
+              <Stack.Screen 
+                name="Services" 
+                component={Services}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen 
+                name="FreeQuote" 
+                component={FreeQuote}
+                options={{
+                  headerShown: true,
+                  headerTitle: "Free Quote",
+                  headerStyle: {
+                    backgroundColor: '#040404',
+                  },
+                  headerTintColor: '#fff',
+                  headerTitleStyle: {
+                    fontWeight: 'bold',
+                  },
+                }}
+              />
+              </Stack.Navigator>
+            </NavigationContainer>
+            // <Home onSignOut={() => setIsAuthenticated(false)} />
           ) : (
             <View style={appStyles.rootContainer}>
               <Text></Text>
