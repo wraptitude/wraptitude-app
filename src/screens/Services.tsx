@@ -8,6 +8,7 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const services = [
   {
@@ -69,6 +70,12 @@ const services = [
 ];
 
 const Services: React.FC = () => {
+  // const navigation = useNavigation();
+
+  // const handleGetQuote = (serviceType: string) => {
+  //   navigation.navigate('FreeQuote', { selectedService: serviceType });
+  // };
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.mainTitle}>Our Professional Services</Text>
@@ -104,7 +111,10 @@ const Services: React.FC = () => {
               </View>
             ))}
 
-            <Pressable style={styles.quoteButton}>
+            <Pressable 
+              style={styles.quoteButton}
+              // onPress={() => handleGetQuote(service.title)}
+            >
               <Text style={styles.quoteButtonText}>Get a Quote</Text>
             </Pressable>
           </View>

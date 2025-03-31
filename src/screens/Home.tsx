@@ -12,6 +12,7 @@ import {
   Image,
   ImageBackground,
   ScrollView,
+  Linking,
 } from 'react-native';
 import { signOut } from 'aws-amplify/auth';
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
@@ -20,17 +21,24 @@ import ServiceHistory from './ServiceHistory';
 import KnowledgeBase from './KnowledgeBase';
 import ContactUs from './ContactUs';
 import Services from './Services';
+import Gallery from './Gallery';
+import About from './About';
+import News from './News';
+import NewsDetail from './NewsDetail';
+import EmergencyService from './EmergencyService';
+import FreeQuote from './FreeQuote';
 
 interface HomeProps {
   onSignOut: () => void;
 }
 
-type Screen = 'menu' | 'tracking' | 'history' | 'services' | 'knowledge' | 'gallery' | 'about' | 'contact' | 'news';
+type Screen = 'menu' | 'tracking' | 'history' | 'services' | 'knowledge' | 'gallery' | 'about' | 'contact' | 'news' | 'newsDetail' | 'emergency' | 'quote';
 
 const Home: React.FC<HomeProps> = ({ onSignOut }) => {
   const { toSignIn } = useAuthenticator();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [currentScreen, setCurrentScreen] = useState<Screen>('menu');
+  const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   
   // Add animation values for each button
   const buttonScales = {
@@ -39,7 +47,11 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
     knowledge: useRef(new Animated.Value(1)).current,
     contact: useRef(new Animated.Value(1)).current,
     services: useRef(new Animated.Value(1)).current,
-    // emergency: useRef(new Animated.Value(1)).current,
+    gallery: useRef(new Animated.Value(1)).current,
+    about: useRef(new Animated.Value(1)).current,
+    news: useRef(new Animated.Value(1)).current,
+    emergency: useRef(new Animated.Value(1)).current,
+    quote: useRef(new Animated.Value(1)).current,
   };
 
   const screenOpacity = useRef(new Animated.Value(1)).current;
@@ -101,6 +113,20 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
     }
   };
 
+  const handleEmergencyCall = async () => {
+    try {
+      await Linking.openURL('tel:4373401121');
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        'Unable to make the call. Please dial 437-340-1121 directly.',
+        [
+          { text: 'OK', style: 'default' }
+        ]
+      );
+    }
+  };
+
   const menuItems = [
     {
       id: 'tracking',
@@ -145,10 +171,16 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
       description: 'Learn more about Wraptitude'
     },
     {
-      id: 'emergency', 
+      id: 'quote',
+      icon: '💰',
+      title: 'Free Quote',
+      description: 'Get an instant quote for your vehicle'
+    },
+    {
+      id: 'emergency',
       icon: '🚨',
       title: 'Emergency Service',
-      description: 'Call for emergency service'
+      description: '24/7 Emergency Support'
     },
     {
       id: 'contact',
@@ -171,6 +203,21 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
           return <ContactUs />;
         case 'services':
           return <Services />;
+        case 'gallery':
+          return <Gallery />;
+        case 'about':
+          return <About />;
+        case 'news':
+          return <News onPostPress={(post) => {
+            setSelectedPost(post);
+            handleScreenTransition('newsDetail');
+          }} />;
+        case 'newsDetail':
+          return <NewsDetail post={selectedPost!} />;
+        case 'emergency':
+          return <EmergencyService/>;
+        case 'quote':
+          return <FreeQuote />;
         default:
           return (
             <View style={styles.menuContainer}>
@@ -180,15 +227,25 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
                   style={[{ transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }] }]}
                 >
                   <Pressable 
-                    style={styles.menuButton}
+                    style={[
+                      styles.menuButton,
+                      item.id === 'emergency' && styles.emergencyButton
+                    ]}
                     onPress={() => {
                       animatePress(buttonScales[item.id]);
                       handleScreenTransition(item.id as Screen);
                     }}
                   >
                     <Text style={styles.menuIcon}>{item.icon}</Text>
-                    <Text style={styles.menuTitle}>{item.title}</Text>
-                    <Text style={styles.menuDescription}>{item.description}</Text>
+                    <Text style={[
+                      styles.menuTitle,
+                      item.id === 'emergency' && styles.emergencyTitle
+                    ]}>
+                      {item.title}
+                    </Text>
+                    <Text style={styles.menuDescription}>
+                      {item.description}
+                    </Text>
                   </Pressable>
                 </Animated.View>
               ))}
@@ -244,12 +301,18 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
                 <>
                   <Pressable 
                     style={styles.backButton}
-                    onPress={() => setCurrentScreen('menu')}
+                    onPress={() => {
+                      if (currentScreen === 'newsDetail') {
+                        setCurrentScreen('news');
+                      } else {
+                        setCurrentScreen('menu');
+                      }
+                    }}
                   >
                     <Text style={styles.backButtonText}>← Back</Text>
                   </Pressable>
                   <Text style={styles.screenTitle}>
-                    {menuItems.find(item => item.id === currentScreen)?.title}
+                    {currentScreen === 'newsDetail' ? 'News' : menuItems.find(item => item.id === currentScreen)?.title}
                   </Text>
                 </>
               )}
@@ -279,15 +342,25 @@ const Home: React.FC<HomeProps> = ({ onSignOut }) => {
                     style={[{ transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }] }]}
                   >
                     <Pressable 
-                      style={styles.menuButton}
+                      style={[
+                        styles.menuButton,
+                        item.id === 'emergency' && styles.emergencyButton
+                      ]}
                       onPress={() => {
                         animatePress(buttonScales[item.id]);
                         handleScreenTransition(item.id as Screen);
                       }}
                     >
                       <Text style={styles.menuIcon}>{item.icon}</Text>
-                      <Text style={styles.menuTitle}>{item.title}</Text>
-                      <Text style={styles.menuDescription}>{item.description}</Text>
+                      <Text style={[
+                        styles.menuTitle,
+                        item.id === 'emergency' && styles.emergencyTitle
+                      ]}>
+                        {item.title}
+                      </Text>
+                      <Text style={styles.menuDescription}>
+                        {item.description}
+                      </Text>
                     </Pressable>
                   </Animated.View>
                 ))}
@@ -425,6 +498,22 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 20,
+  },
+  emergencyButton: {
+    backgroundColor: '#c70628',
+    borderColor: '#ff0000',
+    borderWidth: 2,
+  },
+  emergencyTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  emergencyPhone: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 8,
   },
 });
 
