@@ -7,9 +7,45 @@ import {
   Image,
   Dimensions,
   ImageBackground,
+  Linking,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
 
 const About: React.FC = () => {
+  const handlePhoneCall = async () => {
+    try {
+      await Linking.openURL('tel:4373401121');
+    } catch (error) {
+      console.error('Failed to make phone call:', error);
+      Alert.alert('Error', 'Could not make phone call. Please try again.');
+    }
+  };
+
+  const handleEmail = async () => {
+    try {
+      await Linking.openURL('mailto:wraptitude.ca@gmail.com?subject=Inquiry from App');
+    } catch (error) {
+      Alert.alert('Error', 'Could not open email client. Please try again.');
+    }
+  };
+
+  const handleOpenMaps = async () => {
+    try {
+      const url = 'https://maps.app.goo.gl/fu4c8t3dBP48Jnrd8';
+      const canOpen = await Linking.canOpenURL(url);
+      
+      if (canOpen) {
+        await Linking.openURL(url);
+      } else {
+        // Fallback to coordinates if the direct link doesn't work
+        await Linking.openURL('https://www.google.com/maps/search/?api=1&query=23+Laidlaw+Blvd+Unit+3+Markham');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Could not open Maps. Please try again.');
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       {/* Hero Section */}
@@ -37,7 +73,7 @@ const About: React.FC = () => {
             At Wraptitude, we value every client that walks into our shop. You can count on our installers 
             each with 5 – 10+ years of experience in providing high quality, professional car wrapping services.
           </Text>
-          <View style={styles.statsContainer}>
+          {/* <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>10+</Text>
               <Text style={styles.statLabel}>Years Experience</Text>
@@ -52,13 +88,13 @@ const About: React.FC = () => {
               <Text style={styles.statNumber}>100%</Text>
               <Text style={styles.statLabel}>Satisfaction</Text>
             </View>
-          </View>
+          </View> */}
         </View>
       </View>
 
       {/* Highlights Grid */}
       <View style={styles.highlightsContainer}>
-        <Text style={styles.highlightsTitle}>Why Choose Us</Text>
+        {/* <Text style={styles.highlightsTitle}>Why Choose Us</Text> */}
         
         <View style={styles.highlightBox}>
           <View style={styles.highlightContent}>
@@ -131,7 +167,7 @@ const About: React.FC = () => {
         <View style={styles.innovationHeader}>
           <View style={styles.innovationTitleContainer}>
             <Text style={styles.sectionTitle}>Innovation & Growth</Text>
-            <Text style={styles.innovationSubtitle}>Pushing boundaries in car wrapping excellence</Text>
+            {/* <Text style={styles.innovationSubtitle}>Pushing boundaries in car wrapping excellence</Text> */}
           </View>
         </View>
 
@@ -144,7 +180,7 @@ const About: React.FC = () => {
             />
             <View style={styles.innovationOverlay} />
             
-            <View style={styles.innovationStats}>
+            {/* <View style={styles.innovationStats}>
               <View style={styles.statBox}>
                 <Text style={styles.statValue}>50+</Text>
                 <Text style={styles.statLabel}>Global Workshops</Text>
@@ -157,20 +193,19 @@ const About: React.FC = () => {
                 <Text style={styles.statValue}>15+</Text>
                 <Text style={styles.statLabel}>Industry Awards</Text>
               </View>
-            </View>
+            </View> */}
 
             <View style={styles.innovationTextContainer}>
-              <Text style={styles.innovationHeadline}>Global Excellence</Text>
+              <Text style={styles.innovationHeadline}>We're constantly innovating</Text>
               <Text style={styles.innovationText}>
-                In recent years, we've broadened our global presence through workshops and seminars worldwide, 
-                focusing on enhancing skills and creativity. Our commitment to innovation drives us to:
+              In recent years, we've broadened our global presence through workshops and seminars worldwide, focusing on enhancing skills and creativity. These experiences deepen our understanding of diverse markets and global trends, empowering us to innovate effectively. Moving forward, our commitment to continuous learning and collaboration drives our leadership in delivering impactful solutions globally.
               </Text>
-              <View style={styles.bulletPoints}>
+              {/* <View style={styles.bulletPoints}>
                 <Text style={styles.bulletPoint}>• Master cutting-edge wrapping techniques</Text>
                 <Text style={styles.bulletPoint}>• Adopt latest industry technologies</Text>
                 <Text style={styles.bulletPoint}>• Participate in international training</Text>
                 <Text style={styles.bulletPoint}>• Lead in sustainable practices</Text>
-              </View>
+              </View> */}
             </View>
           </View>
         </View>
@@ -180,14 +215,26 @@ const About: React.FC = () => {
       <View style={styles.contactSection}>
         <View style={styles.contactCard}>
           <Text style={styles.contactTitle}>Visit Us</Text>
-          <Text style={styles.contactText}>23 Laidlaw Blvd Unit 3, Markham</Text>
+          <TouchableOpacity onPress={handleOpenMaps}>
+            <Text style={[styles.contactText, { textDecorationLine: 'underline' }]}>
+              23 Laidlaw Blvd Unit 3, Markham
+            </Text>
+          </TouchableOpacity>
           <Text style={styles.contactText}>Mon-Sat: 11:00am – 7:00pm</Text>
           <Text style={styles.contactText}>Sunday: Closed</Text>
         </View>
         <View style={styles.contactCard}>
           <Text style={styles.contactTitle}>Contact</Text>
-          <Text style={styles.contactText}>(437) 340-1121</Text>
-          <Text style={styles.contactText}>wraptitude.ca@gmail.com</Text>
+          <TouchableOpacity onPress={handlePhoneCall}>
+            <Text style={[styles.contactText, { textDecorationLine: 'underline' }]}>
+              (437) 340-1121
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleEmail}>
+            <Text style={[styles.contactText, { textDecorationLine: 'underline' }]}>
+              wraptitude.ca@gmail.com
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>

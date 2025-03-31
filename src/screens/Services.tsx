@@ -55,7 +55,7 @@ const services = [
   },
   {
     id: 'ppf',
-    title: 'Paint Protection Film',
+    title: 'Paint Protection Film (PPF)',
     description: 'Ultimate protection against rock chips, scratches, and environmental damage.',
     features: [
       'Self-Healing: repairs minor scratches',
