@@ -8,6 +8,8 @@ import {
   Pressable,
   Alert,
   Image,
+  TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
@@ -30,7 +32,11 @@ const FreeQuote: React.FC = () => {
     // serviceType: 'Window Tinting',
     message: '',
     image: null as null | { uri: string },
+    // preferredDate: new Date(),
+    // preferredTime: '09:00',
   });
+
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -53,7 +59,7 @@ const FreeQuote: React.FC = () => {
     'Paint Protection Film (PPF)',
   ];
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Validate required fields
     if (!formData.name || !formData.email || !formData.phone) {
       Alert.alert(
@@ -64,18 +70,69 @@ const FreeQuote: React.FC = () => {
       return;
     }
 
-    // Here you would typically send the data to your backend
-    Alert.alert(
-      'Quote Request Sent',
-      'Thank you for your interest! We will contact you shortly with a detailed quote.',
-      [{ text: 'OK' }]
-    );
+    try {
+      setLoading(true);
+
+      // Convert image to base64 if it exists
+      let imageBase64 = null;
+      console.log('123')
+      if (formData.image) {
+        const response = await fetch(formData.image.uri);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        imageBase64 = await new Promise((resolve) => {
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+      }
+      console.log('456')
+      const response = await fetch('https://xb4ot97nih.execute-api.us-east-2.amazonaws.com/PROD', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          vehicleMake: formData.vehicleMake,
+          vehicleModel: formData.vehicleModel,
+          vehicleYear: formData.vehicleYear,
+          serviceType: formData.serviceType,
+          message: formData.message,
+          // preferredDate: formData.preferredDate.toISOString(),
+          // preferredTime: formData.preferredTime,
+          image: imageBase64, // Send base64 string
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to submit quote request: ${response.status} ${errorText}`);
+      }
+
+      Alert.alert(
+        'Quote Request Sent',
+        'Thank you for your interest! We will contact you shortly with a detailed quote.',
+        [{ text: 'OK' }]
+      );
+
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        'Failed to submit quote request. Please try again later.',
+        [{ text: 'OK' }]
+      );
+      console.error('Error submitting quote:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleImagePick = async () => {
     const result = await launchImageLibrary({
       mediaType: 'photo',
-      quality: 0.8,
+      quality: 0.01,
     });
 
     if (result.assets && result.assets[0]) {
@@ -218,12 +275,25 @@ const FreeQuote: React.FC = () => {
             )}
           </View>
 
-          <Pressable 
-            style={styles.submitButton} 
+          <TouchableOpacity 
+            style={[
+              styles.submitButton,
+              loading && styles.submitButtonDisabled
+            ]}
             onPress={handleSubmit}
+            disabled={loading}
           >
-            <Text style={styles.submitButtonText}>Get Quote</Text>
-          </Pressable>
+            {loading ? (
+              <View style={styles.loadingContainer}>
+              <ActivityIndicator color="#FFFFFF" />
+              <Text style={styles.loadingText}>
+                Submitting request...  {"\n"}This may take a few moments
+              </Text>
+            </View>
+            ) : (
+              <Text style={styles.submitButtonText}>Submit Quote Request</Text>
+            )}
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
@@ -302,8 +372,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   filledInput: {
-    borderColor: '#c70628',
-    backgroundColor: 'rgba(199,6,40,0.1)',
+    // borderColor: '#c70628',
+    // backgroundColor: 'rgba(199,6,40,0.1)',
   },
   imageUploadButton: {
     backgroundColor: '#333',
@@ -320,6 +390,20 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 8,
     marginTop: 8,
+  },
+  submitButtonDisabled: {
+    opacity: 0.7,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 20,
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 
