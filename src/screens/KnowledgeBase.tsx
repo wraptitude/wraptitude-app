@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
-  Pressable,
+  TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 
 interface FAQ {
@@ -13,46 +13,65 @@ interface FAQ {
   answer: string;
 }
 
-const FAQS: FAQ[] = [
-  {
-    question: 'What are the benefits of car film?',
-    answer: 'Car film provides multiple benefits: UV protection, enhanced glass safety, increased privacy, reduced glare, lower interior temperature, and improved vehicle appearance.',
-  },
-  {
-    question: 'How to maintain car film?',
-    answer: '1. Avoid opening windows for 48 hours after installation\n2. Clean with soft cloth and neutral detergent\n3. Avoid ammonia-based or abrasive cleaning products\n4. Schedule regular professional cleaning and inspection',
-  },
-  {
-    question: 'How long does car film last?',
-    answer: 'Quality car film can last 5-10 years with proper maintenance. However, actual lifespan depends on environmental conditions, maintenance, and film quality.',
-  },
-];
-
 const KnowledgeBase: React.FC = () => {
-  const [expandedQuestion, setExpandedQuestion] = React.useState<string | null>(null);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetchFAQs();
+  }, []);
+
+  const fetchFAQs = async () => {
+    try {
+      const response = await fetch('https://j662vojljl.execute-api.us-east-2.amazonaws.com/PROD');
+      const data = await response.json();
+      setFaqs(JSON.parse(data.body));
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching FAQs:', error);
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#c70628" />
+      </View>
+    );
+  }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Knowledge Base</Text>
-      </View>
-      <ScrollView style={styles.content}>
-        {FAQS.map((faq, index) => (
-          <Pressable
+    <ScrollView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.title}>Frequently Asked Questions</Text>
+        <Text style={styles.subtitle}>
+          Everything you need to know about car films and our services
+        </Text>
+        
+        {faqs.map((faq, index) => (
+          <TouchableOpacity
             key={index}
-            style={styles.faqCard}
-            onPress={() => setExpandedQuestion(
-              expandedQuestion === faq.question ? null : faq.question
-            )}
+            style={styles.faqItem}
+            onPress={() => setExpandedIndex(expandedIndex === index ? null : index)}
           >
-            <Text style={styles.question}>{faq.question}</Text>
-            {expandedQuestion === faq.question && (
-              <Text style={styles.answer}>{faq.answer}</Text>
+            <View style={styles.questionContainer}>
+              <Text style={styles.question}>{faq.question}</Text>
+              <Text style={styles.expandIcon}>
+                {expandedIndex === index ? '−' : '+'}
+              </Text>
+            </View>
+            
+            {expandedIndex === index && (
+              <Text style={styles.answer}>
+                {faq.answer}
+              </Text>
             )}
-          </Pressable>
+          </TouchableOpacity>
         ))}
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </ScrollView>
   );
 };
 
@@ -61,39 +80,55 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#040404',
   },
-  header: {
+  content: {
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
   },
-  headerTitle: {
+  title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  faqCard: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#333333',
-  },
-  question: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
     marginBottom: 8,
   },
-  answer: {
+  subtitle: {
+    fontSize: 16,
     color: '#7c7c7c',
+    marginBottom: 24,
+  },
+  faqItem: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  questionContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  question: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    flex: 1,
+  },
+  expandIcon: {
+    fontSize: 24,
+    color: '#c70628',
+    marginLeft: 8,
+  },
+  answer: {
+    marginTop: 12,
     fontSize: 14,
     lineHeight: 20,
-    marginTop: 8,
+    color: '#7c7c7c',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#040404',
   },
 });
 
