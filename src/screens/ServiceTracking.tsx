@@ -11,16 +11,18 @@ import {
   Platform,
   Animated,
   Easing,
+  Alert,
 } from 'react-native';
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
 import { post } from 'aws-amplify/api';
+import { fetchUserAttributes } from 'aws-amplify/auth';
 
 interface ServiceStep {
   id: string;
   title: string;
   description: string;
   status: 'pending' | 'in_progress' | 'completed';
-  images: string[];
+  images: string;
   videos?: string[];
   weight: number;
 }
@@ -31,7 +33,7 @@ const INITIAL_STEPS: ServiceStep[] = [
     title: 'Vehicle Inspection and Cleaning',
     description: 'Detailed vehicle condition check and deep cleaning',
     status: 'completed',
-    images: ['inspection1.jpg', 'cleaning1.jpg'],
+    images: '',
     weight: 20,
   },
   {
@@ -39,7 +41,7 @@ const INITIAL_STEPS: ServiceStep[] = [
     title: 'Film Preparation',
     description: 'Prepare film materials, confirm measurements and cutting',
     status: 'completed',
-    images: ['preparation1.jpg'],
+    images: '',
     weight: 20,
   },
   {
@@ -47,7 +49,7 @@ const INITIAL_STEPS: ServiceStep[] = [
     title: 'Film Installation',
     description: 'Professional film installation process',
     status: 'in_progress',
-    images: ['preparation1.jpg'],
+    images: '',
     weight: 50,
   },
   {
@@ -55,7 +57,7 @@ const INITIAL_STEPS: ServiceStep[] = [
     title: 'Quality Check',
     description: 'Comprehensive film quality inspection',
     status: 'pending',
-    images: [],
+    images: '',
     weight: 5,
   },
   {
@@ -63,15 +65,16 @@ const INITIAL_STEPS: ServiceStep[] = [
     title: 'Final Presentation',
     description: 'Final result presentation and customer confirmation',
     status: 'pending',
-    images: [],
+    images: '',
     weight: 5,
   },
 ];
 
 const ServiceTracking: React.FC = () => {
   const [steps, setSteps] = useState<ServiceStep[]>(INITIAL_STEPS);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   
   // Animation values
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -88,6 +91,74 @@ const ServiceTracking: React.FC = () => {
       return total;
     }, 0);
   };
+
+  useEffect(() => {
+    const getUserData = async () => {
+      try {
+        const userAttributes = await fetchUserAttributes();
+        const userId = userAttributes.sub;
+        setUserId(userId);
+        
+        if (userId) {
+          const response = await fetch('https://nfn5asoyp7.execute-api.us-east-2.amazonaws.com/PROD', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userID: userId
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch service data');
+          }
+
+          const responseData = await response.json();
+          const parsedBody = JSON.parse(responseData.body);
+          
+          if (!parsedBody.data || parsedBody.data.length === 0) {
+            setLoading(false);
+            setSteps([]); // Clear steps if no data
+            return; // Exit early
+          }
+
+          const data = parsedBody.data[0];
+          INITIAL_STEPS[0].status = data.step1;
+          if (data.step1Img && data.step1Img!='') {
+            INITIAL_STEPS[0].images = data.step1Img;
+          }
+          INITIAL_STEPS[1].status = data.step2;
+          if (data.step2Img && data.step2Img!='') {
+            INITIAL_STEPS[1].images = data.step2Img;
+          }
+          INITIAL_STEPS[2].status = data.step3;
+          if (data.step3Img && data.step3Img!='') {
+            INITIAL_STEPS[2].images = data.step3Img;
+          }
+          INITIAL_STEPS[3].status = data.step4;
+          if (data.step4Img && data.step4Img!='') {
+            INITIAL_STEPS[3].images = data.step4Img;
+          }
+          INITIAL_STEPS[4].status = data.step5;
+          if (data.step5Img && data.step5Img!='') {
+            INITIAL_STEPS[4].images = data.step5Img;
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setSteps([]); // Clear steps on error
+        Alert.alert(
+          'Error',
+          'Failed to load service tracking data. Please try again later.'
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getUserData();
+  }, []);
 
   useEffect(() => {
     // Animate progress bar when progress changes
@@ -182,36 +253,38 @@ const ServiceTracking: React.FC = () => {
           ]}
         >
           <Text style={styles.stepDescription}>{step.description}</Text>
-          {step.images.length > 0 && (
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              style={styles.imagesScroll}
-            >
-              {step.images.map((image, index) => (
-                <Animated.View 
-                  key={index} 
-                  style={[
-                    styles.imageContainer,
-                    {
-                      transform: [{
-                        scale: cardHeight.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0.8, 1],
-                        })
-                      }]
-                    }
-                  ]}
-                >
-                  <Text style={styles.imageText}>Image {index + 1}</Text>
-                </Animated.View>
-              ))}
-            </ScrollView>
-          )}
+            {step.images && step.images!='' && (
+              <Image 
+                source={{ uri: step.images }}
+                style={styles.stepImage}
+                resizeMode="cover"
+              />
+            )}
         </Animated.View>
       </Pressable>
     );
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#c70628" />
+        <Text style={styles.loadingText}>Loading your service details...</Text>
+      </View>
+    );
+  }
+
+  if (steps.length === 0) {
+    return (
+      <View style={[styles.container, styles.noDataContainer]}>
+        <Text style={styles.noDataTitle}>No Active Services</Text>
+        <Text style={styles.noDataText}>
+          You don't have any active service tracking at the moment.
+          Please visit our service center to start a new service.
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -343,21 +416,63 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   imageContainer: {
-    width: 160,
-    height: 100,
-    backgroundColor: '#333333',
-    borderRadius: 8,
+    width: 120,
+    height: 120,
     marginRight: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 12,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#444444',
+    backgroundColor: '#1a1a1a',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
-  imageText: {
+  stepImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  imageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 4,
+  },
+  imageNumber: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginTop: 16,
+  },
+  noDataContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  noDataTitle: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  noDataText: {
+    color: '#7c7c7c',
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
   },
 });
 
