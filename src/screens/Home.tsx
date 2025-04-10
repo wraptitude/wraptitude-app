@@ -157,12 +157,12 @@ const Home: React.FC<HomeProps> = ({ route }) => {
       title: 'Knowledge Base',
       description: 'Learn about car films'
     },
-    {
-      id: 'gallery',
-      icon: '📸',
-      title: 'Gallery',
-      description: 'View our recent work'
-    },
+    // {
+    //   id: 'gallery',
+    //   icon: '📸',
+    //   title: 'Gallery',
+    //   description: 'View our recent work'
+    // },
     {
       id: 'news',
       icon: '📰',
@@ -181,12 +181,12 @@ const Home: React.FC<HomeProps> = ({ route }) => {
       title: 'Free Quote',
       description: 'Get an instant quote for your vehicle'
     },
-    {
-      id: 'emergency',
-      icon: '🚨',
-      title: 'Emergency Service',
-      description: '24/7 Emergency Support'
-    },
+    // {
+    //   id: 'emergency',
+    //   icon: '🚨',
+    //   title: 'Emergency Service',
+    //   description: '24/7 Emergency Support'
+    // },
     {
       id: 'contact',
       icon: '📞',
@@ -329,50 +329,58 @@ const Home: React.FC<HomeProps> = ({ route }) => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
-            {currentScreen === 'menu' && (
-              <View style={styles.welcomeSection}>
-                <Text style={styles.welcomeText}>Welcome to Wraptitude</Text>
-                <Text style={styles.welcomeDescription}>
-                  Professional car film services with over 10 years of experience.
-                  Specializing in window tinting, vinyl wraps, ceramic coating, and paint protection.
-                </Text>
-              </View>
-            )}
+            <ImageBackground 
+              source={require('../assets/images/homepage-img.jpg')}
+              style={styles.scrollBackground}
+              // resizeMode="cover"
+            >
+              <View>
+                {currentScreen === 'menu' && (
+                  <View style={styles.welcomeSection}>
+                    <Text style={styles.welcomeText}>Welcome to Wraptitude</Text>
+                    <Text style={styles.welcomeDescription}>
+                      Professional car film services with over 10 years of experience.
+                      Specializing in window tinting, vinyl wraps, ceramic coating, and paint protection.
+                    </Text>
+                  </View>
+                )}
 
-            {currentScreen === 'menu' ? (
-              <View style={styles.menuContainer}>
-                {menuItems.map((item) => (
-                  <Animated.View 
-                    key={item.id}
-                    style={[{ transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }] }]}
-                  >
-                    <Pressable 
-                      style={[
-                        styles.menuButton,
-                        item.id === 'emergency' && styles.emergencyButton
-                      ]}
-                      onPress={() => {
-                        animatePress(buttonScales[item.id]);
-                        handleScreenTransition(item.id as Screen);
-                      }}
-                    >
-                      <Text style={styles.menuIcon}>{item.icon}</Text>
-                      <Text style={[
-                        styles.menuTitle,
-                        item.id === 'emergency' && styles.emergencyTitle
-                      ]}>
-                        {item.title}
-                      </Text>
-                      <Text style={styles.menuDescription}>
-                        {item.description}
-                      </Text>
-                    </Pressable>
-                  </Animated.View>
-                ))}
+                {currentScreen === 'menu' ? (
+                  <View style={styles.menuContainer}>
+                    {menuItems.map((item) => (
+                      <Animated.View 
+                        key={item.id}
+                        style={[{ transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }] }]}
+                      >
+                        <Pressable 
+                          style={[
+                            styles.menuButton,
+                            item.id === 'emergency' && styles.emergencyButton
+                          ]}
+                          onPress={() => {
+                            animatePress(buttonScales[item.id]);
+                            handleScreenTransition(item.id as Screen);
+                          }}
+                        >
+                          <Text style={styles.menuIcon}>{item.icon}</Text>
+                          <Text style={[
+                            styles.menuTitle,
+                            item.id === 'emergency' && styles.emergencyTitle
+                          ]}>
+                            {item.title}
+                          </Text>
+                          <Text style={styles.menuDescription}>
+                            {item.description}
+                          </Text>
+                        </Pressable>
+                      </Animated.View>
+                    ))}
+                  </View>
+                ) : (
+                  renderScreen()
+                )}
               </View>
-            ) : (
-              renderScreen()
-            )}
+            </ImageBackground>
           </ScrollView>
         </SafeAreaView>
       </View>
@@ -503,6 +511,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 20,
+  },
+  scrollBackground: {
+    flex: 1,
   },
   emergencyButton: {
     backgroundColor: '#c70628',
