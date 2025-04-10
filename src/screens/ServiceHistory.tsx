@@ -6,76 +6,58 @@ import {
   ScrollView,
   SafeAreaView,
   Pressable,
+  Image,
 } from 'react-native';
 
 interface ServiceRecord {
   id: string;
-  date: string;
-  service: string;
-  vehicle: string;
-  status: 'completed' | 'cancelled' | 'in_progress';
   cost: string;
+  createAt: string;
   details: string;
-  progress?: number; // Optional progress percentage for in-progress services
+  editAt: string;
+  serviceTrackingEnable: string;
+  serviceType: string;
+  step1: string;
+  step1Img: string;
+  step2: string;
+  step2Img: string;
+  step3: string;
+  step3Img: string;
+  step4: string;
+  step4Img: string;
+  step5: string;
+  step5Img: string;
+  userID: string;
+  vehicleMake: string;
+  vehicleModel: string;
+  vehicleYear: string;
 }
 
 const serviceHistory: ServiceRecord[] = [
   {
-    id: 'SH001',
-    date: '2024-02-25',
-    service: 'Full Car Wrap',
-    vehicle: '2024 Audi RS7',
-    status: 'in_progress',
-    cost: '$4,500',
-    details: 'XPEL Stealth Satin Paint Protection Film, Full Vehicle Coverage with Ceramic Coating',
-    progress: 60,
+    id: '941eaa93-69e4-4859-b52a-68c97f193a42',
+    cost: '3000',
+    createAt: '2025-04-03T19:55:14.751658-04:00',
+    details: 'details',
+    editAt: '2025-04-03T19:55:14.751658-04:00',
+    serviceTrackingEnable: 'True',
+    serviceType: 'window_tinting',
+    step1: 'in_progress',
+    step1Img: 'https://wraptitude-service.s3.amazonaws.com/941eaa93-69e4-4859-b52a-68c97f193a42/step1Img.jpg',
+    step2: 'completed',
+    step2Img: '',
+    step3: 'in_progress',
+    step3Img: '',
+    step4: 'pending',
+    step4Img: '',
+    step5: 'pending',
+    step5Img: '',
+    userID: 'a16b6580-d071-7030-5ba9-5d325e9413d5',
+    vehicleMake: 'BMW',
+    vehicleModel: 'X5',
+    vehicleYear: '2008',
   },
-  {
-    id: 'SH002',
-    date: '2024-02-23',
-    service: 'Paint Protection Film',
-    vehicle: '2024 Porsche GT3 RS',
-    status: 'in_progress',
-    cost: '$2,800',
-    details: 'Full Front PPF Package, Including Hood, Bumper, Fenders, and Mirrors',
-    progress: 30,
-  },
-  {
-    id: 'SH003',
-    date: '2024-02-15',
-    service: 'Full Car Wrap',
-    vehicle: '2023 Tesla Model Y',
-    status: 'completed',
-    cost: '$3,200',
-    details: 'Matte Black Wrap with Chrome Delete, Paint Protection Film on Front Bumper',
-  },
-  {
-    id: 'SH004',
-    date: '2024-01-20',
-    service: 'Window Tinting',
-    vehicle: '2024 BMW M3',
-    status: 'completed',
-    cost: '$650',
-    details: 'Full Window Tint with Ceramic Film, 20% All Around, 70% Windshield',
-  },
-  {
-    id: 'SH005',
-    date: '2023-12-10',
-    service: 'Ceramic Coating',
-    vehicle: '2023 Porsche 911',
-    status: 'completed',
-    cost: '$1,800',
-    details: 'Premium Ceramic Coating Package with Paint Correction',
-  },
-  {
-    id: 'SH006',
-    date: '2023-11-05',
-    service: 'Paint Protection Film',
-    vehicle: '2024 Mercedes AMG GT',
-    status: 'cancelled',
-    cost: '$2,500',
-    details: 'Full Front PPF Package (Cancelled due to scheduling conflict)',
-  },
+  // Add more records as needed
 ];
 
 const ServiceHistory: React.FC = () => {
@@ -88,24 +70,17 @@ const ServiceHistory: React.FC = () => {
     });
   };
 
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return styles.completedBadge;
-      case 'cancelled':
-        return styles.cancelledBadge;
-      case 'in_progress':
-        return styles.inProgressBadge;
-      default:
-        return styles.completedBadge;
-    }
-  };
-
-  const formatStatus = (status: string) => {
-    return status.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-  };
+  const renderStep = (step: string, img: string, stepNumber: number) => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.stepLabel}>Step {stepNumber}:</Text>
+      <Text style={styles.stepStatus}>{step}</Text>
+      {img ? (
+        <Image source={{ uri: img }} style={styles.stepImage} />
+      ) : (
+        <Text style={styles.noImageText}>No Image Available</Text>
+      )}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -117,16 +92,8 @@ const ServiceHistory: React.FC = () => {
           >
             <View style={styles.cardHeader}>
               <View>
-                <Text style={styles.serviceType}>{record.service}</Text>
-                <Text style={styles.date}>{formatDate(record.date)}</Text>
-              </View>
-              <View style={[
-                styles.statusBadge,
-                getStatusStyle(record.status)
-              ]}>
-                <Text style={styles.statusText}>
-                  {formatStatus(record.status)}
-                </Text>
+                <Text style={styles.serviceType}>{record.serviceType}</Text>
+                <Text style={styles.date}>{formatDate(record.createAt)}</Text>
               </View>
             </View>
 
@@ -135,7 +102,7 @@ const ServiceHistory: React.FC = () => {
             <View style={styles.cardContent}>
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Vehicle:</Text>
-                <Text style={styles.value}>{record.vehicle}</Text>
+                <Text style={styles.value}>{`${record.vehicleYear} ${record.vehicleMake} ${record.vehicleModel}`}</Text>
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Service ID:</Text>
@@ -143,26 +110,18 @@ const ServiceHistory: React.FC = () => {
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Cost:</Text>
-                <Text style={styles.value}>{record.cost}</Text>
+                <Text style={styles.value}>${record.cost}</Text>
               </View>
               <View style={styles.detailsSection}>
                 <Text style={styles.label}>Details:</Text>
                 <Text style={styles.detailsText}>{record.details}</Text>
               </View>
-              
-              {record.status === 'in_progress' && record.progress && (
-                <View style={styles.progressSection}>
-                  <View style={styles.progressBar}>
-                    <View 
-                      style={[
-                        styles.progressFill,
-                        { width: `${record.progress}%` }
-                      ]} 
-                    />
-                  </View>
-                  <Text style={styles.progressText}>{record.progress}% Complete</Text>
-                </View>
-              )}
+
+              {renderStep(record.step1, record.step1Img, 1)}
+              {renderStep(record.step2, record.step2Img, 2)}
+              {renderStep(record.step3, record.step3Img, 3)}
+              {renderStep(record.step4, record.step4Img, 4)}
+              {renderStep(record.step5, record.step5Img, 5)}
             </View>
           </Pressable>
         ))}
@@ -203,31 +162,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#7c7c7c',
   },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  completedBadge: {
-    backgroundColor: 'rgba(50, 215, 75, 0.1)',
-    borderWidth: 1,
-    borderColor: '#32D74B',
-  },
-  cancelledBadge: {
-    backgroundColor: 'rgba(255, 59, 48, 0.1)',
-    borderWidth: 1,
-    borderColor: '#FF3B30',
-  },
-  inProgressBadge: {
-    backgroundColor: 'rgba(255, 159, 10, 0.1)',
-    borderWidth: 1,
-    borderColor: '#FF9F0A',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
   divider: {
     height: 1,
     backgroundColor: '#333',
@@ -260,25 +194,29 @@ const styles = StyleSheet.create({
     marginTop: 4,
     lineHeight: 20,
   },
-  progressSection: {
+  stepContainer: {
     marginTop: 12,
   },
-  progressBar: {
-    height: 6,
-    backgroundColor: '#333',
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 8,
+  stepLabel: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#FF9F0A',
-    borderRadius: 3,
+  stepStatus: {
+    fontSize: 14,
+    color: '#7c7c7c',
+    marginBottom: 4,
   },
-  progressText: {
-    fontSize: 12,
-    color: '#FF9F0A',
-    textAlign: 'right',
+  stepImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  noImageText: {
+    fontSize: 14,
+    color: '#7c7c7c',
+    marginTop: 4,
   },
 });
 
