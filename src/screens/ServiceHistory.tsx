@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,9 @@ import {
   SafeAreaView,
   Pressable,
   Image,
+  ActivityIndicator,
 } from 'react-native';
+import { fetchUserAttributes } from 'aws-amplify/auth';
 
 interface ServiceRecord {
   id: string;
@@ -33,34 +35,62 @@ interface ServiceRecord {
   vehicleYear: string;
 }
 
-const serviceHistory: ServiceRecord[] = [
-  {
-    id: '941eaa93-69e4-4859-b52a-68c97f193a42',
-    cost: '3000',
-    createAt: '2025-04-03T19:55:14.751658-04:00',
-    details: 'details',
-    editAt: '2025-04-03T19:55:14.751658-04:00',
-    serviceTrackingEnable: 'True',
-    serviceType: 'window_tinting',
-    step1: 'in_progress',
-    step1Img: 'https://wraptitude-service.s3.amazonaws.com/941eaa93-69e4-4859-b52a-68c97f193a42/step1Img.jpg',
-    step2: 'completed',
-    step2Img: '',
-    step3: 'in_progress',
-    step3Img: '',
-    step4: 'pending',
-    step4Img: '',
-    step5: 'pending',
-    step5Img: '',
-    userID: 'a16b6580-d071-7030-5ba9-5d325e9413d5',
-    vehicleMake: 'BMW',
-    vehicleModel: 'X5',
-    vehicleYear: '2008',
-  },
-  // Add more records as needed
-];
-
 const ServiceHistory: React.FC = () => {
+  const [serviceHistory, setServiceHistory] = useState<ServiceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchServiceHistory();
+  }, []);
+
+  const fetchServiceHistory = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Get user ID from Amplify
+      const userAttributes = await fetchUserAttributes();
+      const userId = userAttributes.sub;
+      setUserId(userId);
+      console.log('userId',userId);
+      // Make API call
+      const response = await fetch('https://v3l0ylwh6a.execute-api.us-east-2.amazonaws.com/PROD/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userID: userId
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch service history');
+      }
+
+      const responseData = await response.json();
+      // Parse the nested body string into an object
+      const parsedBody = JSON.parse(responseData.body);
+      // Extract the data array from the parsed body
+      const serviceRecords = parsedBody.data;
+      
+      // Transform the data to match our interface (ID -> id)
+      const transformedRecords = serviceRecords.map((record: any) => ({
+        ...record,
+        id: record.ID, // Map ID to id
+      }));
+
+      setServiceHistory(transformedRecords);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching service history:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -73,58 +103,99 @@ const ServiceHistory: React.FC = () => {
   const renderStep = (step: string, img: string, stepNumber: number) => (
     <View style={styles.stepContainer}>
       <Text style={styles.stepLabel}>Step {stepNumber}:</Text>
-      <Text style={styles.stepStatus}>{step}</Text>
+      <Text style={[
+        styles.stepStatus,
+        step === 'completed' && styles.statusCompleted,
+        step === 'in_progress' && styles.statusInProgress,
+        step === 'pending' && styles.statusPending
+      ]}>
+        {step}
+      </Text>
       {img ? (
-        <Image source={{ uri: img }} style={styles.stepImage} />
+        <Image 
+          source={{ uri: img }} 
+          style={styles.stepImage}
+          resizeMode="cover"
+        />
       ) : (
         <Text style={styles.noImageText}>No Image Available</Text>
       )}
     </View>
   );
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FFFFFF" />
+          <Text style={styles.loadingText}>Loading service history...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Error: {error}</Text>
+          <Pressable style={styles.retryButton} onPress={fetchServiceHistory}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content}>
-        {serviceHistory.map((record) => (
-          <Pressable 
-            key={record.id}
-            style={styles.serviceCard}
-          >
-            <View style={styles.cardHeader}>
-              <View>
-                <Text style={styles.serviceType}>{record.serviceType}</Text>
-                <Text style={styles.date}>{formatDate(record.createAt)}</Text>
-              </View>
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.cardContent}>
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Vehicle:</Text>
-                <Text style={styles.value}>{`${record.vehicleYear} ${record.vehicleMake} ${record.vehicleModel}`}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Service ID:</Text>
-                <Text style={styles.value}>{record.id}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Cost:</Text>
-                <Text style={styles.value}>${record.cost}</Text>
-              </View>
-              <View style={styles.detailsSection}>
-                <Text style={styles.label}>Details:</Text>
-                <Text style={styles.detailsText}>{record.details}</Text>
+        {serviceHistory.length === 0 ? (
+          <Text style={styles.noRecordsText}>No service records found</Text>
+        ) : (
+          serviceHistory.map((record) => (
+            <Pressable 
+              key={record.id}
+              style={styles.serviceCard}
+            >
+              <View style={styles.cardHeader}>
+                <View>
+                  <Text style={styles.serviceType}>{record.serviceType}</Text>
+                  <Text style={styles.date}>{formatDate(record.createAt)}</Text>
+                </View>
               </View>
 
-              {renderStep(record.step1, record.step1Img, 1)}
-              {renderStep(record.step2, record.step2Img, 2)}
-              {renderStep(record.step3, record.step3Img, 3)}
-              {renderStep(record.step4, record.step4Img, 4)}
-              {renderStep(record.step5, record.step5Img, 5)}
-            </View>
-          </Pressable>
-        ))}
+              <View style={styles.divider} />
+
+              <View style={styles.cardContent}>
+                <View style={styles.infoRow}>
+                  <Text style={styles.label}>Vehicle:</Text>
+                  <Text style={styles.value}>
+                    {`${record.vehicleYear} ${record.vehicleMake} ${record.vehicleModel}`}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.label}>Service ID:</Text>
+                  <Text style={styles.value}>{record.id}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.label}>Cost:</Text>
+                  <Text style={styles.value}>${record.cost}</Text>
+                </View>
+                <View style={styles.detailsSection}>
+                  <Text style={styles.label}>Details:</Text>
+                  <Text style={styles.detailsText}>{record.details}</Text>
+                </View>
+
+                {renderStep(record.step1, record.step1Img, 1)}
+                {renderStep(record.step2, record.step2Img, 2)}
+                {renderStep(record.step3, record.step3Img, 3)}
+                {renderStep(record.step4, record.step4Img, 4)}
+                {renderStep(record.step5, record.step5Img, 5)}
+              </View>
+            </Pressable>
+          ))
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -217,6 +288,52 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#7c7c7c',
     marginTop: 4,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    marginTop: 12,
+    fontSize: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  errorText: {
+    color: '#FF4444',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#333',
+    padding: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  noRecordsText: {
+    color: '#7c7c7c',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 24,
+  },
+  statusCompleted: {
+    color: '#4CAF50',
+  },
+  statusInProgress: {
+    color: '#2196F3',
+  },
+  statusPending: {
+    color: '#FFC107',
   },
 });
 
