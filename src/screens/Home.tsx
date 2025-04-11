@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  SafeAreaView,
   ActivityIndicator,
   Alert,
   Dimensions,
@@ -13,6 +12,7 @@ import {
   ImageBackground,
   ScrollView,
   Linking,
+  StatusBar,
 } from 'react-native';
 import { signOut } from 'aws-amplify/auth';
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
@@ -29,7 +29,6 @@ import EmergencyService from './EmergencyService';
 import FreeQuote from './FreeQuote';
 
 interface HomeProps {
-  // onSignOut: () => void;
   route: {
     params: {
       onSignOut: () => void;
@@ -44,8 +43,9 @@ const Home: React.FC<HomeProps> = ({ route }) => {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [currentScreen, setCurrentScreen] = useState<Screen>('menu');
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
-  
-  // Add animation values for each button
+  const [activeTab, setActiveTab] = useState('home');
+
+  // Animation refs for buttons
   const buttonScales = {
     tracking: useRef(new Animated.Value(1)).current,
     history: useRef(new Animated.Value(1)).current,
@@ -65,13 +65,13 @@ const Home: React.FC<HomeProps> = ({ route }) => {
   const animatePress = (scale: Animated.Value) => {
     Animated.sequence([
       Animated.timing(scale, {
-        toValue: 0.95,
-        duration: 100,
+        toValue: 0.92,
+        duration: 80,
         useNativeDriver: true,
       }),
       Animated.timing(scale, {
         toValue: 1,
-        duration: 100,
+        duration: 80,
         useNativeDriver: true,
       }),
     ]).start();
@@ -81,27 +81,27 @@ const Home: React.FC<HomeProps> = ({ route }) => {
     Animated.parallel([
       Animated.timing(screenOpacity, {
         toValue: 0,
-        duration: 150,
+        duration: 100,
         useNativeDriver: true,
       }),
       Animated.timing(screenTranslateY, {
-        toValue: 20,
-        duration: 150,
+        toValue: 10,
+        duration: 100,
         useNativeDriver: true,
       }),
     ]).start(() => {
       setCurrentScreen(screen);
       screenOpacity.setValue(0);
-      screenTranslateY.setValue(-20);
+      screenTranslateY.setValue(-10);
       Animated.parallel([
         Animated.timing(screenOpacity, {
           toValue: 1,
-          duration: 150,
+          duration: 100,
           useNativeDriver: true,
         }),
         Animated.timing(screenTranslateY, {
           toValue: 0,
-          duration: 150,
+          duration: 100,
           useNativeDriver: true,
         }),
       ]).start();
@@ -125,75 +125,36 @@ const Home: React.FC<HomeProps> = ({ route }) => {
       Alert.alert(
         'Error',
         'Unable to make the call. Please dial 437-340-1121 directly.',
-        [
-          { text: 'OK', style: 'default' }
-        ]
+        [{ text: 'OK', style: 'default' }]
       );
     }
   };
 
   const menuItems = [
-    {
-      id: 'tracking',
-      icon: '🚗',
-      title: 'Service Tracking',
-      description: 'Track your vehicle service progress'
-    },
-    {
-      id: 'history',
-      icon: '📋',
-      title: 'Service History',
-      description: 'View your past services'
-    },
-    {
-      id: 'services',
-      icon: '🛠️',
-      title: 'Our Services',
-      description: 'Explore our professional services'
-    },
-    {
-      id: 'knowledge',
-      icon: '📚',
-      title: 'Knowledge Base',
-      description: 'Learn about car films'
-    },
-    // {
-    //   id: 'gallery',
-    //   icon: '📸',
-    //   title: 'Gallery',
-    //   description: 'View our recent work'
-    // },
-    {
-      id: 'news',
-      icon: '📰',
-      title: 'News',
-      description: 'Latest updates'
-    },
-    {
-      id: 'about',
-      icon: '👥',
-      title: 'About Us',
-      description: 'Learn more about Wraptitude'
-    },
-    {
-      id: 'quote',
-      icon: '💰',
-      title: 'Free Quote',
-      description: 'Get an instant quote for your vehicle'
-    },
-    // {
-    //   id: 'emergency',
-    //   icon: '🚨',
-    //   title: 'Emergency Service',
-    //   description: '24/7 Emergency Support'
-    // },
-    {
-      id: 'contact',
-      icon: '📞',
-      title: 'Contact Us',
-      description: 'Get in touch'
-    },
+    { id: 'tracking', icon: '🚗', title: 'Service Tracking', description: 'Track your vehicle service progress' },
+    { id: 'history', icon: '📋', title: 'Service History', description: 'View your past services' },
+    { id: 'services', icon: '🛠️', title: 'Our Services', description: 'Explore our professional services' },
+    { id: 'knowledge', icon: '📚', title: 'Knowledge Base', description: 'Learn about car films' },
+    { id: 'news', icon: '📰', title: 'News', description: 'Latest updates' },
+    { id: 'about', icon: '👥', title: 'About Us', description: 'Learn more about Wraptitude' },
+    { id: 'quote', icon: '💰', title: 'Free Quote', description: 'Get an instant quote for your vehicle' },
+    { id: 'contact', icon: '📞', title: 'Contact Us', description: 'Get in touch' },
   ];
+
+  const renderFooterIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'home':
+        return '🏠';
+      case 'profile':
+        return '👤';
+      case 'quote':
+        return '💰';
+      case 'contact':
+        return '📞';
+      default:
+        return '🏠';
+    }
+  };
 
   const renderScreen = () => {
     const content = () => {
@@ -213,44 +174,36 @@ const Home: React.FC<HomeProps> = ({ route }) => {
         case 'about':
           return <About />;
         case 'news':
-          return <News onPostPress={(post) => {
-            setSelectedPost(post);
-            handleScreenTransition('newsDetail');
-          }} />;
+          return (
+            <News
+              onPostPress={(post) => {
+                setSelectedPost(post);
+                handleScreenTransition('newsDetail');
+              }}
+            />
+          );
         case 'newsDetail':
           return <NewsDetail post={selectedPost!} />;
         case 'emergency':
-          return <EmergencyService/>;
+          return <EmergencyService />;
         case 'quote':
           return <FreeQuote />;
         default:
           return (
             <View style={styles.menuContainer}>
               {menuItems.map((item) => (
-                <Animated.View 
-                  key={item.id}
-                  style={[{ transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }] }]}
-                >
-                  <Pressable 
-                    style={[
-                      styles.menuButton,
-                      item.id === 'emergency' && styles.emergencyButton
-                    ]}
+                <Animated.View key={item.id} style={[{ transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }] }]}>
+                  <Pressable
+                    style={[styles.menuButton, item.id === 'quote' && styles.quoteButton]}
                     onPress={() => {
                       animatePress(buttonScales[item.id]);
                       handleScreenTransition(item.id as Screen);
                     }}
+                    accessibilityLabel={item.title}
                   >
                     <Text style={styles.menuIcon}>{item.icon}</Text>
-                    <Text style={[
-                      styles.menuTitle,
-                      item.id === 'emergency' && styles.emergencyTitle
-                    ]}>
-                      {item.title}
-                    </Text>
-                    <Text style={styles.menuDescription}>
-                      {item.description}
-                    </Text>
+                    <Text style={[styles.menuTitle, item.id === 'quote' && styles.quoteTitle]}>{item.title}</Text>
+                    <Text style={styles.menuDescription}>{item.description}</Text>
                   </Pressable>
                 </Animated.View>
               ))}
@@ -260,11 +213,13 @@ const Home: React.FC<HomeProps> = ({ route }) => {
     };
 
     return (
-      <Animated.View style={{
-        flex: 1,
-        opacity: screenOpacity,
-        transform: [{ translateY: screenTranslateY }],
-      }}>
+      <Animated.View
+        style={{
+          flex: 1,
+          opacity: screenOpacity,
+          transform: [{ translateY: screenTranslateY }],
+        }}
+      >
         {content()}
       </Animated.View>
     );
@@ -279,32 +234,36 @@ const Home: React.FC<HomeProps> = ({ route }) => {
   }
 
   return (
-    <ImageBackground 
+    <ImageBackground
       source={require('../assets/images/1.jpg')}
       style={styles.container}
-      blurRadius={5}
+      blurRadius={8}
     >
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
       <View style={styles.overlay}>
-        <SafeAreaView style={styles.container}>
+        <View style={styles.mainContainer}>
           <View style={styles.header}>
             <View style={styles.headerContent}>
               {currentScreen === 'menu' ? (
                 <>
-                  <Image 
-                    source={require('../assets/images/wraptitude-logo.webp')}
-                    style={styles.logo}
-                    resizeMode="contain"
-                  />
-                  <Pressable 
-                    style={styles.signOutButton}
-                    onPress={handleSignOut}
-                  >
+                  <View style={styles.logoContainer}>
+                    <Image
+                      source={require('../assets/images/wraptitude-logo.webp')}
+                      style={styles.logo}
+                      resizeMode="contain"
+                    />
+                  </View>
+                  <Pressable style={styles.signOutButton} onPress={handleSignOut}>
                     <Text style={styles.signOutText}>Sign Out</Text>
                   </Pressable>
                 </>
               ) : (
                 <>
-                  <Pressable 
+                  <Pressable
                     style={styles.backButton}
                     onPress={() => {
                       if (currentScreen === 'newsDetail') {
@@ -314,147 +273,195 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                       }
                     }}
                   >
-                    <Text style={styles.backButtonText}>← Back</Text>
+                    <Text style={styles.backButtonText}>←</Text>
                   </Pressable>
                   <Text style={styles.screenTitle}>
-                    {currentScreen === 'newsDetail' ? 'News' : menuItems.find(item => item.id === currentScreen)?.title}
+                    {currentScreen === 'newsDetail' ? 'News' : menuItems.find((item) => item.id === currentScreen)?.title}
                   </Text>
                 </>
               )}
             </View>
           </View>
 
-          <ScrollView 
-            style={styles.scrollContainer}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-          >
-            <ImageBackground 
-              source={require('../assets/images/homepage-img.jpg')}
-              style={styles.scrollBackground}
-              // resizeMode="cover"
+          <View style={styles.contentContainer}>
+            <ScrollView
+              style={styles.scrollContainer}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContent}
             >
-              <View>
-                {currentScreen === 'menu' && (
-                  <View style={styles.welcomeSection}>
-                    <Text style={styles.welcomeText}>Welcome to Wraptitude</Text>
-                    <Text style={styles.welcomeDescription}>
-                      Professional car film services with over 10 years of experience.
-                      Specializing in window tinting, vinyl wraps, ceramic coating, and paint protection.
-                    </Text>
-                  </View>
-                )}
+              {renderScreen()}
+            </ScrollView>
+          </View>
 
-                {currentScreen === 'menu' ? (
-                  <View style={styles.menuContainer}>
-                    {menuItems.map((item) => (
-                      <Animated.View 
-                        key={item.id}
-                        style={[{ transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }] }]}
-                      >
-                        <Pressable 
-                          style={[
-                            styles.menuButton,
-                            item.id === 'emergency' && styles.emergencyButton
-                          ]}
-                          onPress={() => {
-                            animatePress(buttonScales[item.id]);
-                            handleScreenTransition(item.id as Screen);
-                          }}
-                        >
-                          <Text style={styles.menuIcon}>{item.icon}</Text>
-                          <Text style={[
-                            styles.menuTitle,
-                            item.id === 'emergency' && styles.emergencyTitle
-                          ]}>
-                            {item.title}
-                          </Text>
-                          <Text style={styles.menuDescription}>
-                            {item.description}
-                          </Text>
-                        </Pressable>
-                      </Animated.View>
-                    ))}
-                  </View>
-                ) : (
-                  renderScreen()
-                )}
-              </View>
-            </ImageBackground>
-          </ScrollView>
-        </SafeAreaView>
+          <View style={styles.footerNav}>
+            <Pressable
+              style={[styles.footerTab, activeTab === 'profile' && styles.footerTabActive]}
+              onPress={() => {
+                setActiveTab('profile');
+                handleScreenTransition('tracking');
+              }}
+            >
+              <Text style={styles.footerIcon}>{renderFooterIcon('profile')}</Text>
+              <Text style={styles.footerText}>Profile</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.footerTab, activeTab === 'home' && styles.footerTabActive]}
+              onPress={() => {
+                setActiveTab('home');
+                handleScreenTransition('menu');
+              }}
+            >
+              <Text style={styles.footerIcon}>{renderFooterIcon('home')}</Text>
+              <Text style={styles.footerText}>Home</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.footerTab, activeTab === 'quote' && styles.footerTabActive]}
+              onPress={() => {
+                setActiveTab('quote');
+                handleScreenTransition('quote');
+              }}
+            >
+              <Text style={styles.footerIcon}>{renderFooterIcon('quote')}</Text>
+              <Text style={styles.footerText}>Quote</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.footerTab, activeTab === 'contact' && styles.footerTabActive]}
+              onPress={() => {
+                setActiveTab('contact');
+                handleScreenTransition('contact');
+              }}
+            >
+              <Text style={styles.footerIcon}>{renderFooterIcon('contact')}</Text>
+              <Text style={styles.footerText}>Contact</Text>
+            </Pressable>
+          </View>
+        </View>
       </View>
     </ImageBackground>
   );
 };
 
 const { width } = Dimensions.get('window');
-const buttonWidth = (width - 60) / 2;
+const buttonWidth = (width - 48) / 2;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#040404',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  mainContainer: {
+    flex: 1,
+    paddingTop: 44, // Manual padding for status bar
   },
   header: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-    backgroundColor: 'rgba(10,10,10,0.95)',
-    zIndex: 1,
+    paddingVertical: 8,
   },
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 16,
+  },
+  logoContainer: {
+    flex: 1,
   },
   logo: {
-    width: 140,
-    height: 50,
+    width: 120,
+    height: 40,
   },
   backButton: {
-    padding: 8,
+    padding: 12,
   },
   backButtonText: {
-    fontSize: 18,
+    fontSize: 20,
     color: '#FFFFFF',
+    fontWeight: '600',
   },
   screenTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#FFFFFF',
     flex: 1,
     textAlign: 'center',
-    marginRight: 40,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   signOutButton: {
-    padding: 10,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(199, 6, 40, 0.2)',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: 'rgba(199, 6, 40, 0.4)',
   },
   signOutText: {
     color: '#c70628',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
+    letterSpacing: 0.5,
   },
-  welcomeSection: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-    backgroundColor: 'rgba(26,26,26,0.9)',
+  contentContainer: {
+    flex: 1,
   },
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+  scrollContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100, // Extra padding to clear footer
+  },
+  menuContainer: {
+    padding: 16,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  menuButton: {
+    width: buttonWidth,
+    height: buttonWidth * 1.1,
+    backgroundColor: 'rgba(40, 40, 40, 0.9)',
+    borderRadius: 12,
+    marginBottom: 16,
+    padding: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  quoteButton: {
+    backgroundColor: 'rgba(199, 6, 40, 0.2)',
+    borderColor: '#c70628',
+  },
+  menuIcon: {
+    fontSize: 28,
     marginBottom: 8,
   },
-  welcomeDescription: {
-    color: '#7c7c7c',
+  menuTitle: {
+    color: '#FFFFFF',
     fontSize: 14,
-    lineHeight: 20,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  quoteTitle: {
+    color: '#c70628',
+    fontWeight: '700',
+  },
+  menuDescription: {
+    color: '#A0A0A0',
+    fontSize: 11,
+    textAlign: 'center',
+    lineHeight: 14,
   },
   loadingContainer: {
     flex: 1,
@@ -462,75 +469,39 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  menuContainer: {
-    padding: 20,
+  footerNav: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    alignContent: 'flex-start',
+    backgroundColor: 'rgba(20, 20, 20, 0.95)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    paddingVertical: 12,
+    paddingBottom: 16, // Reduced to avoid excessive spacing
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
-  menuButton: {
-    width: buttonWidth,
-    height: buttonWidth * 1.2,
-    backgroundColor: 'rgba(26,26,26,0.9)',
-    borderRadius: 16,
-    marginBottom: 20,
-    padding: 20,
-    justifyContent: 'center',
+  footerTab: {
+    flex: 1,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#333333',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    justifyContent: 'center',
+    paddingVertical: 8,
   },
-  menuIcon: {
-    fontSize: 32,
-    marginBottom: 12,
+  footerTabActive: {
+    backgroundColor: 'rgba(199, 6, 40, 0.15)',
+    borderTopWidth: 2,
+    borderTopColor: '#c70628',
   },
-  menuTitle: {
+  footerIcon: {
+    fontSize: 22,
+    marginBottom: 4,
     color: '#FFFFFF',
-    fontSize: 16,
+  },
+  footerText: {
+    color: '#FFFFFF',
+    fontSize: 11,
     fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  menuDescription: {
-    color: '#7c7c7c',
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  scrollContainer: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 20,
-  },
-  scrollBackground: {
-    flex: 1,
-  },
-  emergencyButton: {
-    backgroundColor: '#c70628',
-    borderColor: '#ff0000',
-    borderWidth: 2,
-  },
-  emergencyTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  emergencyPhone: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: 8,
   },
 });
 
-export default Home; 
+export default Home;
