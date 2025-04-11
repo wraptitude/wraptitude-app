@@ -27,6 +27,7 @@ import News from './News';
 import NewsDetail from './NewsDetail';
 import EmergencyService from './EmergencyService';
 import FreeQuote from './FreeQuote';
+import Profile from './Profile';
 
 interface HomeProps {
   route: {
@@ -36,7 +37,7 @@ interface HomeProps {
   };
 }
 
-type Screen = 'menu' | 'tracking' | 'history' | 'services' | 'knowledge' | 'gallery' | 'about' | 'contact' | 'news' | 'newsDetail' | 'emergency' | 'quote';
+type Screen = 'menu' | 'tracking' | 'history' | 'services' | 'knowledge' | 'gallery' | 'about' | 'contact' | 'news' | 'newsDetail' | 'emergency' | 'quote' | 'profile';
 
 const Home: React.FC<HomeProps> = ({ route }) => {
   const { toSignIn } = useAuthenticator();
@@ -49,6 +50,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
   const buttonScales = {
     tracking: useRef(new Animated.Value(1)).current,
     history: useRef(new Animated.Value(1)).current,
+    profile: useRef(new Animated.Value(1)).current,
     knowledge: useRef(new Animated.Value(1)).current,
     contact: useRef(new Animated.Value(1)).current,
     services: useRef(new Animated.Value(1)).current,
@@ -149,8 +151,8 @@ const Home: React.FC<HomeProps> = ({ route }) => {
         return '👤';
       case 'quote':
         return '💰';
-      case 'contact':
-        return '📞';
+      case 'tracking':
+        return '🚗';
       default:
         return '🏠';
     }
@@ -188,13 +190,15 @@ const Home: React.FC<HomeProps> = ({ route }) => {
           return <EmergencyService />;
         case 'quote':
           return <FreeQuote />;
+        case 'profile':
+          return <Profile />;
         default:
           return (
             <View style={styles.menuContainer}>
               {menuItems.map((item) => (
                 <Animated.View key={item.id} style={[{ transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }] }]}>
                   <Pressable
-                    style={[styles.menuButton, item.id === 'quote' && styles.quoteButton]}
+                    style={styles.menuButton}
                     onPress={() => {
                       animatePress(buttonScales[item.id]);
                       handleScreenTransition(item.id as Screen);
@@ -202,7 +206,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                     accessibilityLabel={item.title}
                   >
                     <Text style={styles.menuIcon}>{item.icon}</Text>
-                    <Text style={[styles.menuTitle, item.id === 'quote' && styles.quoteTitle]}>{item.title}</Text>
+                    <Text style={styles.menuTitle}>{item.title}</Text>
                     <Text style={styles.menuDescription}>{item.description}</Text>
                   </Pressable>
                 </Animated.View>
@@ -294,16 +298,6 @@ const Home: React.FC<HomeProps> = ({ route }) => {
           </View>
 
           <View style={styles.footerNav}>
-            <Pressable
-              style={[styles.footerTab, activeTab === 'profile' && styles.footerTabActive]}
-              onPress={() => {
-                setActiveTab('profile');
-                handleScreenTransition('tracking');
-              }}
-            >
-              <Text style={styles.footerIcon}>{renderFooterIcon('profile')}</Text>
-              <Text style={styles.footerText}>Profile</Text>
-            </Pressable>
 
             <Pressable
               style={[styles.footerTab, activeTab === 'home' && styles.footerTabActive]}
@@ -315,7 +309,16 @@ const Home: React.FC<HomeProps> = ({ route }) => {
               <Text style={styles.footerIcon}>{renderFooterIcon('home')}</Text>
               <Text style={styles.footerText}>Home</Text>
             </Pressable>
-
+            <Pressable
+              style={[styles.footerTab, activeTab === 'tracking' && styles.footerTabActive]}
+              onPress={() => {
+                setActiveTab('tracking');
+                handleScreenTransition('tracking');
+              }}
+            >
+              <Text style={styles.footerIcon}>{renderFooterIcon('tracking')}</Text>
+              <Text style={styles.footerText}>Tracking</Text>
+            </Pressable>
             <Pressable
               style={[styles.footerTab, activeTab === 'quote' && styles.footerTabActive]}
               onPress={() => {
@@ -327,15 +330,16 @@ const Home: React.FC<HomeProps> = ({ route }) => {
               <Text style={styles.footerText}>Quote</Text>
             </Pressable>
 
+            
             <Pressable
-              style={[styles.footerTab, activeTab === 'contact' && styles.footerTabActive]}
+              style={[styles.footerTab, activeTab === 'profile' && styles.footerTabActive]}
               onPress={() => {
-                setActiveTab('contact');
-                handleScreenTransition('contact');
+                setActiveTab('profile');
+                handleScreenTransition('profile');
               }}
             >
-              <Text style={styles.footerIcon}>{renderFooterIcon('contact')}</Text>
-              <Text style={styles.footerText}>Contact</Text>
+              <Text style={styles.footerIcon}>{renderFooterIcon('profile')}</Text>
+              <Text style={styles.footerText}>Profile</Text>
             </Pressable>
           </View>
         </View>
@@ -453,10 +457,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 4,
   },
-  quoteTitle: {
-    color: '#c70628',
-    fontWeight: '700',
-  },
+  // quoteTitle: {
+  //   color: '#c70628',
+  //   fontWeight: '700',
+  // },
   menuDescription: {
     color: '#A0A0A0',
     fontSize: 11,
@@ -488,9 +492,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   footerTabActive: {
-    backgroundColor: 'rgba(199, 6, 40, 0.15)',
-    borderTopWidth: 2,
-    borderTopColor: '#c70628',
+    // backgroundColor: 'rgba(199, 6, 40, 0.15)',
+    // borderTopWidth: 2,
+    // borderTopColor: '#c70628',
   },
   footerIcon: {
     fontSize: 22,
