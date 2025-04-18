@@ -57,11 +57,14 @@ const ContactUs: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content}>
+    <View style={styles.container}>
+      <ScrollView 
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Get In Touch Section */}
         <View style={styles.section}>
-          <Text style={styles.mainTitle}>Get In Touch</Text>
+          <Text style={styles.mainTitle}>GET IN TOUCH</Text>
           <Text style={styles.description}>
             If you want to learn more about our car wrap and enhancement services, 
             please feel free to reach out. We are never too busy to answer your questions 
@@ -74,192 +77,207 @@ const ContactUs: React.FC = () => {
           {contactInfo.map((info, index) => (
             <Pressable
               key={index}
-              style={styles.contactCard}
+              style={({ pressed }) => [
+                styles.contactCard,
+                pressed && styles.cardPressed
+              ]}
               onPress={info.action}
             >
-              <Text style={styles.cardIcon}>{info.icon}</Text>
-              <Text style={styles.cardTitle}>{info.title}</Text>
-              <Text style={styles.cardDescription}>{info.description}</Text>
-              <Text style={styles.cardValue}>{info.value}</Text>
+              <View style={styles.cardContent}>
+                <Text style={styles.cardIcon}>{info.icon}</Text>
+                <View style={styles.cardTextContainer}>
+                  <Text style={styles.cardTitle}>{info.title}</Text>
+                  <Text style={styles.cardDescription}>{info.description}</Text>
+                  <Text style={styles.cardValue}>{info.value}</Text>
+                </View>
+              </View>
             </Pressable>
           ))}
         </View>
 
-        {/* Quote Form */}
-        {/* <View style={styles.formSection}>
-          <Text style={styles.formTitle}>Get Your Friction Free Quote</Text>
-          
-          <TextInput
-            style={styles.input}
-            placeholder="Name"
-            placeholderTextColor="#666"
-            value={formData.name}
-            onChangeText={(text) => setFormData({...formData, name: text})}
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor="#666"
-            keyboardType="email-address"
-            value={formData.email}
-            onChangeText={(text) => setFormData({...formData, email: text})}
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Phone Number"
-            placeholderTextColor="#666"
-            keyboardType="phone-pad"
-            value={formData.phone}
-            onChangeText={(text) => setFormData({...formData, phone: text})}
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Vehicle Make"
-            placeholderTextColor="#666"
-            value={formData.vehicleMake}
-            onChangeText={(text) => setFormData({...formData, vehicleMake: text})}
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Vehicle Model & Year"
-            placeholderTextColor="#666"
-            value={formData.vehicleModelYear}
-            onChangeText={(text) => setFormData({...formData, vehicleModelYear: text})}
-          />
-
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={formData.serviceType}
-              style={styles.picker}
-              dropdownIconColor="#fff"
-              onValueChange={(value) => setFormData({...formData, serviceType: value})}
-            >
-              <Picker.Item label="Tinted Windows" value="Tinted Windows" />
-              <Picker.Item label="Car Wrap" value="Car Wrap" />
-              <Picker.Item label="Ceramic Coating" value="Ceramic Coating" />
-              <Picker.Item label="Paint Protection Film (PPF)" value="Paint Protection Film" />
-            </Picker>
-          </View>
-
-          <TextInput
-            style={[styles.input, styles.messageInput]}
-            placeholder="Your Message"
-            placeholderTextColor="#666"
-            multiline
-            numberOfLines={4}
-            value={formData.message}
-            onChangeText={(text) => setFormData({...formData, message: text})}
-          />
-
-          <Pressable style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Get Your Friction Free Quote</Text>
-          </Pressable>
-        </View> */}
-
         {/* Business Hours */}
         <View style={styles.hoursSection}>
-          <Text style={styles.hoursTitle}>Opening Hours</Text>
-          <Text style={styles.hoursText}>Monday to Saturday: 11:00am – 7:00pm</Text>
-          <Text style={styles.hoursText}>Sunday: Closed</Text>
+          <Text style={styles.hoursTitle}>OPENING HOURS</Text>
+          <View style={styles.hoursCard}>
+            <View style={styles.hoursRow}>
+              <Text style={styles.dayText}>Monday - Saturday</Text>
+              <Text style={styles.timeText}>11:00am – 7:00pm</Text>
+            </View>
+            <View style={styles.hoursDivider} />
+            <View style={styles.hoursRow}>
+              <Text style={styles.dayText}>Sunday</Text>
+              <Text style={styles.timeText}>Closed</Text>
+            </View>
+          </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#040404',
+    backgroundColor: 'transparent',
   },
   content: {
     flex: 1,
+    paddingBottom: 100, // Space for footer
   },
   section: {
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    marginTop: 20,
   },
   mainTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#FFFFFF',
     marginBottom: 16,
+    letterSpacing: 1,
+    textAlign: 'center',
   },
   description: {
-    fontSize: 16,
-    color: '#cccccc',
+    fontSize: 15,
+    color: '#A0A0A0',
     lineHeight: 24,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
   cardsContainer: {
     padding: 20,
+    gap: 16,
   },
   contactCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(40, 40, 40, 0.9)',
     borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  cardPressed: {
+    backgroundColor: 'rgba(50, 50, 50, 0.9)',
+    transform: [{ scale: 0.98 }],
+  },
+  cardContent: {
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
   },
   cardIcon: {
     fontSize: 32,
-    marginBottom: 12,
+  },
+  cardTextContainer: {
+    flex: 1,
   },
   cardTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 8,
+    marginBottom: 6,
+    letterSpacing: 0.5,
   },
   cardDescription: {
-    fontSize: 14,
-    color: '#cccccc',
+    fontSize: 13,
+    color: '#A0A0A0',
     marginBottom: 8,
+    lineHeight: 18,
   },
   cardValue: {
-    fontSize: 16,
+    fontSize: 15,
+    color: '#c70628',
+    fontWeight: '600',
+  },
+  hoursSection: {
+    padding: 20,
+    marginBottom: 20,
+  },
+  hoursTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 16,
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
+  hoursCard: {
+    backgroundColor: 'rgba(40, 40, 40, 0.9)',
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  hoursRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  hoursDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginVertical: 8,
+  },
+  dayText: {
+    fontSize: 15,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  timeText: {
+    fontSize: 15,
     color: '#c70628',
     fontWeight: '600',
   },
   formSection: {
-    padding: 20,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
     margin: 20,
+    backgroundColor: 'rgba(40, 40, 40, 0.9)',
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   formTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#FFFFFF',
     marginBottom: 20,
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: '#333',
+    backgroundColor: 'rgba(26, 26, 26, 0.8)',
     borderRadius: 8,
     padding: 16,
     marginBottom: 16,
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   messageInput: {
     height: 120,
     textAlignVertical: 'top',
   },
   pickerContainer: {
-    backgroundColor: '#333',
+    backgroundColor: 'rgba(26, 26, 26, 0.8)',
     borderRadius: 8,
     marginBottom: 16,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   picker: {
     color: '#FFFFFF',
-    backgroundColor: '#333',
   },
   submitButton: {
     backgroundColor: '#c70628',
@@ -272,21 +290,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-  },
-  hoursSection: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  hoursTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 12,
-  },
-  hoursText: {
-    fontSize: 16,
-    color: '#cccccc',
-    marginBottom: 4,
+    letterSpacing: 0.5,
   },
 });
 
