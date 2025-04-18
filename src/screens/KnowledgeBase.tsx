@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Pressable,
 } from 'react-native';
 
 interface FAQ {
@@ -43,64 +44,110 @@ const KnowledgeBase: React.FC = () => {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Frequently Asked Questions</Text>
-        <Text style={styles.subtitle}>
-          Everything you need to know about car films and our services
-        </Text>
+    <View style={styles.container}>
+      <ScrollView 
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Frequently Asked Questions</Text>
+          <Text style={styles.subtitle}>
+            Everything you need to know about car films and our services
+          </Text>
+        </View>
         
-        {faqs.map((faq, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.faqItem}
-            onPress={() => setExpandedIndex(expandedIndex === index ? null : index)}
-          >
-            <View style={styles.questionContainer}>
-              <Text style={styles.question}>{faq.question}</Text>
-              <Text style={styles.expandIcon}>
-                {expandedIndex === index ? '−' : '+'}
-              </Text>
-            </View>
-            
-            {expandedIndex === index && (
-              <Text style={styles.answer}>
-                {faq.answer}
-              </Text>
-            )}
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+        <View style={styles.faqContainer}>
+          {faqs.map((faq, index) => (
+            <Pressable
+              key={index}
+              style={({ pressed }) => [
+                styles.faqItem,
+                expandedIndex === index && styles.faqItemExpanded,
+                pressed && styles.faqItemPressed
+              ]}
+              onPress={() => setExpandedIndex(expandedIndex === index ? null : index)}
+            >
+              <View style={styles.questionContainer}>
+                <Text style={styles.question}>{faq.question}</Text>
+                <Text style={[
+                  styles.expandIcon,
+                  expandedIndex === index && styles.expandIconActive
+                ]}>
+                  {expandedIndex === index ? '−' : '+'}
+                </Text>
+              </View>
+              
+              {expandedIndex === index && (
+                <Text style={styles.answer}>
+                  {faq.answer}
+                </Text>
+              )}
+            </Pressable>
+          ))}
+        </View>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#040404',
+    backgroundColor: 'transparent',
   },
   content: {
+    flex: 1,
+    paddingBottom: 100, // Space for footer
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  header: {
     padding: 20,
+    alignItems: 'center',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 8,
+    marginBottom: 12,
+    letterSpacing: 1,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#7c7c7c',
+    fontSize: 15,
+    color: '#A0A0A0',
+    textAlign: 'center',
+    lineHeight: 22,
+    maxWidth: '90%',
     marginBottom: 24,
   },
+  faqContainer: {
+    paddingHorizontal: 20,
+  },
   faqItem: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: 'rgba(40, 40, 40, 0.9)',
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  faqItemExpanded: {
+    backgroundColor: 'rgba(45, 45, 45, 0.95)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  faqItemPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
   },
   questionContainer: {
     flexDirection: 'row',
@@ -112,23 +159,28 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
     flex: 1,
+    letterSpacing: 0.5,
+    lineHeight: 22,
   },
   expandIcon: {
     fontSize: 24,
     color: '#c70628',
-    marginLeft: 8,
+    marginLeft: 16,
+    fontWeight: '600',
+    width: 24,
+    textAlign: 'center',
+  },
+  expandIconActive: {
+    color: '#FFFFFF',
   },
   answer: {
-    marginTop: 12,
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#7c7c7c',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#040404',
+    marginTop: 16,
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#A0A0A0',
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },
 });
 
