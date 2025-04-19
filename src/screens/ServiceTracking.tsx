@@ -201,67 +201,82 @@ const ServiceTracking: React.FC = () => {
     }[step.status];
 
     const cardHeight = useRef(new Animated.Value(0)).current;
+    const scaleAnim = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
-      Animated.timing(cardHeight, {
-        toValue: isExpanded ? 1 : 0,
-        duration: 300,
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: false,
-      }).start();
+      Animated.parallel([
+        Animated.timing(cardHeight, {
+          toValue: isExpanded ? 1 : 0,
+          duration: 300,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+        Animated.sequence([
+          Animated.timing(scaleAnim, {
+            toValue: 0.98,
+            duration: 100,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 1,
+            duration: 100,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]).start();
     }, [isExpanded]);
 
     return (
-      <Pressable
-        style={[styles.stepCard, isExpanded && styles.stepCardExpanded]}
-        onPress={() => setExpandedStep(isExpanded ? null : step.id)}
+      <Animated.View
+        style={{
+          transform: [{ scale: scaleAnim }],
+        }}
       >
-        <View style={styles.stepHeader}>
-          <View style={styles.stepHeaderLeft}>
-            <Animated.View 
-              style={[
-                styles.statusDot, 
-                { 
-                  backgroundColor: statusColor,
-                  transform: [{
-                    scale: cardHeight.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [1, 1.2],
-                    })
-                  }]
-                }
-              ]} 
-            />
-            <View>
-              <Text style={styles.stepTitle}>{step.title}</Text>
-              <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
+        <Pressable
+          style={[styles.stepCard, isExpanded && styles.stepCardExpanded]}
+          onPress={() => setExpandedStep(isExpanded ? null : step.id)}
+        >
+          <View style={styles.stepHeader}>
+            <View style={styles.stepHeaderLeft}>
+              <Animated.View 
+                style={[
+                  styles.statusDot, 
+                  { 
+                    backgroundColor: statusColor,
+                  }
+                ]} 
+              />
+              <View>
+                <Text style={styles.stepTitle}>{step.title}</Text>
+                <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
+              </View>
             </View>
           </View>
-        </View>
-        
-        <Animated.View 
-          style={[
-            styles.stepDetails,
-            {
-              maxHeight: cardHeight.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, 300],
-              }),
-              opacity: cardHeight,
-              overflow: 'hidden',
-            }
-          ]}
-        >
-          <Text style={styles.stepDescription}>{step.description}</Text>
-            {step.images && step.images!='' && (
-              <Image 
-                source={{ uri: step.images }}
-                style={styles.stepImage}
-                resizeMode="cover"
-              />
-            )}
-        </Animated.View>
-      </Pressable>
+          
+          <Animated.View 
+            style={[
+              styles.stepDetails,
+              {
+                maxHeight: cardHeight.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 300],
+                }),
+                opacity: cardHeight,
+                overflow: 'hidden',
+              }
+            ]}
+          >
+            <Text style={styles.stepDescription}>{step.description}</Text>
+              {step.images && step.images!='' && (
+                <Image 
+                  source={{ uri: step.images }}
+                  style={styles.stepImage}
+                  resizeMode="cover"
+                />
+              )}
+          </Animated.View>
+        </Pressable>
+      </Animated.View>
     );
   };
 
@@ -269,7 +284,7 @@ const ServiceTracking: React.FC = () => {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
         <ActivityIndicator size="large" color="#c70628" />
-        <Text style={styles.loadingText}>Loading your service details...</Text>
+        <Text style={styles.loadingText}>Loading service details...</Text>
       </View>
     );
   }
@@ -279,8 +294,8 @@ const ServiceTracking: React.FC = () => {
       <View style={[styles.container, styles.noDataContainer]}>
         <Text style={styles.noDataTitle}>No Active Services</Text>
         <Text style={styles.noDataText}>
-          You don't have any active service tracking at the moment.
-          Please visit our service center to start a new service.
+          You currently don't have any active services being tracked.
+          Visit our service center or request a quote to get started.
         </Text>
       </View>
     );
@@ -320,19 +335,23 @@ const ServiceTracking: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#040404',
+    backgroundColor: 'transparent',
   },
   progressSection: {
     padding: 20,
-    backgroundColor: '#1a1a1a',
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    backgroundColor: 'rgba(40, 40, 40, 0.9)',
+    borderRadius: 12,
+    margin: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   progressText: {
     color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
     marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   progressPercentage: {
     color: '#c70628',
@@ -342,7 +361,7 @@ const styles = StyleSheet.create({
   },
   progressBarContainer: {
     height: 8,
-    backgroundColor: '#333333',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -353,23 +372,25 @@ const styles = StyleSheet.create({
   },
   stepsContainer: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 100,
   },
   stepCard: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 16,
+    backgroundColor: 'rgba(40, 40, 40, 0.9)',
+    borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#333333',
-    elevation: 3,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   stepCardExpanded: {
     borderColor: '#c70628',
+    backgroundColor: 'rgba(40, 40, 40, 0.95)',
   },
   stepHeader: {
     flexDirection: 'row',
@@ -382,84 +403,54 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statusDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     marginRight: 12,
   },
   stepTitle: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     marginBottom: 4,
   },
   statusText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  stepTime: {
-    color: '#7c7c7c',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
   },
   stepDetails: {
     marginTop: 16,
   },
   stepDescription: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    lineHeight: 20,
+    color: '#A0A0A0',
+    fontSize: 13,
+    lineHeight: 18,
     marginBottom: 16,
-  },
-  imagesScroll: {
-    marginHorizontal: -16,
-    paddingHorizontal: 16,
-  },
-  imageContainer: {
-    width: 120,
-    height: 120,
-    marginRight: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#1a1a1a',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
   },
   stepImage: {
     width: '100%',
-    height: '100%',
-    borderRadius: 12,
-  },
-  imageOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    padding: 4,
-  },
-  imageNumber: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-    textAlign: 'center',
+    height: 200,
+    borderRadius: 8,
+    marginTop: 8,
   },
   loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'transparent',
   },
   loadingText: {
     color: '#FFFFFF',
     fontSize: 16,
     marginTop: 16,
+    fontWeight: '500',
   },
   noDataContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: 'transparent',
   },
   noDataTitle: {
     color: '#FFFFFF',
@@ -467,12 +458,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 12,
     textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   noDataText: {
-    color: '#7c7c7c',
-    fontSize: 16,
+    color: '#A0A0A0',
+    fontSize: 14,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 20,
+    paddingHorizontal: 20,
   },
 });
 

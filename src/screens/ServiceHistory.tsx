@@ -125,33 +125,41 @@ const ServiceHistory: React.FC = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FFFFFF" />
-          <Text style={styles.loadingText}>Loading service history...</Text>
-        </View>
-      </SafeAreaView>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#c70628" />
+        <Text style={styles.loadingText}>Loading service history...</Text>
+      </View>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Error: {error}</Text>
-          <Pressable style={styles.retryButton} onPress={fetchServiceHistory}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Error: {error}</Text>
+        <Pressable 
+          style={styles.retryButton} 
+          onPress={fetchServiceHistory}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </Pressable>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content}>
+    <View style={styles.container}>
+      <ScrollView 
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {serviceHistory.length === 0 ? (
-          <Text style={styles.noRecordsText}>No service records found</Text>
+          <View style={styles.noRecordsContainer}>
+            <Text style={styles.noRecordsTitle}>No Service History</Text>
+            <Text style={styles.noRecordsText}>
+              You haven't completed any services yet.
+              Book a service to get started with Wraptitude.
+            </Text>
+          </View>
         ) : (
           serviceHistory.map((record) => (
             <Pressable 
@@ -160,8 +168,14 @@ const ServiceHistory: React.FC = () => {
             >
               <View style={styles.cardHeader}>
                 <View>
-                  <Text style={styles.serviceType}>{record.serviceType}</Text>
+                  <Text style={styles.serviceType}>
+                    {record.serviceType.replace(/_/g, ' ').toUpperCase()}
+                  </Text>
                   <Text style={styles.date}>{formatDate(record.createAt)}</Text>
+                </View>
+                <View style={styles.costContainer}>
+                  <Text style={styles.costLabel}>Cost</Text>
+                  <Text style={styles.costValue}>${record.cost}</Text>
                 </View>
               </View>
 
@@ -169,54 +183,56 @@ const ServiceHistory: React.FC = () => {
 
               <View style={styles.cardContent}>
                 <View style={styles.infoRow}>
-                  <Text style={styles.label}>Vehicle:</Text>
+                  <Text style={styles.label}>Vehicle</Text>
                   <Text style={styles.value}>
                     {`${record.vehicleYear} ${record.vehicleMake} ${record.vehicleModel}`}
                   </Text>
                 </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.label}>Service ID:</Text>
-                  <Text style={styles.value}>{record.id}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.label}>Cost:</Text>
-                  <Text style={styles.value}>${record.cost}</Text>
-                </View>
+
                 <View style={styles.detailsSection}>
-                  <Text style={styles.label}>Details:</Text>
+                  <Text style={styles.detailsLabel}>Service Details</Text>
                   <Text style={styles.detailsText}>{record.details}</Text>
                 </View>
 
-                {renderStep(record.step1, record.step1Img, 1)}
-                {renderStep(record.step2, record.step2Img, 2)}
-                {renderStep(record.step3, record.step3Img, 3)}
-                {renderStep(record.step4, record.step4Img, 4)}
-                {renderStep(record.step5, record.step5Img, 5)}
+                <View style={styles.stepsSection}>
+                  <Text style={styles.stepsLabel}>Service Progress</Text>
+                  {renderStep(record.step1, record.step1Img, 1)}
+                  {renderStep(record.step2, record.step2Img, 2)}
+                  {renderStep(record.step3, record.step3Img, 3)}
+                  {renderStep(record.step4, record.step4Img, 4)}
+                  {renderStep(record.step5, record.step5Img, 5)}
+                </View>
               </View>
             </Pressable>
           ))
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#040404',
+    backgroundColor: 'transparent',
   },
   content: {
     flex: 1,
     padding: 16,
+    paddingBottom: 100, // Extra padding for footer
   },
   serviceCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(40, 40, 40, 0.9)',
     borderRadius: 12,
     marginBottom: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -224,86 +240,121 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   serviceType: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '700',
     color: '#FFFFFF',
     marginBottom: 4,
+    letterSpacing: 0.5,
   },
   date: {
-    fontSize: 14,
-    color: '#7c7c7c',
+    fontSize: 13,
+    color: '#A0A0A0',
+  },
+  costContainer: {
+    alignItems: 'flex-end',
+  },
+  costLabel: {
+    fontSize: 12,
+    color: '#A0A0A0',
+    marginBottom: 2,
+  },
+  costValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#c70628',
   },
   divider: {
     height: 1,
-    backgroundColor: '#333',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     marginVertical: 12,
   },
   cardContent: {
-    gap: 8,
+    gap: 16,
   },
   infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
+    flexDirection: 'column',
+    gap: 4,
   },
   label: {
-    fontSize: 14,
-    color: '#7c7c7c',
-    width: 80,
+    fontSize: 12,
+    color: '#A0A0A0',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   value: {
     fontSize: 14,
     color: '#FFFFFF',
-    flex: 1,
+    fontWeight: '500',
   },
   detailsSection: {
-    marginTop: 8,
+    gap: 8,
+  },
+  detailsLabel: {
+    fontSize: 12,
+    color: '#A0A0A0',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   detailsText: {
     fontSize: 14,
-    color: '#cccccc',
-    marginTop: 4,
+    color: '#FFFFFF',
     lineHeight: 20,
   },
+  stepsSection: {
+    gap: 12,
+  },
+  stepsLabel: {
+    fontSize: 12,
+    color: '#A0A0A0',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
   stepContainer: {
-    marginTop: 12,
+    backgroundColor: 'rgba(26, 26, 26, 0.5)',
+    borderRadius: 8,
+    padding: 12,
+    gap: 8,
   },
   stepLabel: {
     fontSize: 14,
     color: '#FFFFFF',
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   stepStatus: {
-    fontSize: 14,
-    color: '#7c7c7c',
-    marginBottom: 4,
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 8,
   },
   stepImage: {
     width: '100%',
-    height: 150,
+    height: 180,
     borderRadius: 8,
-    marginTop: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
   noImageText: {
-    fontSize: 14,
-    color: '#7c7c7c',
-    marginTop: 4,
+    fontSize: 13,
+    color: '#A0A0A0',
+    fontStyle: 'italic',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'transparent',
   },
   loadingText: {
     color: '#FFFFFF',
     marginTop: 12,
     fontSize: 16,
+    fontWeight: '500',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    padding: 20,
+    backgroundColor: 'transparent',
   },
   errorText: {
     color: '#FF4444',
@@ -312,19 +363,40 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#333',
-    padding: 12,
+    backgroundColor: 'rgba(199, 6, 40, 0.2)',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#c70628',
   },
   retryButtonText: {
-    color: '#FFFFFF',
+    color: '#c70628',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  noRecordsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    marginTop: 40,
+  },
+  noRecordsTitle: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   noRecordsText: {
-    color: '#7c7c7c',
-    fontSize: 16,
+    color: '#A0A0A0',
+    fontSize: 14,
     textAlign: 'center',
-    marginTop: 24,
+    lineHeight: 20,
+    maxWidth: 300,
   },
   statusCompleted: {
     color: '#4CAF50',
