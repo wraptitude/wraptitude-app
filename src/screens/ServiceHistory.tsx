@@ -100,9 +100,31 @@ const ServiceHistory: React.FC = () => {
     });
   };
 
+  const getStepDescription = (stepNumber: number): string => {
+    switch (stepNumber) {
+      case 1:
+        return "Vehicle Inspection and Cleaning";
+      case 2:
+        return "Film Preparation";
+      case 3:
+        return "Film Installation";
+      case 4:
+        return "Quality Check";
+      case 5:
+        return "Final Presentation";
+      default:
+        return "";
+    }
+  };
+
   const renderStep = (step: string, img: string, stepNumber: number) => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepLabel}>Step {stepNumber}:</Text>
+      <View style={styles.stepHeader}>
+        <Text style={styles.stepLabel}>Step {stepNumber}:</Text>
+        <Text style={styles.stepDescription}>
+          {getStepDescription(stepNumber)}
+        </Text>
+      </View>
       <Text style={[
         styles.stepStatus,
         step === 'completed' && styles.statusCompleted,
@@ -117,9 +139,7 @@ const ServiceHistory: React.FC = () => {
           style={styles.stepImage}
           resizeMode="cover"
         />
-      ) : (
-        <Text style={styles.noImageText}>No Image Available</Text>
-      )}
+      ) : null}
     </View>
   );
 
@@ -189,10 +209,10 @@ const ServiceHistory: React.FC = () => {
                   </Text>
                 </View>
 
-                <View style={styles.detailsSection}>
+                {/* <View style={styles.detailsSection}>
                   <Text style={styles.detailsLabel}>Service Details</Text>
                   <Text style={styles.detailsText}>{record.details}</Text>
-                </View>
+                </View> */}
 
                 <View style={styles.stepsSection}>
                   <Text style={styles.stepsLabel}>Service Progress</Text>
@@ -316,15 +336,27 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 8,
   },
+  stepHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   stepLabel: {
     fontSize: 14,
     color: '#FFFFFF',
     fontWeight: '600',
   },
+  stepDescription: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '500',
+    flex: 1,
+  },
   stepStatus: {
     fontSize: 13,
     fontWeight: '500',
     marginBottom: 8,
+    textTransform: 'capitalize',
   },
   stepImage: {
     width: '100%',
