@@ -122,7 +122,7 @@ const ServiceTracking: React.FC = () => {
             setSteps([]); // Clear steps if no data
             return; // Exit early
           }
-
+          console.log('parsedBody.data', parsedBody.data);
           const data = parsedBody.data[0];
           INITIAL_STEPS[0].status = data.step1;
           if (data.step1Img && data.step1Img!='') {
@@ -259,7 +259,7 @@ const ServiceTracking: React.FC = () => {
               {
                 maxHeight: cardHeight.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [0, 300],
+                  outputRange: [0, 5000],
                 }),
                 opacity: cardHeight,
                 overflow: 'hidden',
@@ -268,11 +268,13 @@ const ServiceTracking: React.FC = () => {
           >
             <Text style={styles.stepDescription}>{step.description}</Text>
               {step.images && step.images!='' && (
-                <Image 
-                  source={{ uri: step.images }}
-                  style={styles.stepImage}
-                  resizeMode="cover"
-                />
+                <View style={styles.imageContainer}>
+                  <Image 
+                    source={{ uri: step.images }}
+                    style={styles.stepImage}
+                    resizeMode="contain"
+                  />
+              </View>
               )}
           </Animated.View>
         </Pressable>
@@ -427,11 +429,15 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginBottom: 16,
   },
+  imageContainer: {
+    width: '100%',
+    aspectRatio: 1,
+    marginTop: 8,
+  },
   stepImage: {
     width: '100%',
-    height: 200,
-    borderRadius: 8,
-    marginTop: 8,
+    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
   loadingContainer: {
     flex: 1,
@@ -468,6 +474,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     paddingHorizontal: 20,
   },
+
 });
 
 export default ServiceTracking; 

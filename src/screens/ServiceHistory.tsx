@@ -133,13 +133,15 @@ const ServiceHistory: React.FC = () => {
       ]}>
         {step}
       </Text>
-      {img ? (
-        <Image 
-          source={{ uri: img }} 
-          style={styles.stepImage}
-          resizeMode="cover"
-        />
-      ) : null}
+      {img && img !== '' && (
+        <View style={styles.imageContainer}>
+          <Image 
+            source={{ uri: img }} 
+            style={styles.stepImage}
+            resizeMode="contain"
+          />
+        </View>
+      )}
     </View>
   );
 
@@ -358,10 +360,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textTransform: 'capitalize',
   },
+  imageContainer: {
+    width: '100%',
+    aspectRatio: 1,
+    marginTop: 8,
+  },
   stepImage: {
     width: '100%',
-    height: 180,
-    borderRadius: 8,
+    height: '100%',
     backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
   noImageText: {
