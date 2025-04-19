@@ -16,6 +16,7 @@ import {
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
 import { post } from 'aws-amplify/api';
 import { fetchUserAttributes } from 'aws-amplify/auth';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface ServiceStep {
   id: string;
@@ -92,73 +93,86 @@ const ServiceTracking: React.FC = () => {
     }, 0);
   };
 
-  useEffect(() => {
-    const getUserData = async () => {
-      try {
-        const userAttributes = await fetchUserAttributes();
-        const userId = userAttributes.sub;
-        setUserId(userId);
-        
-        if (userId) {
-          const response = await fetch('https://nfn5asoyp7.execute-api.us-east-2.amazonaws.com/PROD', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              userID: userId
-            })
-          });
+  useFocusEffect(
+    React.useCallback(() => {
+      setSteps([]);
+      setExpandedStep(null);
+      setLoading(true);
+      progressAnim.setValue(0);
 
-          if (!response.ok) {
-            throw new Error('Failed to fetch service data');
-          }
-
-          const responseData = await response.json();
-          const parsedBody = JSON.parse(responseData.body);
+      const getUserData = async () => {
+        try {
+          const userAttributes = await fetchUserAttributes();
+          const userId = userAttributes.sub;
+          setUserId(userId);
           
-          if (!parsedBody.data || parsedBody.data.length === 0) {
-            setLoading(false);
-            setSteps([]); // Clear steps if no data
-            return; // Exit early
-          }
-          console.log('parsedBody.data', parsedBody.data);
-          const data = parsedBody.data[0];
-          INITIAL_STEPS[0].status = data.step1;
-          if (data.step1Img && data.step1Img!='') {
-            INITIAL_STEPS[0].images = data.step1Img;
-          }
-          INITIAL_STEPS[1].status = data.step2;
-          if (data.step2Img && data.step2Img!='') {
-            INITIAL_STEPS[1].images = data.step2Img;
-          }
-          INITIAL_STEPS[2].status = data.step3;
-          if (data.step3Img && data.step3Img!='') {
-            INITIAL_STEPS[2].images = data.step3Img;
-          }
-          INITIAL_STEPS[3].status = data.step4;
-          if (data.step4Img && data.step4Img!='') {
-            INITIAL_STEPS[3].images = data.step4Img;
-          }
-          INITIAL_STEPS[4].status = data.step5;
-          if (data.step5Img && data.step5Img!='') {
-            INITIAL_STEPS[4].images = data.step5Img;
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setSteps([]); // Clear steps on error
-        Alert.alert(
-          'Error',
-          'Failed to load service tracking data. Please try again later.'
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+          if (userId) {
+            const response = await fetch('https://nfn5asoyp7.execute-api.us-east-2.amazonaws.com/PROD', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+              },
+              body: JSON.stringify({
+                userID: userId
+              })
+            });
 
-    getUserData();
-  }, []);
+            if (!response.ok) {
+              throw new Error('Failed to fetch service data');
+            }
+
+            const responseData = await response.json();
+            const parsedBody = JSON.parse(responseData.body);
+            
+            if (!parsedBody.data || parsedBody.data.length === 0) {
+              setSteps([]);
+              return;
+            }
+
+            const data = parsedBody.data[0];
+            const updatedSteps = [...INITIAL_STEPS];
+            
+            updatedSteps[0].status = data.step1;
+            updatedSteps[0].images = data.step1Img && data.step1Img !== '' ? `${data.step1Img}?${new Date().getTime()}` : '';
+            
+            updatedSteps[1].status = data.step2;
+            updatedSteps[1].images = data.step2Img && data.step2Img !== '' ? `${data.step2Img}?${new Date().getTime()}` : '';
+            
+            updatedSteps[2].status = data.step3;
+            updatedSteps[2].images = data.step3Img && data.step3Img !== '' ? `${data.step3Img}?${new Date().getTime()}` : '';
+            
+            updatedSteps[3].status = data.step4;
+            updatedSteps[3].images = data.step4Img && data.step4Img !== '' ? `${data.step4Img}?${new Date().getTime()}` : '';
+            
+            updatedSteps[4].status = data.step5;
+            updatedSteps[4].images = data.step5Img && data.step5Img !== '' ? `${data.step5Img}?${new Date().getTime()}` : '';
+
+            setSteps(updatedSteps);
+          }
+        } catch (error) {
+          console.error('Error fetching data:', error);
+          setSteps([]);
+          Alert.alert(
+            'Error',
+            'Failed to load service tracking data. Please try again later.'
+          );
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      getUserData();
+
+      return () => {
+        setSteps([]);
+        setExpandedStep(null);
+        setLoading(true);
+      };
+    }, [])
+  );
 
   useEffect(() => {
     // Animate progress bar when progress changes
@@ -185,6 +199,23 @@ const ServiceTracking: React.FC = () => {
       />
     </View>
   );
+
+  const renderImage = (imageUrl: string) => {
+    if (!imageUrl) return null;
+
+    return (
+      <View style={styles.imageContainer}>
+        <Image 
+          source={{ 
+            uri: imageUrl,
+            cache: 'reload'
+          }}
+          style={styles.stepImage}
+          resizeMode="contain"
+        />
+      </View>
+    );
+  };
 
   const StepCard = ({ step }: { step: ServiceStep }) => {
     const isExpanded = expandedStep === step.id;
@@ -267,15 +298,7 @@ const ServiceTracking: React.FC = () => {
             ]}
           >
             <Text style={styles.stepDescription}>{step.description}</Text>
-              {step.images && step.images!='' && (
-                <View style={styles.imageContainer}>
-                  <Image 
-                    source={{ uri: step.images }}
-                    style={styles.stepImage}
-                    resizeMode="contain"
-                  />
-              </View>
-              )}
+            {step.images && renderImage(step.images)}
           </Animated.View>
         </Pressable>
       </Animated.View>
