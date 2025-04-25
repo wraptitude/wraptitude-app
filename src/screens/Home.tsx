@@ -28,6 +28,7 @@ import NewsDetail from './NewsDetail';
 import EmergencyService from './EmergencyService';
 import FreeQuote from './FreeQuote';
 import Profile from './Profile';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 interface HomeProps {
   route: {
@@ -133,28 +134,29 @@ const Home: React.FC<HomeProps> = ({ route }) => {
   };
 
   const menuItems = [
-    { id: 'tracking', icon: '🚗', title: 'Service Tracking', description: 'Track your vehicle service progress' },
-    { id: 'history', icon: '📋', title: 'Service History', description: 'View your past services' },
-    { id: 'services', icon: '🛠️', title: 'Our Services', description: 'Explore our professional services' },
-    { id: 'knowledge', icon: '📚', title: 'Knowledge Base', description: 'Learn about car films' },
-    { id: 'news', icon: '📰', title: 'News', description: 'Latest updates' },
-    { id: 'about', icon: '👥', title: 'About Us', description: 'Learn more about Wraptitude' },
-    { id: 'quote', icon: '💰', title: 'Free Quote', description: 'Get an instant quote for your vehicle' },
-    { id: 'contact', icon: '📞', title: 'Contact Us', description: 'Get in touch' },
+    { id: 'tracking', icon: 'directions-car', title: 'Service Tracking', description: 'Track your vehicle service progress' },
+    { id: 'history', icon: 'history', title: 'Service History', description: 'View your past services' },
+    // { id: 'emergency', icon: 'emergency', title: 'Emergency Service', description: 'Call for emergency service' },
+    { id: 'services', icon: 'build', title: 'Our Services', description: 'Explore our professional services' },
+    { id: 'knowledge', icon: 'book', title: 'Knowledge Base', description: 'Learn about car films' },
+    { id: 'news', icon: 'newspaper', title: 'News', description: 'Latest updates' },
+    { id: 'about', icon: 'person', title: 'About Us', description: 'Learn more about Wraptitude' },
+    { id: 'quote', icon: 'calculate', title: 'Free Quote', description: 'Get an instant quote for your vehicle' },
+    { id: 'contact', icon: 'phone', title: 'Contact Us', description: 'Get in touch' },
   ];
 
   const renderFooterIcon = (iconName: string) => {
     switch (iconName) {
       case 'home':
-        return '🏠';
+        return <Icon name="home" size={24} color="#FFFFFF" />;
       case 'profile':
-        return '👤';
+        return <Icon name="person" size={24} color="#FFFFFF" />;
       case 'quote':
-        return '💰';
+        return <Icon name="calculate" size={24} color="#FFFFFF" />;
       case 'tracking':
-        return '🚗';
+        return <Icon name="directions-car" size={24} color="#FFFFFF" />;
       default:
-        return '🏠';
+        return <Icon name="home" size={24} color="#FFFFFF" />;
     }
   };
 
@@ -205,7 +207,11 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                     }}
                     accessibilityLabel={item.title}
                   >
-                    <Text style={styles.menuIcon}>{item.icon}</Text>
+                    {/* <Text style={styles.menuIcon}>{item.icon}</Text> */}
+                    {/* <Icon name={item.icon} size={50} color="#FFFFFF" /> */}
+                    <View style={{width: 50, height: 50, justifyContent: 'center', alignItems: 'center', borderRadius: 100}}>
+                      <Icon name={item.icon} size={24} color="#FFFFFF" />
+                    </View>
                     <Text style={styles.menuTitle}>{item.title}</Text>
                     <Text style={styles.menuDescription}>{item.description}</Text>
                   </Pressable>
@@ -261,8 +267,13 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                       resizeMode="contain"
                     />
                   </View>
-                  <Pressable style={styles.signOutButton} onPress={handleSignOut}>
+                  {/* <Pressable style={styles.signOutButton} onPress={handleSignOut}>
                     <Text style={styles.signOutText}>Sign Out</Text>
+                  </Pressable> */}
+                  <Pressable  onPress={handleSignOut}>
+
+                    {/* <Text style={styles.signOutText}>Sign Out</Text> */}
+                    <Icon name="logout" size={24} color="#FFFFFF" />
                   </Pressable>
                 </>
               ) : (
