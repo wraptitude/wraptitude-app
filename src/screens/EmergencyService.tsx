@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   Linking,
   Alert,
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+import { useNavigation } from '@react-navigation/native';
 
 const emergencyServices = [
   {
@@ -60,7 +62,10 @@ const emergencyServices = [
   },
 ];
 
-const EmergencyService: React.FC = () => {
+const EmergencyService = () => {
+  const navigation = useNavigation();
+  const [selectedService, setSelectedService] = useState('');
+
   const handleEmergencyCall = async () => {
     try {
       await Linking.openURL('tel:4373401121');
@@ -78,11 +83,34 @@ const EmergencyService: React.FC = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Emergency Services</Text>
         <Text style={styles.headerDescription}>
-          Select the type of emergency you're experiencing, and we'll provide immediate assistance
+          Select the type of emergency you're experiencing
         </Text>
       </View>
 
-      <View style={styles.servicesContainer}>
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={selectedService}
+          onValueChange={(value) => {
+            setSelectedService(value);
+            if (value) {
+              navigation.navigate('EmergencyServiceUrgentNonUrgent', { serviceId: value });
+            }
+          }}
+          style={styles.picker}
+          dropdownIconColor="#FFFFFF"
+        >
+          <Picker.Item label="Select a service..." value="" />
+          {emergencyServices.map((service) => (
+            <Picker.Item
+              key={service.id}
+              label={`${service.icon} ${service.title}`}
+              value={service.id}
+            />
+          ))}
+        </Picker>
+      </View>
+
+      {/* <View style={styles.servicesContainer}>
         {emergencyServices.map((service) => (
           <Pressable
             key={service.id}
@@ -98,7 +126,7 @@ const EmergencyService: React.FC = () => {
             </View>
           </Pressable>
         ))}
-      </View>
+      </View> */}
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>
@@ -134,7 +162,17 @@ const styles = StyleSheet.create({
   headerDescription: {
     fontSize: 14,
     color: '#cccccc',
-    lineHeight: 20,
+    marginBottom: 24,
+  },
+  pickerContainer: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#333',
+    overflow: 'hidden',
+  },
+  picker: {
+    color: '#FFFFFF',
   },
   servicesContainer: {
     padding: 20,

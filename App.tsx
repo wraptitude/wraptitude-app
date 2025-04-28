@@ -36,6 +36,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Services from './src/screens/Services';
 import FreeQuote from './src/screens/FreeQuote';
+import EmergencyService from './src/screens/EmergencyService';
+import EmergencyServiceUrgentNonUrgent from './src/screens/EmergencyServiceUrgentNonUrgent';
+import NonUrgentForm from './src/screens/NonUrgentForm';
 
 // Configure Amplify
 Amplify.configure(awsconfig);
@@ -499,6 +502,9 @@ function App(): React.JSX.Element {
                   },
                 }}
               />
+              <Stack.Screen name="EmergencyService" component={EmergencyService} />
+              <Stack.Screen name="EmergencyServiceUrgentNonUrgent" component={EmergencyServiceUrgentNonUrgent} />
+              <Stack.Screen name="NonUrgentForm" component={NonUrgentForm} />
               </Stack.Navigator>
             </NavigationContainer>
             {/* <Home onSignOut={() => setIsAuthenticated(false)} /> */}

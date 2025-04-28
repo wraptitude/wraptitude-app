@@ -136,7 +136,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
   const menuItems = [
     { id: 'tracking', icon: 'directions-car', title: 'Service Tracking', description: 'Track your vehicle service progress' },
     { id: 'history', icon: 'history', title: 'Service History', description: 'View your past services' },
-    // { id: 'emergency', icon: 'emergency', title: 'Emergency Service', description: 'Call for emergency service' },
+    { id: 'emergency', icon: 'emergency', title: 'Emergency Service', description: 'Call for emergency service' },
     { id: 'services', icon: 'build', title: 'Our Services', description: 'Explore our professional services' },
     { id: 'knowledge', icon: 'book', title: 'Knowledge Base', description: 'Learn about car films' },
     { id: 'news', icon: 'newspaper', title: 'News', description: 'Latest updates' },

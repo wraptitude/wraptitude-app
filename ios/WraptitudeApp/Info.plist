@@ -64,6 +64,10 @@
 		<string>Octicons.ttf</string>
 		<string>Zocial.ttf</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>We need to access your camera for emergency service photo submission.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need to access your photo library for selecting pictures.</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
 </dict>
