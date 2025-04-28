@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, Pressable, Image, TextInput, Alert,
   KeyboardAvoidingView, Platform, ScrollView
 } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { fetchUserAttributes } from 'aws-amplify/auth';
 
 const emergencyServices = [
     {
@@ -63,6 +64,20 @@ const NonUrgentForm = ({ route, navigation }) => {
   const [details, setDetails] = useState('');
   const [photo, setPhoto] = useState<{ uri: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [userAttributes, setUserAttributes] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchAttributes = async () => {
+      try {
+        const attrs = await fetchUserAttributes();
+        setUserAttributes(attrs);
+        console.log(attrs);
+      } catch {
+        Alert.alert('Error', 'Failed to fetch user information.');
+      }
+    };
+    fetchAttributes();
+  }, []);
 
   const handleTakePhoto = async () => {
     try {
@@ -109,6 +124,10 @@ const NonUrgentForm = ({ route, navigation }) => {
       Alert.alert('Photo Required', 'Please take or select a photo before submitting.');
       return;
     }
+    if (!userAttributes) {
+      Alert.alert('User Info Missing', 'User information is required to submit the report.');
+      return;
+    }
     setSubmitting(true);
     try {
       const response = await fetch(photo.uri);
@@ -119,10 +138,14 @@ const NonUrgentForm = ({ route, navigation }) => {
         reader.readAsDataURL(blob);
       });
 
-      const apiResponse = await fetch('https://xb4ot97nih.execute-api.us-east-2.amazonaws.com/PROD', {
+      const apiResponse = await fetch('https://x58qaqacwc.execute-api.us-east-2.amazonaws.com/PROD', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          userId: userAttributes.sub, // or userAttributes.sub if id is not present
+          name: userAttributes.name,
+          email: userAttributes.email,
+          phone: userAttributes.phone_number,
           serviceType: `Emergency - ${selectedService?.title} (Non-Urgent)`,
           image: imageBase64,
           details,
