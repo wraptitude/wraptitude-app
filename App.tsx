@@ -502,9 +502,45 @@ function App(): React.JSX.Element {
                   },
                 }}
               />
-              <Stack.Screen name="EmergencyService" component={EmergencyService} />
-              <Stack.Screen name="EmergencyServiceUrgentNonUrgent" component={EmergencyServiceUrgentNonUrgent} />
-              <Stack.Screen name="NonUrgentForm" component={NonUrgentForm} />
+              <Stack.Screen name="EmergencyService" component={EmergencyService}                 
+                options={{
+                  headerShown: true,
+                  headerTitle: "Emergency Service",
+                  headerBackTitle: "Back",
+                  headerStyle: {
+                    backgroundColor: '#040404',
+                  },
+                  headerTintColor: '#fff',
+                  headerTitleStyle: {
+                    fontWeight: 'bold',
+                  },
+                }}/>
+              <Stack.Screen name="EmergencyServiceUrgentNonUrgent" component={EmergencyServiceUrgentNonUrgent} 
+              options={{
+                  headerShown: true,
+                  headerTitle: "Emergency Service",
+                  headerBackTitle: "Back",
+                  headerStyle: {
+                    backgroundColor: '#040404',
+                  },
+                  headerTintColor: '#fff',
+                  headerTitleStyle: {
+                    fontWeight: 'bold',
+                  },
+                }}/>
+              <Stack.Screen name="NonUrgentForm" component={NonUrgentForm} 
+              options={{
+                  headerShown: true,
+                  headerTitle: "Non-Urgent Form",
+                  headerBackTitle: "Back",
+                  headerStyle: {
+                    backgroundColor: '#040404',
+                  },
+                  headerTintColor: '#fff',
+                  headerTitleStyle: {
+                    fontWeight: 'bold',
+                  },
+                }}/>
               </Stack.Navigator>
             </NavigationContainer>
             {/* <Home onSignOut={() => setIsAuthenticated(false)} /> */}
