@@ -163,7 +163,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
   const menuItems = [
     { id: 'tracking', icon: 'directions-car', title: 'Service Tracking', description: 'Track your vehicle service progress' },
     { id: 'history', icon: 'history', title: 'Service History', description: 'View your past services' },
-    { id: 'emergency', icon: 'emergency', title: 'Emergency Service', description: 'Call for emergency service' },
+    { id: 'emergency', icon: 'warning', title: 'Emergency Service', description: 'Call for emergency service' },
     { id: 'services', icon: 'build', title: 'Our Services', description: 'Explore our professional services' },
     { id: 'knowledge', icon: 'book', title: 'Knowledge Base', description: 'Learn about car films' },
     { id: 'news', icon: 'newspaper', title: 'News', description: 'Latest updates' },
@@ -256,7 +256,10 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                 <Animated.View 
                   key={item.id} 
                   style={[
-                    { transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }] }
+                    { 
+                      transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }],
+                      marginBottom: 10,
+                    }
                   ]}
                 >
                   <Pressable
@@ -278,7 +281,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                           ? ['rgba(217, 42, 42, 0.4)', 'rgba(199, 6, 40, 0.7)'] 
                           : item.id === 'quote'
                             ? ['rgba(37, 118, 235, 0.4)', 'rgba(59, 130, 246, 0.7)']
-                            : ['rgba(40, 40, 40, 0.7)', 'rgba(30, 30, 30, 0.95)']
+                            : ['rgba(15, 15, 15, 0.7)', 'rgba(10, 10, 10, 0.85)']
                       }
                       style={styles.menuButtonGradient}
                     >
@@ -293,7 +296,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                               ? ['rgba(255, 150, 150, 0.2)', 'rgba(199, 6, 40, 0.3)'] 
                               : item.id === 'quote'
                                 ? ['rgba(150, 190, 255, 0.2)', 'rgba(59, 130, 246, 0.3)']
-                                : ['rgba(70, 70, 70, 0.3)', 'rgba(40, 40, 40, 0.6)']
+                                : ['rgba(50, 50, 50, 0.3)', 'rgba(40, 40, 40, 0.5)']
                           }
                           style={styles.iconGradient}
                         >
@@ -464,7 +467,6 @@ const Home: React.FC<HomeProps> = ({ route }) => {
             >
               <View style={styles.footerIcon}>
                 {renderFooterIcon('home', activeTab === 'home')}
-                {activeTab === 'home' && <View style={styles.activeIndicator} />}
               </View>
               <Text style={[
                 styles.footerText, 
@@ -543,7 +545,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.65)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
   },
   mainContainer: {
     flex: 1,
@@ -551,7 +553,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingVertical: 12,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
     position: 'absolute',
     top: 44,
     left: 0,
@@ -578,7 +580,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButtonPressed: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   backButtonText: {
     fontSize: 20,
@@ -586,13 +588,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   screenTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '600',
     color: '#FFFFFF',
     flex: 1,
     textAlign: 'center',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   signOutButton: {
     padding: 10,
@@ -601,7 +603,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signOutButtonPressed: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   signOutText: {
     color: '#c70628',
@@ -630,21 +632,20 @@ const styles = StyleSheet.create({
     width: buttonWidth,
     height: buttonWidth * 1.1,
     borderRadius: 16,
-    marginBottom: 16,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 4,
   },
   menuButtonGradient: {
-    flex: 20,
+    flex: 1,
     // padding: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    // borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 16,
   },
   menuButtonPressed: {
@@ -653,45 +654,44 @@ const styles = StyleSheet.create({
   },
   emergencyButton: {
     shadowColor: '#c70628',
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.3,
   },
   quoteButton: {
     shadowColor: '#3b82f6',
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.3,
   },
   iconContainer: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: 'rgba(30, 30, 30, 0.8)',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 14,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
   },
   emergencyIconContainer: {
-    backgroundColor: 'rgba(199, 6, 40, 0.2)',
-    borderColor: 'rgba(255, 125, 125, 0.4)',
-    borderWidth: 1.5,
+    backgroundColor: 'rgba(199, 6, 40, 0.1)',
+    borderColor: 'rgba(255, 125, 125, 0.3)',
+    borderWidth: 1,
     shadowColor: '#c70628',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.4,
-    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
   },
   quoteIconContainer: {
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-    borderColor: 'rgba(159, 200, 255, 0.4)',
-    borderWidth: 1.5,
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    borderColor: 'rgba(159, 200, 255, 0.3)',
+    borderWidth: 1,
     shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.4,
-    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
   },
   menuTitle: {
     color: '#FFFFFF',
@@ -699,7 +699,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 6,
-    letterSpacing: 0.5,
+    letterSpacing: 0.2,
   },
   specialMenuTitle: {
     fontWeight: '700',
@@ -718,9 +718,9 @@ const styles = StyleSheet.create({
   },
   footerNav: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(15, 15, 15, 0.95)',
+    backgroundColor: 'rgba(10, 10, 10, 0.9)',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
     paddingVertical: 12,
     paddingBottom: Platform.OS === 'ios' ? 28 : 16, // Account for iOS home indicator
     position: 'absolute',
@@ -729,9 +729,9 @@ const styles = StyleSheet.create({
     right: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 10,
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 5,
   },
   footerTab: {
     flex: 1,
@@ -760,18 +760,10 @@ const styles = StyleSheet.create({
   iconGradient: {
     width: '100%',
     height: '100%',
-    borderRadius: 25,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  activeIndicator: {
-    position: 'absolute',
-    bottom: -8,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#c70628',
-  },
+  }
 });
 
 export default Home;
