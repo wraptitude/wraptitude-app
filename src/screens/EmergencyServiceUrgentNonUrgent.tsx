@@ -27,7 +27,7 @@ const emergencyServices = [
     iconFallback: '🚗',
     title: 'Vehicle Collision',
     description: 'Emergency assistance for vehicle accidents or collisions',
-    phoneNumbers: ['416-990-2218', '416-302-2203'],
+    phoneNumbers: ['647-836-8026', '416-990-2218', '416-302-2203'],
   },
   {
     id: 'other',

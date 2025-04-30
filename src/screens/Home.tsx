@@ -172,18 +172,23 @@ const Home: React.FC<HomeProps> = ({ route }) => {
     { id: 'contact', icon: 'phone', title: 'Contact Us', description: 'Get in touch' },
   ];
 
-  const renderFooterIcon = (iconName: string) => {
+  const renderFooterIcon = (iconName: string, isActive: boolean) => {
+    const getIconColor = () => {
+      if (isActive) return '#FFFFFF';
+      return 'rgba(255, 255, 255, 0.7)';
+    };
+
     switch (iconName) {
       case 'home':
-        return <Icon name="home" size={24} color="#FFFFFF" />;
+        return <Icon name="home" size={24} color={getIconColor()} />;
       case 'profile':
-        return <Icon name="person" size={24} color="#FFFFFF" />;
+        return <Icon name="person" size={24} color={getIconColor()} />;
       case 'quote':
-        return <Icon name="calculate" size={24} color="#FFFFFF" />;
+        return <Icon name="calculate" size={24} color={getIconColor()} />;
       case 'tracking':
-        return <Icon name="directions-car" size={24} color="#FFFFFF" />;
+        return <Icon name="directions-car" size={24} color={getIconColor()} />;
       default:
-        return <Icon name="home" size={24} color="#FFFFFF" />;
+        return <Icon name="home" size={24} color={getIconColor()} />;
     }
   };
 
@@ -282,15 +287,28 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                         item.id === 'emergency' && styles.emergencyIconContainer,
                         item.id === 'quote' && styles.quoteIconContainer
                       ]}>
-                        <Icon 
-                          name={item.icon} 
-                          size={24} 
-                          color={
-                            item.id === 'emergency' || item.id === 'quote' 
-                              ? '#FFFFFF' 
-                              : '#FFFFFF'
-                          } 
-                        />
+                        <LinearGradient
+                          colors={
+                            item.id === 'emergency' 
+                              ? ['rgba(255, 150, 150, 0.2)', 'rgba(199, 6, 40, 0.3)'] 
+                              : item.id === 'quote'
+                                ? ['rgba(150, 190, 255, 0.2)', 'rgba(59, 130, 246, 0.3)']
+                                : ['rgba(70, 70, 70, 0.3)', 'rgba(40, 40, 40, 0.6)']
+                          }
+                          style={styles.iconGradient}
+                        >
+                          <Icon 
+                            name={item.icon === 'emergency' ? 'warning' : item.icon} 
+                            size={26} 
+                            color={
+                              item.id === 'emergency' 
+                                ? '#ff9494' 
+                                : item.id === 'quote'
+                                  ? '#a8cbff'
+                                  : '#FFFFFF'
+                            } 
+                          />
+                        </LinearGradient>
                       </View>
                       <Text style={[
                         styles.menuTitle,
@@ -445,7 +463,8 @@ const Home: React.FC<HomeProps> = ({ route }) => {
               }}
             >
               <View style={styles.footerIcon}>
-                {renderFooterIcon('home')}
+                {renderFooterIcon('home', activeTab === 'home')}
+                {activeTab === 'home' && <View style={styles.activeIndicator} />}
               </View>
               <Text style={[
                 styles.footerText, 
@@ -463,7 +482,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
               }}
             >
               <View style={styles.footerIcon}>
-                {renderFooterIcon('tracking')}
+                {renderFooterIcon('tracking', activeTab === 'tracking')}
               </View>
               <Text style={[
                 styles.footerText, 
@@ -481,7 +500,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
               }}
             >
               <View style={styles.footerIcon}>
-                {renderFooterIcon('quote')}
+                {renderFooterIcon('quote', activeTab === 'quote')}
               </View>
               <Text style={[
                 styles.footerText, 
@@ -499,7 +518,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
               }}
             >
               <View style={styles.footerIcon}>
-                {renderFooterIcon('profile')}
+                {renderFooterIcon('profile', activeTab === 'profile')}
               </View>
               <Text style={[
                 styles.footerText, 
@@ -641,23 +660,38 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
   },
   iconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: 'rgba(30, 30, 30, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    marginBottom: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
   },
   emergencyIconContainer: {
-    backgroundColor: 'rgba(199, 6, 40, 0.3)',
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(199, 6, 40, 0.2)',
+    borderColor: 'rgba(255, 125, 125, 0.4)',
+    borderWidth: 1.5,
+    shadowColor: '#c70628',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 5,
   },
   quoteIconContainer: {
-    backgroundColor: 'rgba(59, 130, 246, 0.3)',
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    borderColor: 'rgba(159, 200, 255, 0.4)',
+    borderWidth: 1.5,
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 5,
   },
   menuTitle: {
     color: '#FFFFFF',
@@ -722,6 +756,21 @@ const styles = StyleSheet.create({
   footerTextActive: {
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  iconGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activeIndicator: {
+    position: 'absolute',
+    bottom: -8,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#c70628',
   },
 });
 
