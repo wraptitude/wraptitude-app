@@ -8,13 +8,14 @@ import {
   Pressable,
   Alert,
   Image,
-  TouchableOpacity,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
 import { fetchUserAttributes } from 'aws-amplify/auth';
 import { launchImageLibrary } from 'react-native-image-picker';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 // Update the props interface
 interface FreeQuoteProps {
@@ -87,7 +88,6 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
 
       // Convert image to base64 if it exists
       let imageBase64 = null;
-      console.log('123')
       if (formData.image) {
         const response = await fetch(formData.image.uri);
         const blob = await response.blob();
@@ -97,7 +97,7 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
           reader.readAsDataURL(blob);
         });
       }
-      console.log('456')
+      
       const response = await fetch('https://xb4ot97nih.execute-api.us-east-2.amazonaws.com/PROD', {
         method: 'POST',
         headers: {
@@ -156,230 +156,209 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
   return (
     <View style={styles.container}>
       <ScrollView
-        style={styles.content}
+        style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.headerSection}>
-          {onGoBack && (
-            <Pressable
-              style={styles.backButton}
-              onPress={onGoBack}
-            >
-              <Text style={styles.backButtonText}>← Back</Text>
-            </Pressable>
-          )}
           <Text style={styles.title}>GET YOUR FREE QUOTE</Text>
           <Text style={styles.description}>
             Fill out the form below and we'll provide you with a detailed quote for your vehicle enhancement needs.
           </Text>
         </View>
 
-        <View style={styles.formCard}>
-          <View style={styles.form}>
-            {/* Personal Information */}
-            <View style={styles.formSection}>
+        {/* Form Sections as Cards */}
+        <View style={styles.formSectionsContainer}>
+          {/* Personal Information Card */}
+          <View style={styles.formCard}>
+            <View style={styles.cardHeader}>
+              <Icon name="person" size={20} color="#FFFFFF" />
               <Text style={styles.sectionTitle}>Personal Information</Text>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Name <Text style={styles.required}>*</Text></Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your name"
-                  placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                  value={formData.name}
-                  onChangeText={(text) => setFormData({ ...formData, name: text })}
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Email <Text style={styles.required}>*</Text></Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your email"
-                  placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                  keyboardType="email-address"
-                  value={formData.email}
-                  onChangeText={(text) => setFormData({ ...formData, email: text })}
-                  autoCapitalize="none"
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Phone <Text style={styles.required}>*</Text></Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your phone number"
-                  placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                  keyboardType="phone-pad"
-                  value={formData.phone}
-                  onChangeText={(text) => setFormData({ ...formData, phone: text })}
-                />
-              </View>
             </View>
-
-            {/* Vehicle Information */}
-            <View style={styles.formSection}>
-              <Text style={styles.sectionTitle}>Vehicle Information</Text>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Vehicle Make</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g., BMW, Tesla, Porsche"
-                  placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                  value={formData.vehicleMake}
-                  onChangeText={(text) => setFormData({ ...formData, vehicleMake: text })}
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Vehicle Model</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g., Model 3, M3, 911"
-                  placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                  value={formData.vehicleModel}
-                  onChangeText={(text) => setFormData({ ...formData, vehicleModel: text })}
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Vehicle Year</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g., 2024"
-                  placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                  keyboardType="numeric"
-                  value={formData.vehicleYear}
-                  onChangeText={(text) => setFormData({ ...formData, vehicleYear: text })}
-                />
-              </View>
-            </View>
-
-            {/* Service Information */}
-            <View style={styles.formSection}>
-              <Text style={styles.sectionTitle}>Service Details</Text>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Service Type</Text>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={formData.serviceType}
-                    style={styles.picker}
-                    dropdownIconColor="#fff"
-                    onValueChange={(value) => setFormData({ ...formData, serviceType: value })}
-                  >
-                    {services.map((service) => (
-                      <Picker.Item
-                        key={service}
-                        label={service}
-                        value={service}
-                        color="#FFFFFF"
-                      />
-                    ))}
-                  </Picker>
-                </View>
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Additional Details</Text>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Tell us more about your requirements"
-                  placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                  multiline
-                  numberOfLines={4}
-                  value={formData.message}
-                  onChangeText={(text) => setFormData({ ...formData, message: text })}
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Vehicle Image</Text>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.imageUploadButton,
-                    // pressed && styles.buttonPressed
-                  ]}
-                  onPress={handleImagePick}
-                >
-                  <Text style={styles.imageUploadText}>
-                    {formData.image ? 'Change Image' : 'Select Image'}
-                  </Text>
-                </Pressable>
-                {formData.image && (
-                  <Image
-                    source={formData.image}
-                    style={styles.previewImage}
-                    resizeMode="cover"
-                  />
-                )}
-              </View>
-            </View>
-
-            {/* Submit Button Container */}
-            {/* <View style={styles.submitButtonContainer}>
-              <TouchableOpacity 
-                style={({ pressed }) => [
-                  styles.submitButton,
-                  loading && styles.submitButtonDisabled,
-                  pressed && styles.buttonPressed
-                ]}
-                onPress={handleSubmit}
-                disabled={loading}
-              >
-                {loading ? (
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator color="#FFFFFF" />
-                    <Text style={styles.loadingText}>
-                      Submitting request...{"\n"}This may take a few moments
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.buttonContent}>
-                    <Text style={styles.submitButtonText}>GET YOUR QUOTE</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            </View> */}
+            
             <View style={styles.inputGroup}>
+              <Text style={styles.label}>Name <Text style={styles.required}>*</Text></Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your name"
+                placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                value={formData.name}
+                onChangeText={(text) => setFormData({ ...formData, name: text })}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email <Text style={styles.required}>*</Text></Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                keyboardType="email-address"
+                value={formData.email}
+                onChangeText={(text) => setFormData({ ...formData, email: text })}
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Phone <Text style={styles.required}>*</Text></Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your phone number"
+                placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                keyboardType="phone-pad"
+                value={formData.phone}
+                onChangeText={(text) => setFormData({ ...formData, phone: text })}
+              />
+            </View>
+          </View>
+
+          {/* Vehicle Information Card */}
+          <View style={styles.formCard}>
+            <View style={styles.cardHeader}>
+              <Icon name="directions-car" size={20} color="#FFFFFF" />
+              <Text style={styles.sectionTitle}>Vehicle Information</Text>
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Vehicle Make</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., BMW, Tesla, Porsche"
+                placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                value={formData.vehicleMake}
+                onChangeText={(text) => setFormData({ ...formData, vehicleMake: text })}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Vehicle Model</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., Model 3, M3, 911"
+                placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                value={formData.vehicleModel}
+                onChangeText={(text) => setFormData({ ...formData, vehicleModel: text })}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Vehicle Year</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., 2024"
+                placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                keyboardType="numeric"
+                value={formData.vehicleYear}
+                onChangeText={(text) => setFormData({ ...formData, vehicleYear: text })}
+              />
+            </View>
+          </View>
+
+          {/* Service Details Card */}
+          <View style={styles.formCard}>
+            <View style={styles.cardHeader}>
+              <Icon name="build" size={20} color="#FFFFFF" />
+              <Text style={styles.sectionTitle}>Service Details</Text>
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Service Type</Text>
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={formData.serviceType}
+                  style={styles.picker}
+                  dropdownIconColor="#fff"
+                  onValueChange={(value) => setFormData({ ...formData, serviceType: value })}
+                >
+                  {services.map((service) => (
+                    <Picker.Item
+                      key={service}
+                      label={service}
+                      value={service}
+                      color="#FFFFFF"
+                    />
+                  ))}
+                </Picker>
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Additional Details</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Tell us more about your requirements"
+                placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                multiline
+                numberOfLines={4}
+                value={formData.message}
+                onChangeText={(text) => setFormData({ ...formData, message: text })}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Vehicle Image</Text>
               <Pressable
                 style={({ pressed }) => [
-                  styles.getQuoteButton,
-                  // pressed && styles.buttonPressed,
-                  loading && styles.submitButtonDisabled
+                  styles.imageUploadButton,
+                  pressed && styles.buttonPressed
                 ]}
-                onPress={handleSubmit}
+                onPress={handleImagePick}
               >
-                <Text style={styles.imageUploadText}>
-                {loading ? (
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator color="#FFFFFF" />
-                    <Text style={styles.loadingText}>
-                      Submitting request...{"\n"}This may take a few moments
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.buttonContent}>
-                    <Text style={styles.submitButtonText}>GET YOUR QUOTE</Text>
-                  </View>
-                )}
+                <Icon name="photo-camera" size={18} color="#FFFFFF" style={styles.buttonIcon} />
+                <Text style={styles.buttonText}>
+                  {formData.image ? 'Change Image' : 'Select Image'}
                 </Text>
               </Pressable>
+              {formData.image && (
+                <Image
+                  source={formData.image}
+                  style={styles.previewImage}
+                  resizeMode="cover"
+                />
+              )}
             </View>
-
           </View>
+
+          {/* Submit Button */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.submitButton,
+              pressed && styles.buttonPressed,
+              loading && styles.buttonDisabled
+            ]}
+            onPress={handleSubmit}
+            disabled={loading}
+          >
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator color="#FFFFFF" size="small" />
+                <Text style={styles.loadingText}>Submitting request...</Text>
+              </View>
+            ) : (
+              <View style={styles.buttonContent}>
+                <Icon name="send" size={18} color="#FFFFFF" style={styles.buttonIcon} />
+                <Text style={styles.submitButtonText}>SUBMIT QUOTE REQUEST</Text>
+              </View>
+            )}
+          </Pressable>
         </View>
       </ScrollView>
     </View>
   );
 };
 
+const { width } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor: 'transparent',
-    backgroundColor: 'black',
+    backgroundColor: 'transparent',
   },
-  content: {
+  scrollContainer: {
     flex: 1,
+  },
+  scrollContent: {
     paddingBottom: 100, // Space for footer
   },
   headerSection: {
@@ -387,7 +366,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
     color: '#FFFFFF',
     marginBottom: 12,
@@ -395,63 +374,64 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   description: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#A0A0A0',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 20,
     maxWidth: '90%',
+  },
+  formSectionsContainer: {
+    padding: 16,
+    gap: 16,
   },
   formCard: {
     backgroundColor: 'rgba(40, 40, 40, 0.9)',
-    borderRadius: 16,
-    margin: 20,
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
   },
-  form: {
-    padding: 20,
-    gap: 24,
-  },
-  formSection: {
-    gap: 16,
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    gap: 8,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
-    marginBottom: 4,
     letterSpacing: 0.5,
   },
   inputGroup: {
-    gap: 8,
+    marginBottom: 12,
   },
   label: {
     fontSize: 14,
     color: '#A0A0A0',
     fontWeight: '500',
-    letterSpacing: 0.5,
+    marginBottom: 6,
   },
   required: {
     color: '#c70628',
-    fontSize: 14,
   },
   input: {
     backgroundColor: 'rgba(26, 26, 26, 0.8)',
     borderRadius: 8,
-    padding: 14,
+    padding: 12,
     color: '#FFFFFF',
     fontSize: 15,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   textArea: {
-    height: 120,
+    height: 100,
     textAlignVertical: 'top',
   },
   pickerContainer: {
@@ -466,48 +446,35 @@ const styles = StyleSheet.create({
   },
   imageUploadButton: {
     backgroundColor: 'rgba(26, 26, 26, 0.8)',
-    padding: 14,
     borderRadius: 8,
+    padding: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  imageUploadText: {
+  buttonIcon: {
+    marginRight: 8,
+  },
+  buttonText: {
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '500',
-    letterSpacing: 0.5,
-  },
-  getQuoteButton: {
-    backgroundColor: '#b30523',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   previewImage: {
     width: '100%',
-    height: 200,
+    height: 180,
     borderRadius: 8,
-    marginTop: 8,
-  },
-  submitButtonContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
-    width: '100%',
+    marginTop: 12,
   },
   submitButton: {
     backgroundColor: '#c70628',
     borderRadius: 8,
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    minWidth: 180,
+    padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
+    marginTop: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -515,6 +482,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   buttonContent: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -522,30 +490,25 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-    textAlign: 'center',
   },
   buttonPressed: {
     opacity: 0.8,
     backgroundColor: '#b30523',
-    borderColor: 'rgba(255, 255, 255, 0.8)',
   },
-  submitButtonDisabled: {
+  buttonDisabled: {
     opacity: 0.5,
     backgroundColor: '#999',
-    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   loadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
-    minHeight: 24,
+    gap: 10,
   },
   loadingText: {
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '500',
-    textAlign: 'center',
   },
   backButton: {
     padding: 10,
