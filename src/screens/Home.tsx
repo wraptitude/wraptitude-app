@@ -47,6 +47,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [activeTab, setActiveTab] = useState('home');
   const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [quoteSourceScreen, setQuoteSourceScreen] = useState<Screen>('menu');
 
   // Animation refs for buttons
   const buttonScales = {
@@ -82,6 +83,10 @@ const Home: React.FC<HomeProps> = ({ route }) => {
   };
 
   const handleScreenTransition = (screen: Screen) => {
+    if (screen === 'quote') {
+      setQuoteSourceScreen(currentScreen);
+    }
+    
     Animated.parallel([
       Animated.timing(screenOpacity, {
         toValue: 0,
@@ -192,7 +197,14 @@ const Home: React.FC<HomeProps> = ({ route }) => {
         case 'emergency':
           return <EmergencyService />;
         case 'quote':
-          return <FreeQuote selectedService={selectedService} />;
+          return (
+            <FreeQuote 
+              selectedService={selectedService} 
+              onGoBack={() => {
+                setCurrentScreen(quoteSourceScreen);
+              }}
+            />
+          );
         case 'profile':
           return <Profile />;
         default:
@@ -289,6 +301,8 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                     onPress={() => {
                       if (currentScreen === 'newsDetail') {
                         setCurrentScreen('news');
+                      } else if (currentScreen === 'quote') {
+                        setCurrentScreen(quoteSourceScreen);
                       } else {
                         setCurrentScreen('menu');
                       }

@@ -16,12 +16,16 @@ import { useAuthenticator } from '@aws-amplify/ui-react-native';
 import { fetchUserAttributes } from 'aws-amplify/auth';
 import { launchImageLibrary } from 'react-native-image-picker';
 
-// Add props interface
+// Update the props interface
 interface FreeQuoteProps {
   selectedService?: string;
+  onGoBack?: () => void;  // Optional callback for going back
 }
 
-const FreeQuote: React.FC<FreeQuoteProps> = ({ selectedService }) => {
+const FreeQuote: React.FC<FreeQuoteProps> = ({ 
+  selectedService,
+  onGoBack 
+}) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -156,6 +160,14 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({ selectedService }) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerSection}>
+          {onGoBack && (
+            <Pressable
+              style={styles.backButton}
+              onPress={onGoBack}
+            >
+              <Text style={styles.backButtonText}>← Back</Text>
+            </Pressable>
+          )}
           <Text style={styles.title}>GET YOUR FREE QUOTE</Text>
           <Text style={styles.description}>
             Fill out the form below and we'll provide you with a detailed quote for your vehicle enhancement needs.
@@ -534,6 +546,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',
+  },
+  backButton: {
+    padding: 10,
+    alignSelf: 'flex-start',
+    marginBottom: 15,
+  },
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
