@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import {
   ScrollView,
   Linking,
   StatusBar,
+  Platform,
+  BlurView,
 } from 'react-native';
 import { signOut } from 'aws-amplify/auth';
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
@@ -31,6 +33,7 @@ import NonUrgentForm from './NonUrgentForm';
 import FreeQuote from './FreeQuote';
 import Profile from './Profile';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import LinearGradient from 'react-native-linear-gradient';
 
 interface HomeProps {
   route: {
@@ -51,6 +54,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [quoteSourceScreen, setQuoteSourceScreen] = useState<Screen>('menu');
   const [selectedEmergencyService, setSelectedEmergencyService] = useState<string>('');
+  const [scrollY, setScrollY] = useState(0);
 
   // Animation refs for buttons
   const buttonScales = {
@@ -69,17 +73,29 @@ const Home: React.FC<HomeProps> = ({ route }) => {
 
   const screenOpacity = useRef(new Animated.Value(1)).current;
   const screenTranslateY = useRef(new Animated.Value(0)).current;
+  const headerOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // Animate header opacity based on scroll position
+    if (currentScreen === 'menu') {
+      Animated.timing(headerOpacity, {
+        toValue: scrollY > 20 ? 0.95 : 1,
+        duration: 150,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [scrollY, currentScreen]);
 
   const animatePress = (scale: Animated.Value) => {
     Animated.sequence([
       Animated.timing(scale, {
-        toValue: 0.92,
-        duration: 80,
+        toValue: 0.96,
+        duration: 100,
         useNativeDriver: true,
       }),
       Animated.timing(scale, {
         toValue: 1,
-        duration: 80,
+        duration: 100,
         useNativeDriver: true,
       }),
     ]).start();
@@ -95,12 +111,12 @@ const Home: React.FC<HomeProps> = ({ route }) => {
     Animated.parallel([
       Animated.timing(screenOpacity, {
         toValue: 0,
-        duration: 100,
+        duration: 150,
         useNativeDriver: true,
       }),
       Animated.timing(screenTranslateY, {
         toValue: 10,
-        duration: 100,
+        duration: 150,
         useNativeDriver: true,
       }),
     ]).start(() => {
@@ -110,12 +126,12 @@ const Home: React.FC<HomeProps> = ({ route }) => {
       Animated.parallel([
         Animated.timing(screenOpacity, {
           toValue: 1,
-          duration: 100,
+          duration: 150,
           useNativeDriver: true,
         }),
         Animated.timing(screenTranslateY, {
           toValue: 0,
-          duration: 100,
+          duration: 150,
           useNativeDriver: true,
         }),
       ]).start();
@@ -232,22 +248,58 @@ const Home: React.FC<HomeProps> = ({ route }) => {
           return (
             <View style={styles.menuContainer}>
               {menuItems.map((item) => (
-                <Animated.View key={item.id} style={[{ transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }] }]}>
+                <Animated.View 
+                  key={item.id} 
+                  style={[
+                    { transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }] }
+                  ]}
+                >
                   <Pressable
-                    style={styles.menuButton}
+                    style={({pressed}) => [
+                      styles.menuButton,
+                      item.id === 'emergency' && styles.emergencyButton,
+                      item.id === 'quote' && styles.quoteButton,
+                      pressed && styles.menuButtonPressed
+                    ]}
                     onPress={() => {
                       animatePress(buttonScales[item.id]);
                       handleScreenTransition(item.id as Screen);
                     }}
                     accessibilityLabel={item.title}
                   >
-                    {/* <Text style={styles.menuIcon}>{item.icon}</Text> */}
-                    {/* <Icon name={item.icon} size={50} color="#FFFFFF" /> */}
-                    <View style={{width: 50, height: 50, justifyContent: 'center', alignItems: 'center', borderRadius: 100}}>
-                      <Icon name={item.icon} size={24} color="#FFFFFF" />
-                    </View>
-                    <Text style={styles.menuTitle}>{item.title}</Text>
-                    <Text style={styles.menuDescription}>{item.description}</Text>
+                    <LinearGradient
+                      colors={
+                        item.id === 'emergency' 
+                          ? ['rgba(217, 42, 42, 0.4)', 'rgba(199, 6, 40, 0.7)'] 
+                          : item.id === 'quote'
+                            ? ['rgba(37, 118, 235, 0.4)', 'rgba(59, 130, 246, 0.7)']
+                            : ['rgba(40, 40, 40, 0.7)', 'rgba(30, 30, 30, 0.95)']
+                      }
+                      style={styles.menuButtonGradient}
+                    >
+                      <View style={[
+                        styles.iconContainer, 
+                        item.id === 'emergency' && styles.emergencyIconContainer,
+                        item.id === 'quote' && styles.quoteIconContainer
+                      ]}>
+                        <Icon 
+                          name={item.icon} 
+                          size={24} 
+                          color={
+                            item.id === 'emergency' || item.id === 'quote' 
+                              ? '#FFFFFF' 
+                              : '#FFFFFF'
+                          } 
+                        />
+                      </View>
+                      <Text style={[
+                        styles.menuTitle,
+                        (item.id === 'emergency' || item.id === 'quote') && styles.specialMenuTitle
+                      ]}>
+                        {item.title}
+                      </Text>
+                      <Text style={styles.menuDescription}>{item.description}</Text>
+                    </LinearGradient>
                   </Pressable>
                 </Animated.View>
               ))}
@@ -296,6 +348,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
       source={require('../assets/images/1.jpg')}
       style={styles.container}
       blurRadius={8}
+      resizeMode="cover"
     >
       <StatusBar
         barStyle="light-content"
@@ -304,7 +357,17 @@ const Home: React.FC<HomeProps> = ({ route }) => {
       />
       <View style={styles.overlay}>
         <View style={styles.mainContainer}>
-          <View style={styles.header}>
+          {/* Header with glass effect */}
+          <Animated.View 
+            style={[
+              styles.header,
+              { 
+                opacity: headerOpacity,
+                backgroundColor: scrollY > 20 ? 'rgba(10, 10, 10, 0.85)' : 'transparent',
+                borderBottomWidth: scrollY > 20 ? 1 : 0,
+              }
+            ]}
+          >
             <View style={styles.headerContent}>
               {currentScreen === 'menu' ? (
                 <>
@@ -315,19 +378,23 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                       resizeMode="contain"
                     />
                   </View>
-                  {/* <Pressable style={styles.signOutButton} onPress={handleSignOut}>
-                    <Text style={styles.signOutText}>Sign Out</Text>
-                  </Pressable> */}
-                  <Pressable  onPress={handleSignOut}>
-
-                    {/* <Text style={styles.signOutText}>Sign Out</Text> */}
-                    <Icon name="logout" size={24} color="#FFFFFF" />
+                  <Pressable 
+                    style={({pressed}) => [
+                      styles.signOutButton,
+                      pressed && styles.signOutButtonPressed
+                    ]} 
+                    onPress={handleSignOut}
+                  >
+                    <Icon name="logout" size={22} color="#FFFFFF" />
                   </Pressable>
                 </>
               ) : (
                 <>
                   <Pressable
-                    style={styles.backButton}
+                    style={({pressed}) => [
+                      styles.backButton,
+                      pressed && styles.backButtonPressed
+                    ]}
                     onPress={() => {
                       if (currentScreen === 'newsDetail') {
                         setCurrentScreen('news');
@@ -342,7 +409,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                       }
                     }}
                   >
-                    <Text style={styles.backButtonText}>←</Text>
+                    <Icon name="arrow-back-ios" size={20} color="#FFFFFF" />
                   </Pressable>
                   <Text style={styles.screenTitle}>
                     {currentScreen === 'newsDetail' 
@@ -354,20 +421,22 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                 </>
               )}
             </View>
-          </View>
+          </Animated.View>
 
           <View style={styles.contentContainer}>
             <ScrollView
               style={styles.scrollContainer}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.scrollContent}
+              onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+              scrollEventThrottle={16}
             >
               {renderScreen()}
             </ScrollView>
           </View>
 
+          {/* Footer with glass effect */}
           <View style={styles.footerNav}>
-
             <Pressable
               style={[styles.footerTab, activeTab === 'home' && styles.footerTabActive]}
               onPress={() => {
@@ -375,9 +444,17 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                 handleScreenTransition('menu');
               }}
             >
-              <Text style={styles.footerIcon}>{renderFooterIcon('home')}</Text>
-              <Text style={styles.footerText}>Home</Text>
+              <View style={styles.footerIcon}>
+                {renderFooterIcon('home')}
+              </View>
+              <Text style={[
+                styles.footerText, 
+                activeTab === 'home' && styles.footerTextActive
+              ]}>
+                Home
+              </Text>
             </Pressable>
+            
             <Pressable
               style={[styles.footerTab, activeTab === 'tracking' && styles.footerTabActive]}
               onPress={() => {
@@ -385,9 +462,17 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                 handleScreenTransition('tracking');
               }}
             >
-              <Text style={styles.footerIcon}>{renderFooterIcon('tracking')}</Text>
-              <Text style={styles.footerText}>Tracking</Text>
+              <View style={styles.footerIcon}>
+                {renderFooterIcon('tracking')}
+              </View>
+              <Text style={[
+                styles.footerText, 
+                activeTab === 'tracking' && styles.footerTextActive
+              ]}>
+                Tracking
+              </Text>
             </Pressable>
+            
             <Pressable
               style={[styles.footerTab, activeTab === 'quote' && styles.footerTabActive]}
               onPress={() => {
@@ -395,10 +480,16 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                 handleScreenTransition('quote');
               }}
             >
-              <Text style={styles.footerIcon}>{renderFooterIcon('quote')}</Text>
-              <Text style={styles.footerText}>Quote</Text>
+              <View style={styles.footerIcon}>
+                {renderFooterIcon('quote')}
+              </View>
+              <Text style={[
+                styles.footerText, 
+                activeTab === 'quote' && styles.footerTextActive
+              ]}>
+                Quote
+              </Text>
             </Pressable>
-
             
             <Pressable
               style={[styles.footerTab, activeTab === 'profile' && styles.footerTabActive]}
@@ -407,8 +498,15 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                 handleScreenTransition('profile');
               }}
             >
-              <Text style={styles.footerIcon}>{renderFooterIcon('profile')}</Text>
-              <Text style={styles.footerText}>Profile</Text>
+              <View style={styles.footerIcon}>
+                {renderFooterIcon('profile')}
+              </View>
+              <Text style={[
+                styles.footerText, 
+                activeTab === 'profile' && styles.footerTextActive
+              ]}>
+                Profile
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -417,7 +515,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
   );
 };
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 const buttonWidth = (width - 48) / 2;
 
 const styles = StyleSheet.create({
@@ -426,14 +524,20 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.65)',
   },
   mainContainer: {
     flex: 1,
     paddingTop: 44, // Manual padding for status bar
   },
   header: {
-    paddingVertical: 8,
+    paddingVertical: 12,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    position: 'absolute',
+    top: 44,
+    left: 0,
+    right: 0,
+    zIndex: 10,
   },
   headerContent: {
     flexDirection: 'row',
@@ -445,11 +549,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   logo: {
-    width: 120,
+    width: 140,
     height: 40,
   },
   backButton: {
-    padding: 12,
+    padding: 10,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backButtonPressed: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   backButtonText: {
     fontSize: 20,
@@ -463,15 +573,16 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   signOutButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: 'rgba(199, 6, 40, 0.2)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(199, 6, 40, 0.4)',
+    padding: 10,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  signOutButtonPressed: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   signOutText: {
     color: '#c70628',
@@ -481,12 +592,14 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
+    marginTop: 44, // Account for header
   },
   scrollContainer: {
     flex: 1,
   },
   scrollContent: {
     paddingBottom: 100, // Extra padding to clear footer
+    paddingTop: 20,
   },
   menuContainer: {
     padding: 16,
@@ -497,44 +610,71 @@ const styles = StyleSheet.create({
   menuButton: {
     width: buttonWidth,
     height: buttonWidth * 1.1,
-    backgroundColor: 'rgba(40, 40, 40, 0.9)',
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 16,
-    padding: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  menuButtonGradient: {
+    flex: 20,
+    // padding: 16,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 16,
+  },
+  menuButtonPressed: {
+    opacity: 0.9,
+    transform: [{scale: 0.98}],
+  },
+  emergencyButton: {
+    shadowColor: '#c70628',
+    shadowOpacity: 0.4,
   },
   quoteButton: {
-    backgroundColor: 'rgba(199, 6, 40, 0.2)',
-    borderColor: '#c70628',
+    shadowColor: '#3b82f6',
+    shadowOpacity: 0.4,
   },
-  menuIcon: {
-    fontSize: 28,
-    marginBottom: 8,
+  iconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  emergencyIconContainer: {
+    backgroundColor: 'rgba(199, 6, 40, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  quoteIconContainer: {
+    backgroundColor: 'rgba(59, 130, 246, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   menuTitle: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
+    letterSpacing: 0.5,
   },
-  // quoteTitle: {
-  //   color: '#c70628',
-  //   fontWeight: '700',
-  // },
+  specialMenuTitle: {
+    fontWeight: '700',
+  },
   menuDescription: {
-    color: '#A0A0A0',
-    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
     textAlign: 'center',
-    lineHeight: 14,
+    lineHeight: 16,
   },
   loadingContainer: {
     flex: 1,
@@ -544,15 +684,20 @@ const styles = StyleSheet.create({
   },
   footerNav: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(20, 20, 20, 0.95)',
+    backgroundColor: 'rgba(15, 15, 15, 0.95)',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.1)',
     paddingVertical: 12,
-    paddingBottom: 16, // Reduced to avoid excessive spacing
+    paddingBottom: Platform.OS === 'ios' ? 28 : 16, // Account for iOS home indicator
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 10,
   },
   footerTab: {
     flex: 1,
@@ -561,18 +706,21 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   footerTabActive: {
-    // backgroundColor: 'rgba(199, 6, 40, 0.15)',
-    // borderTopWidth: 2,
-    // borderTopColor: '#c70628',
+    // No visible styles - using indicator instead
   },
   footerIcon: {
-    fontSize: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 26,
     marginBottom: 4,
-    color: '#FFFFFF',
   },
   footerText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  footerTextActive: {
     color: '#FFFFFF',
-    fontSize: 11,
     fontWeight: '600',
   },
 });
