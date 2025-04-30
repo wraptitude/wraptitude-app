@@ -8,7 +8,11 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+
+// Add props interface
+interface ServicesProps {
+  onGetQuote?: (serviceType: string) => void;
+}
 
 const services = [
   {
@@ -69,11 +73,11 @@ const services = [
   },
 ];
 
-const Services: React.FC = () => {
-  const navigation = useNavigation();
-
+const Services: React.FC<ServicesProps> = ({ onGetQuote }) => {
   const handleGetQuote = (serviceType: string) => {
-    navigation.navigate('FreeQuote', { selectedService: serviceType });
+    if (onGetQuote) {
+      onGetQuote(serviceType);
+    }
   };
 
   return (

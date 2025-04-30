@@ -15,12 +15,13 @@ import { Picker } from '@react-native-picker/picker';
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
 import { fetchUserAttributes } from 'aws-amplify/auth';
 import { launchImageLibrary } from 'react-native-image-picker';
-import { useRoute } from '@react-navigation/native';
 
-const FreeQuote: React.FC = () => {
-  const route = useRoute();
-  const selectedService = route.params?.selectedService;
+// Add props interface
+interface FreeQuoteProps {
+  selectedService?: string;
+}
 
+const FreeQuote: React.FC<FreeQuoteProps> = ({ selectedService }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -29,11 +30,8 @@ const FreeQuote: React.FC = () => {
     vehicleModel: '',
     vehicleYear: '',
     serviceType: selectedService || 'Window Tinting',
-    // serviceType: 'Window Tinting',
     message: '',
     image: null as null | { uri: string },
-    // preferredDate: new Date(),
-    // preferredTime: '09:00',
   });
 
   const [loading, setLoading] = useState(false);
@@ -51,6 +49,16 @@ const FreeQuote: React.FC = () => {
       }
     })();
   }, []);
+
+  // Update the selectedService when it changes
+  useEffect(() => {
+    if (selectedService) {
+      setFormData(prev => ({
+        ...prev,
+        serviceType: selectedService
+      }));
+    }
+  }, [selectedService]);
 
   const services = [
     'Window Tinting',
@@ -100,8 +108,6 @@ const FreeQuote: React.FC = () => {
           vehicleYear: formData.vehicleYear,
           serviceType: formData.serviceType,
           message: formData.message,
-          // preferredDate: formData.preferredDate.toISOString(),
-          // preferredTime: formData.preferredTime,
           image: imageBase64, // Send base64 string
         }),
       });

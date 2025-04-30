@@ -46,6 +46,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('menu');
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [activeTab, setActiveTab] = useState('home');
+  const [selectedService, setSelectedService] = useState<string | null>(null);
 
   // Animation refs for buttons
   const buttonScales = {
@@ -172,7 +173,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
         case 'contact':
           return <ContactUs />;
         case 'services':
-          return <Services />;
+          return <Services onGetQuote={handleGetQuote} />;
         case 'gallery':
           return <Gallery />;
         case 'about':
@@ -191,7 +192,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
         case 'emergency':
           return <EmergencyService />;
         case 'quote':
-          return <FreeQuote />;
+          return <FreeQuote selectedService={selectedService} />;
         case 'profile':
           return <Profile />;
         default:
@@ -233,6 +234,11 @@ const Home: React.FC<HomeProps> = ({ route }) => {
         {content()}
       </Animated.View>
     );
+  };
+
+  const handleGetQuote = (serviceType: string) => {
+    setSelectedService(serviceType);
+    handleScreenTransition('quote');
   };
 
   if (isSigningOut) {
