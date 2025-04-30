@@ -1,47 +1,87 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, StyleSheet, Pressable, Image, TextInput, Alert,
-  KeyboardAvoidingView, Platform, ScrollView
+  View, 
+  Text, 
+  StyleSheet, 
+  Pressable, 
+  Image, 
+  TextInput, 
+  Alert,
+  KeyboardAvoidingView, 
+  Platform, 
+  ScrollView,
+  ActivityIndicator,
+  Animated,
+  Dimensions
 } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { fetchUserAttributes } from 'aws-amplify/auth';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+
+// Define props interface
+interface NonUrgentFormProps {
+  serviceId: string;
+  onGoBack: () => void;
+  onSubmitSuccess: () => void;
+}
 
 const emergencyServices = [
-    {
-      id: 'collision',
-      icon: '🚗',
-      title: 'Vehicle Collision',
-      description: 'Emergency assistance for vehicle accidents or collisions'
-    },
-    {
-      id: 'other',
-      icon: '❓',
-      title: 'Other Emergencies',
-      description: 'Other situations requiring immediate assistance'
-    },
-  ];
+  {
+    id: 'collision',
+    icon: 'car-crash',
+    title: 'Vehicle Collision',
+    description: 'Emergency assistance for vehicle accidents or collisions'
+  },
+  {
+    id: 'other',
+    icon: 'help',
+    title: 'Other Emergencies',
+    description: 'Other situations requiring immediate assistance'
+  },
+];
 
-const NonUrgentForm = ({ route, navigation }) => {
-  const { serviceId } = route.params;
+const NonUrgentForm: React.FC<NonUrgentFormProps> = ({ 
+  serviceId, 
+  onGoBack,
+  onSubmitSuccess
+}) => {
   const selectedService = emergencyServices.find(s => s.id === serviceId);
 
   const [details, setDetails] = useState('');
   const [photo, setPhoto] = useState<{ uri: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [userAttributes, setUserAttributes] = useState<any>(null);
+  
+  // Animation refs for buttons
+  const takePhotoButtonScale = useRef(new Animated.Value(1)).current;
+  const submitButtonScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const fetchAttributes = async () => {
       try {
         const attrs = await fetchUserAttributes();
         setUserAttributes(attrs);
-        console.log(attrs);
       } catch {
         Alert.alert('Error', 'Failed to fetch user information.');
       }
     };
     fetchAttributes();
   }, []);
+
+  const animatePress = (scale: Animated.Value) => {
+    Animated.sequence([
+      Animated.timing(scale, {
+        toValue: 0.95,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
   const handleTakePhoto = async () => {
     try {
@@ -62,6 +102,8 @@ const NonUrgentForm = ({ route, navigation }) => {
   };
 
   const handleAddOrChangePhoto = () => {
+    animatePress(takePhotoButtonScale);
+    
     Alert.alert(
       'Add Photo',
       'Choose an option',
@@ -92,7 +134,10 @@ const NonUrgentForm = ({ route, navigation }) => {
       Alert.alert('User Info Missing', 'User information is required to submit the report.');
       return;
     }
+    
+    animatePress(submitButtonScale);
     setSubmitting(true);
+    
     try {
       const response = await fetch(photo.uri);
       const blob = await response.blob();
@@ -106,7 +151,7 @@ const NonUrgentForm = ({ route, navigation }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: userAttributes.sub, // or userAttributes.sub if id is not present
+          userId: userAttributes.sub,
           name: userAttributes.name,
           email: userAttributes.email,
           phone: userAttributes.phone_number,
@@ -121,7 +166,7 @@ const NonUrgentForm = ({ route, navigation }) => {
       Alert.alert(
         'Report Submitted',
         'Thank you for your report. We will review and respond within 2 business days.',
-        [{ text: 'OK', onPress: () => navigation.popToTop() }]
+        [{ text: 'OK', onPress: onSubmitSuccess }]
       );
     } catch {
       Alert.alert('Error', 'Failed to submit report. Please try again.');
@@ -131,33 +176,80 @@ const NonUrgentForm = ({ route, navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-    >
-      <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
-        <View style={styles.formContainer}>
-          <Text style={styles.formTitle}>Non-Urgent {selectedService?.title} Report</Text>
-          <Text style={styles.formDescription}>Take or select a photo and submit your report. We will respond within 2 business days.</Text>
-          {photo ? (
-            <View style={styles.photoContainer}>
-              <Image source={{ uri: photo.uri }} style={styles.photo} />
-              <Pressable style={styles.retakeButton} onPress={handleAddOrChangePhoto}>
-                <Text style={styles.buttonText}>Change Photo</Text>
-              </Pressable>
+    <View style={styles.container}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      >
+        <ScrollView 
+          style={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.headerSection}>
+            <Text style={styles.title}>Non-Urgent Report</Text>
+            <Text style={styles.subtitle}>{selectedService?.title}</Text>
+            <Text style={styles.description}>
+              Submit a report with photo evidence for non-urgent situations. 
+              Our team will review and respond within 2 business days.
+            </Text>
+          </View>
+
+          <View style={styles.formCard}>
+            <View style={styles.cardHeader}>
+              <Icon name="photo-camera" size={20} color="#FFFFFF" />
+              <Text style={styles.sectionTitle}>Photo Evidence</Text>
             </View>
-          ) : (
-            <Pressable style={styles.photoButton} onPress={handleAddOrChangePhoto}>
-              <Text style={styles.buttonText}>Add Photo</Text>
-            </Pressable>
-          )}
-          <View style={styles.textInputContainer}>
-            <Text style={styles.textInputLabel}>Additional Details (Optional)</Text>
+            
+            {photo ? (
+              <View style={styles.photoContainer}>
+                <Image source={{ uri: photo.uri }} style={styles.photo} />
+                <Animated.View style={{
+                  transform: [{ scale: takePhotoButtonScale }],
+                  width: '100%',
+                }}>
+                  <Pressable 
+                    style={styles.changePhotoButton} 
+                    onPress={handleAddOrChangePhoto}
+                  >
+                    <Icon name="photo-camera" size={18} color="#FFFFFF" style={styles.buttonIcon} />
+                    <Text style={styles.buttonText}>Change Photo</Text>
+                  </Pressable>
+                </Animated.View>
+              </View>
+            ) : (
+              <View style={styles.noPhotoContainer}>
+                <Icon name="photo-camera" size={40} color="rgba(255, 255, 255, 0.3)" />
+                <Text style={styles.noPhotoText}>No photo added yet</Text>
+                <Animated.View style={{
+                  transform: [{ scale: takePhotoButtonScale }],
+                  width: '100%',
+                }}>
+                  <Pressable 
+                    style={styles.addPhotoButton} 
+                    onPress={handleAddOrChangePhoto}
+                  >
+                    <Icon name="add-a-photo" size={18} color="#FFFFFF" style={styles.buttonIcon} />
+                    <Text style={styles.buttonText}>Add Photo</Text>
+                  </Pressable>
+                </Animated.View>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.formCard}>
+            <View style={styles.cardHeader}>
+              <Icon name="notes" size={20} color="#FFFFFF" />
+              <Text style={styles.sectionTitle}>Additional Details</Text>
+            </View>
+            
+            <Text style={styles.inputLabel}>Describe your situation (Optional)</Text>
             <TextInput
               style={styles.textInput}
-              placeholder="Describe your emergency situation..."
-              placeholderTextColor="#666"
+              placeholder="Provide details about your emergency situation..."
+              placeholderTextColor="rgba(255, 255, 255, 0.5)"
               multiline
               numberOfLines={4}
               value={details}
@@ -165,34 +257,294 @@ const NonUrgentForm = ({ route, navigation }) => {
               textAlignVertical="top"
             />
           </View>
-          <Pressable
-            style={[styles.submitButton, (!photo || submitting) && styles.submitButtonDisabled]}
-            onPress={handleSubmit}
-            disabled={!photo || submitting}
-          >
-            <Text style={styles.buttonText}>{submitting ? 'Submitting...' : 'Submit Report'}</Text>
-          </Pressable>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+          <View style={styles.infoCard}>
+            <View style={styles.infoHeader}>
+              <Icon name="info" size={20} color="#c70628" />
+              <Text style={styles.infoTitle}>Submission Information</Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Icon name="check-circle" size={16} color="#c70628" />
+              <Text style={styles.infoText}>Report will be reviewed within 2 business days</Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Icon name="check-circle" size={16} color="#c70628" />
+              <Text style={styles.infoText}>You will be contacted by our team via email or phone</Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Icon name="check-circle" size={16} color="#c70628" />
+              <Text style={styles.infoText}>Clear photos help us process your report faster</Text>
+            </View>
+          </View>
+
+          <Animated.View style={{
+            transform: [{ scale: submitButtonScale }],
+            width: '100%',
+            padding: 16,
+            marginBottom: 20,
+          }}>
+            <Pressable
+              style={[
+                styles.submitButton, 
+                (!photo || submitting) && styles.submitButtonDisabled
+              ]}
+              onPress={handleSubmit}
+              disabled={!photo || submitting}
+            >
+              {submitting ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                  <Text style={styles.loadingText}>Submitting report...</Text>
+                </View>
+              ) : (
+                <View style={styles.buttonContent}>
+                  <Icon name="send" size={18} color="#FFFFFF" style={styles.buttonIcon} />
+                  <Text style={styles.submitButtonText}>Submit Report</Text>
+                </View>
+              )}
+            </Pressable>
+          </Animated.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+      
+      {/* <Pressable style={styles.backButton} onPress={onGoBack}>
+        <Icon name="arrow-back" size={20} color="#FFFFFF" />
+        <Text style={styles.backButtonText}>Back</Text>
+      </Pressable> */}
+    </View>
   );
 };
 
+const { width } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#040404' },
-  formContainer: { padding: 20 },
-  formTitle: { fontSize: 18, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 8 },
-  formDescription: { fontSize: 14, color: '#cccccc', marginBottom: 20 },
-  photoContainer: { marginBottom: 16 },
-  photo: { width: '100%', height: 200, borderRadius: 8, marginBottom: 8 },
-  photoButton: { backgroundColor: '#2c2c2c', borderRadius: 8, padding: 16, alignItems: 'center', marginBottom: 16, flex: 1, marginHorizontal: 4 },
-  retakeButton: { backgroundColor: '#2c2c2c', borderRadius: 8, padding: 12, alignItems: 'center', flex: 1, marginHorizontal: 4 },
-  textInputContainer: { marginBottom: 16 },
-  textInputLabel: { color: '#FFFFFF', fontSize: 14, marginBottom: 8 },
-  textInput: { backgroundColor: '#2c2c2c', borderRadius: 8, padding: 12, color: '#FFFFFF', borderWidth: 1, borderColor: '#333', minHeight: 100, maxHeight: 150, fontSize: 14 },
-  submitButton: { backgroundColor: '#c70628', borderRadius: 8, padding: 16, alignItems: 'center' },
-  submitButtonDisabled: { backgroundColor: '#666', opacity: 0.7 },
-  buttonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
+  container: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100, // Space for footer
+  },
+  headerSection: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#c70628',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  description: {
+    fontSize: 14,
+    color: '#A0A0A0',
+    textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: '90%',
+  },
+  formCard: {
+    backgroundColor: 'rgba(40, 40, 40, 0.9)',
+    borderRadius: 12,
+    padding: 16,
+    margin: 16,
+    marginTop: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 8,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  photoContainer: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  noPhotoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(26, 26, 26, 0.8)',
+    borderRadius: 8,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderStyle: 'dashed',
+    gap: 12,
+  },
+  noPhotoText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginBottom: 8,
+  },
+  photo: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    backgroundColor: 'rgba(26, 26, 26, 0.8)',
+  },
+  addPhotoButton: {
+    backgroundColor: 'rgba(199, 6, 40, 0.2)',
+    borderRadius: 8,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(199, 6, 40, 0.5)',
+    width: '100%',
+  },
+  changePhotoButton: {
+    backgroundColor: 'rgba(26, 26, 26, 0.8)',
+    borderRadius: 8,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    width: '100%',
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: '#A0A0A0',
+    marginBottom: 8,
+  },
+  textInput: {
+    backgroundColor: 'rgba(26, 26, 26, 0.8)',
+    borderRadius: 8,
+    padding: 12,
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    minHeight: 120,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  infoCard: {
+    backgroundColor: 'rgba(40, 40, 40, 0.9)',
+    borderRadius: 12,
+    padding: 16,
+    margin: 16,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  infoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#A0A0A0',
+    flex: 1,
+  },
+  submitButton: {
+    backgroundColor: '#c70628',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  submitButtonDisabled: {
+    backgroundColor: 'rgba(120, 120, 120, 0.5)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 8,
+    borderRadius: 8,
+    gap: 4,
+  },
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
 
 export default NonUrgentForm; 

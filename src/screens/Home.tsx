@@ -26,6 +26,8 @@ import About from './About';
 import News from './News';
 import NewsDetail from './NewsDetail';
 import EmergencyService from './EmergencyService';
+import EmergencyServiceUrgentNonUrgent from './EmergencyServiceUrgentNonUrgent';
+import NonUrgentForm from './NonUrgentForm';
 import FreeQuote from './FreeQuote';
 import Profile from './Profile';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -38,7 +40,7 @@ interface HomeProps {
   };
 }
 
-type Screen = 'menu' | 'tracking' | 'history' | 'services' | 'knowledge' | 'gallery' | 'about' | 'contact' | 'news' | 'newsDetail' | 'emergency' | 'quote' | 'profile';
+type Screen = 'menu' | 'tracking' | 'history' | 'services' | 'knowledge' | 'gallery' | 'about' | 'contact' | 'news' | 'newsDetail' | 'emergency' | 'emergencyUrgentNonUrgent' | 'nonUrgentForm' | 'quote' | 'profile';
 
 const Home: React.FC<HomeProps> = ({ route }) => {
   const { toSignIn } = useAuthenticator();
@@ -48,6 +50,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
   const [activeTab, setActiveTab] = useState('home');
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [quoteSourceScreen, setQuoteSourceScreen] = useState<Screen>('menu');
+  const [selectedEmergencyService, setSelectedEmergencyService] = useState<string>('');
 
   // Animation refs for buttons
   const buttonScales = {
@@ -85,6 +88,8 @@ const Home: React.FC<HomeProps> = ({ route }) => {
   const handleScreenTransition = (screen: Screen) => {
     if (screen === 'quote') {
       setQuoteSourceScreen(currentScreen);
+    } else if (screen === 'emergencyUrgentNonUrgent' || screen === 'nonUrgentForm') {
+      // We don't change quoteSourceScreen here
     }
     
     Animated.parallel([
@@ -195,7 +200,23 @@ const Home: React.FC<HomeProps> = ({ route }) => {
         case 'newsDetail':
           return <NewsDetail post={selectedPost!} />;
         case 'emergency':
-          return <EmergencyService />;
+          return <EmergencyService onServiceSelect={handleEmergencyServiceSelect} />;
+        case 'emergencyUrgentNonUrgent':
+          return (
+            <EmergencyServiceUrgentNonUrgent 
+              serviceId={selectedEmergencyService}
+              onNonUrgentSelect={handleNonUrgentSelect}
+              onGoBack={() => setCurrentScreen('emergency')}
+            />
+          );
+        case 'nonUrgentForm':
+          return (
+            <NonUrgentForm 
+              serviceId={selectedEmergencyService}
+              onGoBack={() => setCurrentScreen('emergencyUrgentNonUrgent')}
+              onSubmitSuccess={() => setCurrentScreen('menu')}
+            />
+          );
         case 'quote':
           return (
             <FreeQuote 
@@ -253,6 +274,15 @@ const Home: React.FC<HomeProps> = ({ route }) => {
     handleScreenTransition('quote');
   };
 
+  const handleEmergencyServiceSelect = (serviceId: string) => {
+    setSelectedEmergencyService(serviceId);
+    handleScreenTransition('emergencyUrgentNonUrgent');
+  };
+
+  const handleNonUrgentSelect = () => {
+    handleScreenTransition('nonUrgentForm');
+  };
+
   if (isSigningOut) {
     return (
       <View style={styles.loadingContainer}>
@@ -303,6 +333,10 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                         setCurrentScreen('news');
                       } else if (currentScreen === 'quote') {
                         setCurrentScreen(quoteSourceScreen);
+                      } else if (currentScreen === 'emergencyUrgentNonUrgent') {
+                        setCurrentScreen('emergency');
+                      } else if (currentScreen === 'nonUrgentForm') {
+                        setCurrentScreen('emergencyUrgentNonUrgent');
                       } else {
                         setCurrentScreen('menu');
                       }
@@ -311,7 +345,11 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                     <Text style={styles.backButtonText}>←</Text>
                   </Pressable>
                   <Text style={styles.screenTitle}>
-                    {currentScreen === 'newsDetail' ? 'News' : menuItems.find((item) => item.id === currentScreen)?.title}
+                    {currentScreen === 'newsDetail' 
+                      ? 'News' 
+                      : currentScreen === 'emergencyUrgentNonUrgent' || currentScreen === 'nonUrgentForm'
+                        ? 'Emergency Service'
+                        : menuItems.find((item) => item.id === currentScreen)?.title}
                   </Text>
                 </>
               )}

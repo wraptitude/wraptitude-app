@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,28 +7,56 @@ import {
   ScrollView,
   Linking,
   Alert,
+  Dimensions,
+  Animated,
+  Image,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+
+// Define the interface for props
+interface EmergencyServiceProps {
+  onServiceSelect: (serviceId: string) => void;
+}
 
 const emergencyServices = [
   {
     id: 'collision',
-    icon: '🚗',
+    icon: 'car-crash',
+    iconFallback: '🚗',
     title: 'Vehicle Collision',
     description: 'Emergency assistance for vehicle accidents or collisions'
   },
   {
     id: 'other',
-    icon: '❓',
+    icon: 'help',
+    iconFallback: '❓',
     title: 'Other Emergencies',
     description: 'Other situations requiring immediate assistance'
   },
 ];
 
-const EmergencyService = () => {
-  const navigation = useNavigation();
-  const [selectedService, setSelectedService] = useState('');
+const EmergencyService: React.FC<EmergencyServiceProps> = ({ onServiceSelect }) => {
+  // Animation refs for buttons
+  const buttonScales = {
+    collision: useRef(new Animated.Value(1)).current,
+    other: useRef(new Animated.Value(1)).current,
+    call: useRef(new Animated.Value(1)).current,
+  };
+
+  const animatePress = (scale: Animated.Value) => {
+    Animated.sequence([
+      Animated.timing(scale, {
+        toValue: 0.95,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
   const handleEmergencyCall = async () => {
     try {
@@ -43,167 +71,252 @@ const EmergencyService = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Emergency Services</Text>
-        <Text style={styles.headerDescription}>
-          Select the type of emergency you're experiencing
-        </Text>
-      </View>
+    <View style={styles.container}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.headerSection}>
+          <Text style={styles.title}>Emergency Services</Text>
+          <Text style={styles.description}>
+            Select the type of emergency you're experiencing or call our hotline for immediate assistance.
+          </Text>
+        </View>
 
-      <View style={styles.pickerContainer}>
-        <Picker
-          selectedValue={selectedService}
-          onValueChange={(value) => {
-            setSelectedService(value);
-            if (value) {
-              navigation.navigate('EmergencyServiceUrgentNonUrgent', { serviceId: value });
-            }
-          }}
-          style={styles.picker}
-          dropdownIconColor="#FFFFFF"
-        >
-          <Picker.Item label="Select a service..." value="" color="#FFFFFF" />
+        <View style={styles.servicesContainer}>
           {emergencyServices.map((service) => (
-            <Picker.Item
-              key={service.id}
-              label={`${service.icon} ${service.title}`}
-              value={service.id}
-              color="#FFFFFF"
-            />
+            <Animated.View 
+              key={service.id} 
+              style={{
+                transform: [{ scale: buttonScales[service.id] }]
+              }}
+            >
+              <Pressable
+                style={styles.serviceCard}
+                onPress={() => {
+                  animatePress(buttonScales[service.id]);
+                  onServiceSelect(service.id);
+                }}
+              >
+                <View style={styles.serviceIconContainer}>
+                  <Icon name={service.icon} size={32} color="#FFFFFF" />
+                </View>
+                <View style={styles.serviceContent}>
+                  <Text style={styles.serviceTitle}>{service.title}</Text>
+                  <Text style={styles.serviceDescription}>{service.description}</Text>
+                </View>
+                <Icon name="chevron-right" size={24} color="#FFFFFF" style={styles.arrowIcon} />
+              </Pressable>
+            </Animated.View>
           ))}
-        </Picker>
-      </View>
+        </View>
 
-      {/* <View style={styles.servicesContainer}>
-        {emergencyServices.map((service) => (
-          <Pressable
-            key={service.id}
-            style={styles.serviceCard}
-            onPress={handleEmergencyCall}
+        <View style={styles.divider} />
+
+        <View style={styles.callSection}>
+          <Text style={styles.callSectionTitle}>24/7 Emergency Hotline</Text>
+          <Text style={styles.callSectionDescription}>
+            Need immediate assistance? Call our emergency service hotline.
+          </Text>
+          <Animated.View
+            style={{
+              transform: [{ scale: buttonScales.call }],
+              width: '100%',
+            }}
           >
-            <Text style={styles.serviceIcon}>{service.icon}</Text>
-            <Text style={styles.serviceTitle}>{service.title}</Text>
-            <Text style={styles.serviceDescription}>{service.description}</Text>
-            <View style={styles.callButton}>
-              <Text style={styles.callButtonText}>Call Now</Text>
-              <Text style={styles.phoneNumber}>437-340-1121</Text>
-            </View>
-          </Pressable>
-        ))}
-      </View> */}
+            <Pressable
+              style={styles.callButton}
+              onPress={() => {
+                animatePress(buttonScales.call);
+                handleEmergencyCall();
+              }}
+            >
+              <Icon name="call" size={24} color="#FFFFFF" style={styles.callIcon} />
+              <Text style={styles.callButtonText}>437-340-1121</Text>
+            </Pressable>
+          </Animated.View>
+        </View>
 
-      {/* <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          24/7 Emergency Service Hotline
-        </Text>
-        <Pressable
-          style={styles.mainCallButton}
-          onPress={handleEmergencyCall}
-        >
-          <Text style={styles.mainCallButtonText}>437-340-1121</Text>
-        </Pressable>
-      </View> */}
-    </ScrollView>
+        <View style={styles.infoCard}>
+          <View style={styles.infoHeader}>
+            <Icon name="info" size={20} color="#c70628" />
+            <Text style={styles.infoTitle}>When to Call Emergency Services</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Icon name="check-circle" size={16} color="#c70628" />
+            <Text style={styles.infoText}>Vehicle collision or accidents</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Icon name="check-circle" size={16} color="#c70628" />
+            <Text style={styles.infoText}>Vehicle stranded in unsafe location</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Icon name="check-circle" size={16} color="#c70628" />
+            <Text style={styles.infoText}>Any situation requiring immediate assistance</Text>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
   );
 };
+
+const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#040404',
+    backgroundColor: 'transparent',
   },
-  header: {
+  content: {
+    flex: 1,
+    paddingBottom: 100, // Space for footer
+  },
+  headerSection: {
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    alignItems: 'center',
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 8,
+    marginBottom: 12,
+    letterSpacing: 0.5,
+    textAlign: 'center',
   },
-  headerDescription: {
-    fontSize: 14,
-    color: '#cccccc',
-    marginBottom: 24,
-  },
-  pickerContainer: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#',
-    overflow: 'hidden',
-  },
-  picker: {
-    color: '#FFFFFF',
+  description: {
+    fontSize: 15,
+    color: '#A0A0A0',
+    textAlign: 'center',
+    lineHeight: 22,
+    maxWidth: '90%',
   },
   servicesContainer: {
-    padding: 20,
+    padding: 16,
+    gap: 12,
   },
   serviceCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(40, 40, 40, 0.9)',
     borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  serviceIcon: {
-    fontSize: 32,
-    marginBottom: 12,
+  serviceIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(199, 6, 40, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  serviceContent: {
+    flex: 1,
   },
   serviceTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#FFFFFF',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   serviceDescription: {
     fontSize: 14,
-    color: '#cccccc',
+    color: '#A0A0A0',
+    lineHeight: 20,
+  },
+  arrowIcon: {
+    opacity: 0.7,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginVertical: 16,
+    marginHorizontal: 20,
+  },
+  callSection: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  callSectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  callSectionDescription: {
+    fontSize: 14,
+    color: '#A0A0A0',
+    textAlign: 'center',
     marginBottom: 16,
+    lineHeight: 20,
   },
   callButton: {
     backgroundColor: '#c70628',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  callIcon: {
+    marginRight: 10,
   },
   callButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  phoneNumber: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  footer: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#333',
-    alignItems: 'center',
-  },
-  footerText: {
-    color: '#cccccc',
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  mainCallButton: {
-    backgroundColor: '#c70628',
-    borderRadius: 8,
-    padding: 16,
-    width: '100%',
-    alignItems: 'center',
-  },
-  mainCallButtonText: {
-    color: '#FFFFFF',
     fontSize: 20,
     fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  infoCard: {
+    backgroundColor: 'rgba(40, 40, 40, 0.9)',
+    borderRadius: 12,
+    padding: 16,
+    margin: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  infoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#A0A0A0',
+    flex: 1,
   },
 });
 
