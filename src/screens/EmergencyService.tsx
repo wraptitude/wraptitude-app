@@ -19,42 +19,6 @@ const emergencyServices = [
     description: 'Emergency assistance for vehicle accidents or collisions'
   },
   {
-    id: 'window',
-    icon: '🪟',
-    title: 'Window Damage',
-    description: 'Broken windows or window system malfunction'
-  },
-  {
-    id: 'lock',
-    icon: '🔐',
-    title: 'Lock Issues',
-    description: 'Car lock or central locking system problems'
-  },
-  {
-    id: 'alarm',
-    icon: '🚨',
-    title: 'Security Alarm',
-    description: 'Alarm system malfunction or continuous triggering'
-  },
-  {
-    id: 'film_damage',
-    icon: '📜',
-    title: 'Film Damage',
-    description: 'Damaged or peeling window film or wrap'
-  },
-  {
-    id: 'film_quality',
-    icon: '⚠️',
-    title: 'Film Quality Issues',
-    description: 'Bubbling, discoloration, or other quality concerns'
-  },
-  {
-    id: 'overheat',
-    icon: '🌡️',
-    title: 'Heat Protection',
-    description: 'Overheating issues during heat waves'
-  },
-  {
     id: 'other',
     icon: '❓',
     title: 'Other Emergencies',
@@ -99,12 +63,13 @@ const EmergencyService = () => {
           style={styles.picker}
           dropdownIconColor="#FFFFFF"
         >
-          <Picker.Item label="Select a service..." value="" />
+          <Picker.Item label="Select a service..." value="" color="#FFFFFF" />
           {emergencyServices.map((service) => (
             <Picker.Item
               key={service.id}
               label={`${service.icon} ${service.title}`}
               value={service.id}
+              color="#FFFFFF"
             />
           ))}
         </Picker>
@@ -128,7 +93,7 @@ const EmergencyService = () => {
         ))}
       </View> */}
 
-      <View style={styles.footer}>
+      {/* <View style={styles.footer}>
         <Text style={styles.footerText}>
           24/7 Emergency Service Hotline
         </Text>
@@ -138,7 +103,7 @@ const EmergencyService = () => {
         >
           <Text style={styles.mainCallButtonText}>437-340-1121</Text>
         </Pressable>
-      </View>
+      </View> */}
     </ScrollView>
   );
 };
@@ -168,7 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: '#',
     overflow: 'hidden',
   },
   picker: {

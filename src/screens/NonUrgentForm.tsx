@@ -14,42 +14,6 @@ const emergencyServices = [
       description: 'Emergency assistance for vehicle accidents or collisions'
     },
     {
-      id: 'window',
-      icon: '🪟',
-      title: 'Window Damage',
-      description: 'Broken windows or window system malfunction'
-    },
-    {
-      id: 'lock',
-      icon: '🔐',
-      title: 'Lock Issues',
-      description: 'Car lock or central locking system problems'
-    },
-    {
-      id: 'alarm',
-      icon: '🚨',
-      title: 'Security Alarm',
-      description: 'Alarm system malfunction or continuous triggering'
-    },
-    {
-      id: 'film_damage',
-      icon: '📜',
-      title: 'Film Damage',
-      description: 'Damaged or peeling window film or wrap'
-    },
-    {
-      id: 'film_quality',
-      icon: '⚠️',
-      title: 'Film Quality Issues',
-      description: 'Bubbling, discoloration, or other quality concerns'
-    },
-    {
-      id: 'overheat',
-      icon: '🌡️',
-      title: 'Heat Protection',
-      description: 'Overheating issues during heat waves'
-    },
-    {
       id: 'other',
       icon: '❓',
       title: 'Other Emergencies',
