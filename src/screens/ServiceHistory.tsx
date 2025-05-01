@@ -13,7 +13,7 @@ import {
 import { fetchUserAttributes } from 'aws-amplify/auth';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LinearGradient from 'react-native-linear-gradient';
-
+import FastImage from 'react-native-fast-image';
 interface ServiceRecord {
   id: string;
   cost: string;
@@ -44,7 +44,7 @@ const ServiceHistory: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [expandedRecord, setExpandedRecord] = useState<string | null>(null);
-  const [imageLoading, setImageLoading] = useState<{ [key: string]: boolean }>({});
+  const [loadingImage, setLoadingImage] = useState(false);
 
   useEffect(() => {
     fetchServiceHistory();
@@ -176,13 +176,18 @@ const ServiceHistory: React.FC = () => {
     
     return (
       <View style={styles.imageContainer}>
-        <Image 
-          source={{ 
-            uri: imageUrl,
-            cache: 'reload'
-          }}
+        {loadingImage && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#ffffff" />
+              <Text style={styles.loadingText}>Loading image...</Text>
+            </View>
+          )}
+        <FastImage
+          source={{ uri: imageUrl, priority: FastImage.priority.normal, cache: FastImage.cacheControl.immutable }}
           style={styles.stepImage}
-          resizeMode="contain"
+          resizeMode={FastImage.resizeMode.contain}
+          onLoadStart={() => setLoadingImage(true)}
+          onLoadEnd={() => setLoadingImage(false)}
         />
       </View>
     );

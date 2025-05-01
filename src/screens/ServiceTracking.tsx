@@ -19,6 +19,7 @@ import { fetchUserAttributes } from 'aws-amplify/auth';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LinearGradient from 'react-native-linear-gradient';
+import FastImage from 'react-native-fast-image';
 
 interface ServiceStep {
   id: string;
@@ -82,6 +83,7 @@ const INITIAL_STEPS: ServiceStep[] = [
 const ServiceTracking: React.FC = () => {
   const [steps, setSteps] = useState<ServiceStep[]>(INITIAL_STEPS);
   const [loading, setLoading] = useState(true);
+  const [loadingImage, setLoadingImage] = useState(false);
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [serviceDetails, setServiceDetails] = useState({
@@ -227,14 +229,19 @@ const ServiceTracking: React.FC = () => {
 
     return (
       <View style={styles.imageContainer}>
-        <Image 
-          source={{ 
-            uri: imageUrl,
-            cache: 'reload'
-          }}
-          style={styles.stepImage}
-          resizeMode="contain"
-        />
+          {loadingImage && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#ffffff" />
+              <Text style={styles.loadingText}>Loading image...</Text>
+            </View>
+          )}
+            <FastImage
+              source={{ uri: imageUrl, priority: FastImage.priority.normal, cache: FastImage.cacheControl.immutable }}
+              style={styles.stepImage}
+              resizeMode={FastImage.resizeMode.contain}
+              onLoadStart={() => setLoadingImage(true)}
+              onLoadEnd={() => setLoadingImage(false)}
+            />
       </View>
     );
   };

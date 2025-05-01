@@ -21,6 +21,7 @@
     "aws-amplify": "^6.13.5",
     "react": "19.0.0",
     "react-native": "0.78.0",
+    "react-native-fast-image": "^8.6.3",
     "react-native-get-random-values": "^1.11.0",
     "react-native-image-picker": "^8.2.0",
     "react-native-keyboard-aware-scroll-view": "^0.9.5",
