@@ -84,6 +84,12 @@ const ServiceTracking: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [serviceDetails, setServiceDetails] = useState({
+    serviceType: '',
+    vehicleMake: '',
+    vehicleModel: '',
+    vehicleYear: '',
+  });
   // Animation values
   const progressAnim = useRef(new Animated.Value(0)).current;
   const progressTextAnim = useRef(new Animated.Value(0)).current;
@@ -136,13 +142,22 @@ const ServiceTracking: React.FC = () => {
 
             const responseData = await response.json();
             const parsedBody = JSON.parse(responseData.body);
-            
+            console.log('parsedBody', parsedBody);
             if (!parsedBody.data || parsedBody.data.length === 0) {
               setSteps([]);
               return;
             }
 
             const data = parsedBody.data[0];
+            
+            // Set service details
+            setServiceDetails({
+              serviceType: data.serviceType || '',
+              vehicleMake: data.vehicleMake || '',
+              vehicleModel: data.vehicleModel || '',
+              vehicleYear: data.vehicleYear || '',
+            });
+
             const updatedSteps = [...INITIAL_STEPS];
             
             updatedSteps[0].status = data.step1;
@@ -277,6 +292,21 @@ const ServiceTracking: React.FC = () => {
         {/* </LinearGradient> */}
       </View>
     );
+  };
+
+  const getDisplayServiceType = (serviceType: string): string => {
+    switch (serviceType) {
+      case 'window_tinting':
+        return 'Window Tinting';
+      case 'vinyl_wrap':
+        return 'Vinyl Wrap';
+      case 'ceramic_coating':
+        return 'Ceramic Coating';
+      case 'paint_protection_film':
+        return 'Paint Protection Film (PPF)';
+      default:
+        return serviceType;
+    }
   };
 
   const StepCard = ({ step }: { step: ServiceStep }) => {
@@ -427,6 +457,28 @@ const ServiceTracking: React.FC = () => {
     );
   };
 
+  const ServiceDetails = () => (
+    <View style={styles.serviceDetailsContainer}>
+      {/* <LinearGradient
+        colors={['rgba(15, 15, 15, 0.7)', 'rgba(10, 10, 10, 0.85)']}
+        style={styles.serviceDetailsGradient}
+      > */}
+        <View style={styles.serviceDetailsRow}>
+          <Text style={styles.serviceDetailsLabel}>Service Type:</Text>
+          <Text style={styles.serviceDetailsValue}>
+            {getDisplayServiceType(serviceDetails.serviceType)}
+          </Text>
+        </View>
+        <View style={styles.serviceDetailsRow}>
+          <Text style={styles.serviceDetailsLabel}>Vehicle:</Text>
+          <Text style={styles.serviceDetailsValue}>
+            {`${serviceDetails.vehicleYear} ${serviceDetails.vehicleMake} ${serviceDetails.vehicleModel}`}
+          </Text>
+        </View>
+      {/* </LinearGradient> */}
+    </View>
+  );
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -477,21 +529,16 @@ const ServiceTracking: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView 
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.contentContainer}
-      >
-        <ProgressBar />
-        
-        <View style={styles.stepsContainer}>
-          {steps.map(step => (
-            <StepCard key={step.id} step={step} />
-          ))}
-        </View>
-      </ScrollView>
-    </View>
+    <ScrollView style={styles.container}>
+      <ServiceDetails />
+      <ProgressBar />
+      
+      <View style={styles.stepsContainer}>
+        {steps.map(step => (
+          <StepCard key={step.id} step={step} />
+        ))}
+      </View>
+    </ScrollView>
   );
 };
 
@@ -790,6 +837,32 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginRight: 8,
+  },
+  serviceDetailsContainer: {
+    padding: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  serviceDetailsGradient: {
+    padding: 16,
+  },
+  serviceDetailsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  serviceDetailsLabel: {
+    color: '#9CA3AF',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  serviceDetailsValue: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 
