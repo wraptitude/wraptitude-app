@@ -365,95 +365,68 @@ const ServiceTracking: React.FC = () => {
     });
 
     return (
-      // <Animated.View
-      //   style={{
-      //     transform: [{ scale: scaleAnim }],
-      //     marginBottom: 10,
-      //   }}
-      // >
-        <Pressable
-          style={({pressed}) => [
-            styles.stepCard,
-            pressed && styles.stepCardPressed
-          ]}
-          onPress={() => setExpandedStep(isExpanded ? null : step.id)}
-          android_ripple={{ color: 'rgba(255, 255, 255, 0.05)' }}
-        >
-          {/* <LinearGradient
-            colors={['rgba(15, 15, 15, 0.7)', 'rgba(10, 10, 10, 0.85)']}
-            style={styles.stepCardGradient}
-          > */}
-            <View style={styles.stepHeader}>
-              <View style={styles.stepHeaderLeft}>
-                <View style={styles.iconContainer}>
-                  <LinearGradient
-                    colors={colorSet.gradient}
-                    style={styles.iconGradient}
-                  >
-                    <Icon name={step.icon} size={20} color="#FFFFFF" />
-                  </LinearGradient>
-                </View>
-                
-                <View style={styles.titleContainer}>
-                  <Text style={styles.stepTitle}>{step.title}</Text>
-                  <View style={styles.statusContainer}>
-                    <View 
-                      style={[
-                        styles.statusIndicator, 
-                        { backgroundColor: colorSet.color }
-                      ]} 
-                    />
-                    <Text 
-                      style={[
-                        styles.statusText, 
-                        { color: colorSet.color }
-                      ]}
-                    >
-                      {statusText}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-              
-              <Animated.View
-                style={{
-                  transform: [{ rotate }],
-                }}
+      <Pressable
+        style={({pressed}) => [
+          styles.stepCard,
+          pressed && styles.stepCardPressed
+        ]}
+        onPress={() => setExpandedStep(isExpanded ? null : step.id)}
+        android_ripple={{ color: 'rgba(255, 255, 255, 0.05)' }}
+      >
+               
+        <View style={styles.stepHeader}>
+          <View style={styles.stepHeaderLeft}>
+            <View style={styles.iconContainer}>
+              <LinearGradient
+                colors={colorSet.gradient}
+                style={styles.iconGradient}
               >
-                <Icon 
-                  name="expand-more" 
-                  size={24} 
-                  color="rgba(255, 255, 255, 0.6)" 
-                />
-              </Animated.View>
+                <Icon name={step.icon} size={20} color="#FFFFFF" />
+              </LinearGradient>
             </View>
             
-            <Animated.View 
-              style={[
-                styles.stepDetails,
-                {
-                  maxHeight: cardHeight.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 1000],
-                  }),
-                  opacity: cardHeight,
-                  overflow: 'hidden',
-                }
-              ]}
-            >
-              <Text style={styles.stepDescription}>{step.description}</Text>
-              {step.images ? (
-                renderImage(step.images)
-              ) : (
-                <View style={styles.noImageContainer}>
-                  <Icon name="image-not-supported" size={32} color="rgba(255, 255, 255, 0.1)" />
-                  <Text style={styles.noImageText}>No images available yet</Text>
-                </View>
-              )}
-            </Animated.View>
-          {/* </LinearGradient> */}
-        </Pressable>
-      // </Animated.View>
+            <View style={styles.titleContainer}>
+              <Text style={styles.stepTitle}>{step.title}</Text>
+              <View style={styles.statusContainer}>
+                <View 
+                  style={[
+                    styles.statusIndicator, 
+                    { backgroundColor: colorSet.color }
+                  ]} 
+                />
+                <Text 
+                  style={[
+                    styles.statusText, 
+                    { color: colorSet.color }
+                  ]}
+                >
+                  {statusText}
+                </Text>
+              </View>
+            </View>
+          </View>
+          
+          <Icon 
+            name={isExpanded ? "expand-less" : "expand-more"}
+            size={24} 
+            color="rgba(255, 255, 255, 0.6)" 
+          />
+        </View>
+        
+        {isExpanded && (
+          <View style={styles.stepDetails}>
+            <Text style={styles.stepDescription}>{step.description}</Text>
+            {step.images ? (
+              renderImage(step.images)
+            ) : (
+              <View style={styles.noImageContainer}>
+                <Icon name="image-not-supported" size={32} color="rgba(255, 255, 255, 0.1)" />
+                <Text style={styles.noImageText}>No images available yet</Text>
+              </View>
+            )}
+          </View>
+        )}
+      </Pressable>
     );
   };
 
@@ -499,30 +472,30 @@ const ServiceTracking: React.FC = () => {
     return (
       <View style={styles.noDataContainer}>
         <View style={styles.noDataCard}>
-          <LinearGradient
+          {/* <LinearGradient
             colors={['rgba(15, 15, 15, 0.7)', 'rgba(10, 10, 10, 0.85)']}
             style={styles.noDataGradient}
-          >
-            <Icon name="assignment-late" size={64} color="rgba(255, 255, 255, 0.1)" />
+          > */}
+            <Icon name="assignment-late" size={64} color="rgba(255, 255, 255, 0.1)" style={{textAlign: 'center'}}/>
             <Text style={styles.noDataTitle}>No Active Services</Text>
             <Text style={styles.noDataText}>
               You currently don't have any active services being tracked.
               Visit our service center or request a quote to get started.
             </Text>
             
-            <View style={styles.actionButtonContainer}>
+            {/* <View style={styles.actionButtonContainer}>
               <Pressable
                 style={({pressed}) => [
                   styles.actionButton,
                   pressed && styles.actionButtonPressed
                 ]}
-                onPress={() => {/* Navigation logic here */}}
+                onPress={() => {}}//Navigation logic here
               >
                 <Icon name="calculate" size={18} color="#FFFFFF" style={styles.buttonIcon} />
                 <Text style={styles.actionButtonText}>Get a Quote</Text>
               </Pressable>
-            </View>
-          </LinearGradient>
+            </View> */}
+          {/* </LinearGradient> */}
         </View>
       </View>
     );
@@ -715,12 +688,6 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 1,
     marginTop: 8,
-
-    // height: 180,
-    // borderRadius: 8,
-    // overflow: 'hidden',
-    // borderWidth: 1,
-    // borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   stepImage: {
     width: '100%',
@@ -790,11 +757,11 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   noDataGradient: {
-    padding: 30,
+    // padding: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    // borderWidth: 1,
+    // borderColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 16,
   },
   noDataTitle: {
