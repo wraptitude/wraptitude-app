@@ -225,7 +225,8 @@ function App(): React.JSX.Element {
         console.error('Sign in error:', error);
         RNAlert.alert(
           'Error',
-          error.message || 'Failed to sign in. Please check your credentials.'
+          'Incorrect phone number or password' || 'Failed to sign in. Please check your credentials.'
+          // error.message || 'Failed to sign in. Please check your credentials.'
         );
       } finally {
         setIsLoading(false);
@@ -241,7 +242,7 @@ function App(): React.JSX.Element {
           {/* <View style={appStyles.formContainer}> */}
           <Text style={appStyles.signUpTitle}>Sign In</Text>
 
-          <View style={appStyles.phoneFieldContainer}>
+          <View style={appStyles.phoneFieldContainer}>         
             <View style={appStyles.countryCodePicker}>
 
               <Picker
@@ -251,9 +252,6 @@ function App(): React.JSX.Element {
                 dropdownIconColor="#FFFFFF"
               >
                 <Picker.Item label="+1" value="+1" color="#FFFFFF" />
-                <Picker.Item label="+44" value="+44" color="#FFFFFF" />
-                <Picker.Item label="+86" value="+86" color="#FFFFFF" />
-                <Picker.Item label="+81" value="+81" color="#FFFFFF" />
               </Picker>
             </View>
             <TextInput
