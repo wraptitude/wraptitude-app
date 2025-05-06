@@ -109,7 +109,7 @@ const News: React.FC<NewsProps> = ({ onPostPress }) => {
           ))}
         </View>
 
-        <View style={styles.socialSection}>
+        {/* <View style={styles.socialSection}>
           <Text style={styles.socialTitle}>Follow our Social Media</Text>
           <View style={styles.socialStats}>
             <View style={styles.statItem}>
@@ -125,7 +125,7 @@ const News: React.FC<NewsProps> = ({ onPostPress }) => {
               <Text style={styles.statLabel}>Posts</Text>
             </View>
           </View>
-        </View>
+        </View> */}
       </ScrollView>
     </View>
   );

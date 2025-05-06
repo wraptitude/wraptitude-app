@@ -29,7 +29,7 @@ import { Authenticator, AuthenticatorProps, ThemeProvider, useAuthenticator, use
 import awsconfig from './src/aws-exports';
 import { SignIn } from '@aws-amplify/ui-react-native/dist/Authenticator/Defaults/SignIn';
 import { Picker } from '@react-native-picker/picker';
-import { signIn, getCurrentUser, signUp } from 'aws-amplify/auth';
+import { signIn, getCurrentUser, signUp, signOut } from 'aws-amplify/auth';
 import Home from './src/screens/Home';
 import { appStyles } from './src/styles/appStyles';
 import { NavigationContainer } from '@react-navigation/native';
@@ -105,6 +105,7 @@ function Section({ children, title }: SectionProps): React.JSX.Element {
 
 function App(): React.JSX.Element {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   // Check auth state on mount
   useEffect(() => {
@@ -117,6 +118,19 @@ function App(): React.JSX.Element {
       setIsAuthenticated(!!user);
     } catch (error) {
       setIsAuthenticated(false);
+    }
+  };
+
+  // Add a proper sign out function
+  const handleSignOut = async () => {
+    try {
+      setIsSigningOut(true);
+      await signOut();
+      setIsAuthenticated(false);
+    } catch (error) {
+      console.error('Error signing out:', error);
+    } finally {
+      setIsSigningOut(false);
     }
   };
 
@@ -479,7 +493,7 @@ function App(): React.JSX.Element {
                 name="Home" 
                 component={Home}
                 options={{ headerShown: false }}
-                initialParams={{ onSignOut: () => setIsAuthenticated(false) }}
+                initialParams={{ onSignOut: handleSignOut }}
               />
               <Stack.Screen 
                 name="Services" 
@@ -565,7 +579,7 @@ function App(): React.JSX.Element {
                 name="Home" 
                 component={Home}
                 options={{ headerShown: false }}
-                initialParams={{ onSignOut: () => setIsAuthenticated(false) }}
+                initialParams={{ onSignOut: handleSignOut }}
               />
               <Stack.Screen 
                 name="Services" 

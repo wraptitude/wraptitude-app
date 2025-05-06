@@ -26,8 +26,8 @@ const services = [
       'Glare Reduction: improved driving safety',
     ],
     image: require('../assets/images/tinting.webp'), // Add your service image
-    duration: '2-4 hours',
-    warranty: '5 years',
+    // duration: '2-4 hours',
+    // warranty: '5 years',
   },
   {
     id: 'wrap',
@@ -40,8 +40,8 @@ const services = [
       'Cost-effective: compared to repainting',
     ],
     image: require('../assets/images/wrap.webp'), // Add your service image
-    duration: '3-5 days',
-    warranty: '3 years',
+    // duration: '3-5 days',
+    // warranty: '3 years',
   },
   {
     id: 'ceramic',
@@ -54,8 +54,8 @@ const services = [
       'Enhanced Gloss: maintains showroom shine',
     ],
     image: require('../assets/images/ceramic.webp'), // Add your service image
-    duration: '2-3 days',
-    warranty: '5 years',
+    // duration: '2-3 days',
+    // warranty: '5 years',
   },
   {
     id: 'ppf',
@@ -68,8 +68,8 @@ const services = [
       'Preserves Value: maintains vehicle condition',
     ],
     image: require('../assets/images/ppf.webp'), // Add your service image
-    duration: '2-3 days',
-    warranty: '10 years',
+    // duration: '2-3 days',
+    // warranty: '10 years',
   },
 ];
 
@@ -100,7 +100,7 @@ const Services: React.FC<ServicesProps> = ({ onGetQuote }) => {
               <Text style={styles.serviceTitle}>{service.title}</Text>
               <Text style={styles.serviceDescription}>{service.description}</Text>
               
-              <View style={styles.serviceInfo}>
+              {/* <View style={styles.serviceInfo}>
                 <View style={styles.infoItem}>
                   <Text style={styles.infoLabel}>Duration</Text>
                   <Text style={styles.infoValue}>{service.duration}</Text>
@@ -109,7 +109,7 @@ const Services: React.FC<ServicesProps> = ({ onGetQuote }) => {
                   <Text style={styles.infoLabel}>Warranty</Text>
                   <Text style={styles.infoValue}>{service.warranty}</Text>
                 </View>
-              </View>
+              </View> */}
 
               <Text style={styles.featuresTitle}>Key Features:</Text>
               {service.features.map((feature, index) => (
