@@ -6,8 +6,9 @@ import {
   ActivityIndicator,
   ScrollView,
   Pressable,
+  Alert,
 } from 'react-native';
-import { fetchUserAttributes } from 'aws-amplify/auth';
+import { fetchUserAttributes, deleteUser } from 'aws-amplify/auth';
 
 interface UserAttributes {
   email: string;
@@ -22,6 +23,7 @@ const Profile: React.FC = () => {
   const [userAttributes, setUserAttributes] = useState<UserAttributes | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchUserData();
@@ -39,6 +41,38 @@ const Profile: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsDeleting(true);
+              await deleteUser();
+              // After successful deletion, you might want to navigate to the sign-in screen
+              // or handle the post-deletion state
+              Alert.alert('Success', 'Your account has been deleted successfully.');
+            } catch (error) {
+              console.error('Error deleting account:', error);
+              Alert.alert('Error', 'Failed to delete account. Please try again.');
+            } finally {
+              setIsDeleting(false);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   if (loading) {
@@ -102,6 +136,21 @@ const Profile: React.FC = () => {
           <Text style={styles.statusText}>Active</Text>
           <View style={styles.statusDot} />
         </View>
+      </View>
+
+      <View style={styles.infoSection}>
+        <Text style={styles.sectionTitle}>Danger Zone</Text>
+        <Pressable
+          style={[styles.deleteButton, isDeleting && styles.deleteButtonDisabled]}
+          onPress={handleDeleteAccount}
+          disabled={isDeleting}
+        >
+          {isDeleting ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.deleteButtonText}>Delete Account</Text>
+          )}
+        </Pressable>
       </View>
     </ScrollView>
   );
@@ -215,6 +264,22 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: '#4CAF50',
+  },
+  deleteButton: {
+    backgroundColor: '#FF4444',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  deleteButtonDisabled: {
+    opacity: 0.7,
+  },
+  deleteButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

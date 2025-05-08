@@ -43,7 +43,7 @@ interface HomeProps {
   };
 }
 
-type Screen = 'menu' | 'tracking' | 'history' | 'services' | 'knowledge' | 'gallery' | 'about' | 'contact' | 'news' | 'newsDetail' | 'emergency' | 'emergencyUrgentNonUrgent' | 'nonUrgentForm' | 'quote' | 'profile';
+type Screen = 'menu' | 'tracking' | 'history' | 'services' | 'knowledge' | 'gallery' | 'about' | 'contact' | 'profile' | 'news' | 'newsDetail' | 'emergency' | 'emergencyUrgentNonUrgent' | 'nonUrgentForm' | 'quote' | 'profile';
 
 const Home: React.FC<HomeProps> = ({ route }) => {
   const { toSignIn } = useAuthenticator();
@@ -63,6 +63,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
     profile: useRef(new Animated.Value(1)).current,
     knowledge: useRef(new Animated.Value(1)).current,
     contact: useRef(new Animated.Value(1)).current,
+    profile: useRef(new Animated.Value(1)).current,
     services: useRef(new Animated.Value(1)).current,
     gallery: useRef(new Animated.Value(1)).current,
     about: useRef(new Animated.Value(1)).current,
@@ -170,6 +171,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
     { id: 'about', icon: 'person', title: 'About Us', description: 'Learn more about Wraptitude' },
     { id: 'quote', icon: 'calculate', title: 'Free Quote', description: 'Get an instant quote for your vehicle' },
     { id: 'contact', icon: 'phone', title: 'Contact Us', description: 'Get in touch' },
+    { id: 'profile', icon: 'person', title: 'Profile', description: 'Manage your account' },
   ];
 
   const renderFooterIcon = (iconName: string, isActive: boolean) => {
@@ -203,6 +205,8 @@ const Home: React.FC<HomeProps> = ({ route }) => {
           return <KnowledgeBase />;
         case 'contact':
           return <ContactUs />;
+        case 'profile':
+          return <Profile />;
         case 'services':
           return <Services onGetQuote={handleGetQuote} />;
         case 'gallery':
