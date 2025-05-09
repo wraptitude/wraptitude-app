@@ -164,6 +164,12 @@ export const appStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  guestModeText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+  },
   forgotPasswordContainer: {
     padding: 20,
     backgroundColor: '#040404',

@@ -244,7 +244,7 @@ function App(): React.JSX.Element {
           {/* <View style={appStyles.formContainer}> */}
           <Text style={appStyles.signUpTitle}>Sign In</Text>
 
-          <View style={appStyles.phoneFieldContainer}>         
+          <View style={appStyles.phoneFieldContainer}>
             <View style={appStyles.countryCodePicker}>
 
               <Picker
@@ -299,7 +299,7 @@ function App(): React.JSX.Element {
           </Pressable>
 
           <Pressable onPress={() => setIsGuestMode(true)} style={appStyles.signInLink}>
-            <Text style={appStyles.signInLinkText}>In Guest Mode</Text>
+            <Text style={appStyles.guestModeText}>Continue as Guest</Text>
           </Pressable>
         </View>
       </View>
@@ -487,108 +487,114 @@ function App(): React.JSX.Element {
   // If authenticated, show Home directly
   if (isAuthenticated || isGuestMode) {
     return (
-      <ThemeProvider>
-        <Authenticator.Provider>
-          <View style={{ flex: 1, backgroundColor: '#040404' }}>
-          <NavigationContainer>
-              <Stack.Navigator>
-                <Stack.Screen 
-                name="Home" 
-                component={Home}
-                options={{ headerShown: false }}
-                initialParams={{ onSignOut: handleSignOut, isGuestMode: isGuestMode }}
-              />
-              <Stack.Screen 
-                name="Services" 
-                component={Services}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen 
-                name="FreeQuote" 
-                component={FreeQuote}
-                options={{
-                  headerShown: true,
-                  headerTitle: "Free Quote",
-                  headerBackTitle: "Back",
-                  headerStyle: {
-                    backgroundColor: '#040404',
-                  },
-                  headerTintColor: '#fff',
-                  headerTitleStyle: {
-                    fontWeight: 'bold',
-                  },
-                }}
-              />
-              <Stack.Screen name="EmergencyService" component={EmergencyService}                 
-                options={{
-                  headerShown: true,
-                  headerTitle: "Emergency Service",
-                  headerBackTitle: "Back",
-                  headerStyle: {
-                    backgroundColor: '#040404',
-                  },
-                  headerTintColor: '#fff',
-                  headerTitleStyle: {
-                    fontWeight: 'bold',
-                  },
-                }}/>
-              <Stack.Screen name="EmergencyServiceUrgentNonUrgent" component={EmergencyServiceUrgentNonUrgent} 
-              options={{
-                  headerShown: true,
-                  headerTitle: "Emergency Service",
-                  headerBackTitle: "Back",
-                  headerStyle: {
-                    backgroundColor: '#040404',
-                  },
-                  headerTintColor: '#fff',
-                  headerTitleStyle: {
-                    fontWeight: 'bold',
-                  },
-                }}/>
-              <Stack.Screen name="NonUrgentForm" component={NonUrgentForm} 
-              options={{
-                  headerShown: true,
-                  headerTitle: "Non-Urgent Form",
-                  headerBackTitle: "Back",
-                  headerStyle: {
-                    backgroundColor: '#040404',
-                  },
-                  headerTintColor: '#fff',
-                  headerTitleStyle: {
-                    fontWeight: 'bold',
-                  },
-                }}/>
-              </Stack.Navigator>
-            </NavigationContainer>
-            {/* <Home onSignOut={() => setIsAuthenticated(false)} /> */}
-          </View>
-        </Authenticator.Provider>
-      </ThemeProvider>
-    );
-  }
-
-  return (
       <ImageBackground
         source={require('./src/assets/images/1.jpg')} // Your background image
         style={appStyles.backgroundImage}
         resizeMode="cover"
       >
-        <ThemeProvider theme={theme}>
-        <Authenticator.Provider>
-        <View style={appStyles.rootContainer}>
-              {/* <Text>.</Text> */}
-              <Authenticator
-                Header={components.Header}
-                components={{
-                  SignIn: CustomSignIn,
-                  SignUp: CustomSignUp,
-                }}
-              >
-              </Authenticator>
+        <ThemeProvider>
+          <Authenticator.Provider>
+            <View style={{ flex: 1, backgroundColor: '#040404' }}>
+              <NavigationContainer>
+                <Stack.Navigator>
+                  <Stack.Screen
+                    name="Home"
+                    component={Home}
+                    options={{ headerShown: false }}
+                    initialParams={{ onSignOut: handleSignOut, isGuestMode: isGuestMode }}
+                  />
+                  <Stack.Screen
+                    name="Services"
+                    component={Services}
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="FreeQuote"
+                    component={FreeQuote}
+                    options={{
+                      headerShown: true,
+                      headerTitle: "Free Quote",
+                      headerBackTitle: "Back",
+                      headerStyle: {
+                        backgroundColor: '#040404',
+                      },
+                      headerTintColor: '#fff',
+                      headerTitleStyle: {
+                        fontWeight: 'bold',
+                      },
+                    }}
+                  />
+                  <Stack.Screen name="EmergencyService" component={EmergencyService}
+                    options={{
+                      headerShown: true,
+                      headerTitle: "Emergency Service",
+                      headerBackTitle: "Back",
+                      headerStyle: {
+                        backgroundColor: '#040404',
+                      },
+                      headerTintColor: '#fff',
+                      headerTitleStyle: {
+                        fontWeight: 'bold',
+                      },
+                    }} />
+                  <Stack.Screen name="EmergencyServiceUrgentNonUrgent" component={EmergencyServiceUrgentNonUrgent}
+                    options={{
+                      headerShown: true,
+                      headerTitle: "Emergency Service",
+                      headerBackTitle: "Back",
+                      headerStyle: {
+                        backgroundColor: '#040404',
+                      },
+                      headerTintColor: '#fff',
+                      headerTitleStyle: {
+                        fontWeight: 'bold',
+                      },
+                    }} />
+                  <Stack.Screen name="NonUrgentForm" component={NonUrgentForm}
+                    options={{
+                      headerShown: true,
+                      headerTitle: "Non-Urgent Form",
+                      headerBackTitle: "Back",
+                      headerStyle: {
+                        backgroundColor: '#040404',
+                      },
+                      headerTintColor: '#fff',
+                      headerTitleStyle: {
+                        fontWeight: 'bold',
+                      },
+                    }} />
+                </Stack.Navigator>
+              </NavigationContainer>
+              {/* <Home onSignOut={() => setIsAuthenticated(false)} /> */}
             </View>
-        </Authenticator.Provider>
+          </Authenticator.Provider>
         </ThemeProvider>
       </ImageBackground>
+    );
+  }
+
+  return (
+    <ImageBackground
+      source={require('./src/assets/images/1.jpg')} // Your background image
+      style={appStyles.backgroundImage}
+      resizeMode="cover"
+    >
+      <ThemeProvider theme={theme}>
+        <Authenticator.Provider>
+          <View style={appStyles.rootContainer}>
+            {/* <Text>.</Text> */}
+            <Authenticator
+              Header={components.Header}
+              components={{
+                SignIn: CustomSignIn,
+                SignUp: CustomSignUp,
+              }}
+            >
+            </Authenticator>
+          </View>
+        </Authenticator.Provider>
+      </ThemeProvider>
+    </ImageBackground>
 
   );
 
