@@ -39,13 +39,15 @@ interface HomeProps {
   route: {
     params: {
       onSignOut: () => void;
+      isGuestMode: boolean;
     };
   };
+  navigation: any;
 }
 
 type Screen = 'menu' | 'tracking' | 'history' | 'services' | 'knowledge' | 'gallery' | 'about' | 'contact' | 'profile' | 'news' | 'newsDetail' | 'emergency' | 'emergencyUrgentNonUrgent' | 'nonUrgentForm' | 'quote' | 'profile';
 
-const Home: React.FC<HomeProps> = ({ route }) => {
+const Home: React.FC<HomeProps> = ({ route, navigation }) => {
   const { toSignIn } = useAuthenticator();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [currentScreen, setCurrentScreen] = useState<Screen>('menu');
@@ -103,6 +105,30 @@ const Home: React.FC<HomeProps> = ({ route }) => {
   };
 
   const handleScreenTransition = (screen: Screen) => {
+    // Check if user is trying to access protected features while in guest mode
+    const protectedScreens: Screen[] = ['tracking', 'history', 'emergency', 'emergencyUrgentNonUrgent', 'nonUrgentForm', 'profile'];
+    
+    if (route.params.isGuestMode && protectedScreens.includes(screen)) {
+      // Show login prompt for protected features
+      Alert.alert(
+        'Login Required',
+        'Please sign in to access this feature.',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          },
+          {
+            text: 'Sign In',
+            // onPress: () => navigation.navigate('Auth')
+            onPress: handleSignOut
+          }
+        ]
+      );
+      return;
+    }
+    
+    // Continue with normal screen transition for public features or authenticated users
     if (screen === 'quote') {
       setQuoteSourceScreen(currentScreen);
     } else if (screen === 'emergencyUrgentNonUrgent' || screen === 'nonUrgentForm') {
@@ -256,78 +282,92 @@ const Home: React.FC<HomeProps> = ({ route }) => {
         default:
           return (
             <View style={styles.menuContainer}>
-              {menuItems.map((item) => (
-                <Animated.View 
-                  key={item.id} 
-                  style={[
-                    { 
-                      transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }],
-                      marginBottom: 10,
-                    }
-                  ]}
-                >
-                  <Pressable
-                    style={({pressed}) => [
-                      styles.menuButton,
-                      item.id === 'emergency' && styles.emergencyButton,
-                      item.id === 'quote' && styles.quoteButton,
-                      pressed && styles.menuButtonPressed
-                    ]}
-                    onPress={() => {
-                      animatePress(buttonScales[item.id]);
-                      handleScreenTransition(item.id as Screen);
-                    }}
-                    accessibilityLabel={item.title}
-                  >
-                    <LinearGradient
-                      colors={
-                        item.id === 'emergency' 
-                          ? ['rgba(217, 42, 42, 0.4)', 'rgba(199, 6, 40, 0.7)'] 
-                          : item.id === 'quote'
-                            ? ['rgba(37, 118, 235, 0.4)', 'rgba(59, 130, 246, 0.7)']
-                            : ['rgba(15, 15, 15, 0.7)', 'rgba(10, 10, 10, 0.85)']
+              {menuItems.map((item) => {
+                // Check if this is a protected feature
+                const isProtected = ['tracking', 'history', 'emergency', 'profile'].includes(item.id);
+                const isLocked = isProtected && route.params.isGuestMode;
+                
+                return (
+                  <Animated.View 
+                    key={item.id} 
+                    style={[
+                      { 
+                        transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }],
+                        marginBottom: 10,
+                        opacity: isLocked ? 0.7 : 1, // Dim protected features in guest mode
                       }
-                      style={styles.menuButtonGradient}
+                    ]}
+                  >
+                    <Pressable
+                      style={({pressed}) => [
+                        styles.menuButton,
+                        item.id === 'emergency' && styles.emergencyButton,
+                        item.id === 'quote' && styles.quoteButton,
+                        pressed && styles.menuButtonPressed
+                      ]}
+                      onPress={() => {
+                        animatePress(buttonScales[item.id]);
+                        handleScreenTransition(item.id as Screen);
+                      }}
+                      accessibilityLabel={item.title}
                     >
-                      <View style={[
-                        styles.iconContainer, 
-                        item.id === 'emergency' && styles.emergencyIconContainer,
-                        item.id === 'quote' && styles.quoteIconContainer
-                      ]}>
-                        <LinearGradient
-                          colors={
-                            item.id === 'emergency' 
-                              ? ['rgba(255, 150, 150, 0.2)', 'rgba(199, 6, 40, 0.3)'] 
-                              : item.id === 'quote'
-                                ? ['rgba(150, 190, 255, 0.2)', 'rgba(59, 130, 246, 0.3)']
-                                : ['rgba(50, 50, 50, 0.3)', 'rgba(40, 40, 40, 0.5)']
-                          }
-                          style={styles.iconGradient}
-                        >
-                          <Icon 
-                            name={item.icon === 'emergency' ? 'warning' : item.icon} 
-                            size={26} 
-                            color={
+                      <LinearGradient
+                        colors={
+                          item.id === 'emergency' 
+                            ? ['rgba(217, 42, 42, 0.4)', 'rgba(199, 6, 40, 0.7)'] 
+                            : item.id === 'quote'
+                              ? ['rgba(37, 118, 235, 0.4)', 'rgba(59, 130, 246, 0.7)']
+                              : ['rgba(15, 15, 15, 0.7)', 'rgba(10, 10, 10, 0.85)']
+                        }
+                        style={styles.menuButtonGradient}
+                      >
+                        <View style={[
+                          styles.iconContainer, 
+                          item.id === 'emergency' && styles.emergencyIconContainer,
+                          item.id === 'quote' && styles.quoteIconContainer
+                        ]}>
+                          <LinearGradient
+                            colors={
                               item.id === 'emergency' 
-                                ? '#ff9494' 
+                                ? ['rgba(255, 150, 150, 0.2)', 'rgba(199, 6, 40, 0.3)'] 
                                 : item.id === 'quote'
-                                  ? '#a8cbff'
-                                  : '#FFFFFF'
-                            } 
-                          />
-                        </LinearGradient>
-                      </View>
-                      <Text style={[
-                        styles.menuTitle,
-                        (item.id === 'emergency' || item.id === 'quote') && styles.specialMenuTitle
-                      ]}>
-                        {item.title}
-                      </Text>
-                      <Text style={styles.menuDescription}>{item.description}</Text>
-                    </LinearGradient>
-                  </Pressable>
-                </Animated.View>
-              ))}
+                                  ? ['rgba(150, 190, 255, 0.2)', 'rgba(59, 130, 246, 0.3)']
+                                  : ['rgba(50, 50, 50, 0.3)', 'rgba(40, 40, 40, 0.5)']
+                            }
+                            style={styles.iconGradient}
+                          >
+                            <Icon 
+                              name={item.icon === 'emergency' ? 'warning' : item.icon} 
+                              size={26} 
+                              color={
+                                item.id === 'emergency' 
+                                  ? '#ff9494' 
+                                  : item.id === 'quote'
+                                    ? '#a8cbff'
+                                    : '#FFFFFF'
+                              } 
+                            />
+                          </LinearGradient>
+                        </View>
+                        <Text style={[
+                          styles.menuTitle,
+                          (item.id === 'emergency' || item.id === 'quote') && styles.specialMenuTitle
+                        ]}>
+                          {item.title}
+                        </Text>
+                        <Text style={styles.menuDescription}>{item.description}</Text>
+                        
+                        {/* Show lock icon for protected features in guest mode */}
+                        {isLocked && (
+                          <View style={styles.lockIconContainer}>
+                            <Icon name="lock" size={18} color="#FFFFFF" />
+                          </View>
+                        )}
+                      </LinearGradient>
+                    </Pressable>
+                  </Animated.View>
+                );
+              })}
             </View>
           );
       }
@@ -410,7 +450,13 @@ const Home: React.FC<HomeProps> = ({ route }) => {
                     ]} 
                     onPress={handleSignOut}
                   >
-                    <Icon name="logout" size={22} color="#FFFFFF" />
+                    {/* <Icon name="logout" size={22} color="#FFFFFF" />
+                     <Icon name="login" size={22} color="#FFFFFF" /> */}
+                     {route.params.isGuestMode ? (
+                      <Text style={styles.signOutText}>Sign In</Text>
+                     ) : (
+                      <Text style={styles.signOutText}>Sign Out</Text>
+                     )}
                   </Pressable>
                 </>
               ) : (
@@ -483,12 +529,36 @@ const Home: React.FC<HomeProps> = ({ route }) => {
             <Pressable
               style={[styles.footerTab, activeTab === 'tracking' && styles.footerTabActive]}
               onPress={() => {
+                if (route.params.isGuestMode) {
+                  // Show login prompt
+                  Alert.alert(
+                    'Login Required',
+                    'Please sign in to access tracking features.',
+                    [
+                      {
+                        text: 'Cancel',
+                        style: 'cancel'
+                      },
+                      {
+                        text: 'Sign In',
+                        // onPress: () => navigation.navigate('Auth')
+                        onPress: handleSignOut
+                      }
+                    ]
+                  );
+                  return;
+                }
                 setActiveTab('tracking');
                 handleScreenTransition('tracking');
               }}
             >
               <View style={styles.footerIcon}>
                 {renderFooterIcon('tracking', activeTab === 'tracking')}
+                {route.params.isGuestMode && (
+                  <View style={styles.footerLockIcon}>
+                    <Icon name="lock" size={10} color="#FFFFFF" />
+                  </View>
+                )}
               </View>
               <Text style={[
                 styles.footerText, 
@@ -519,12 +589,36 @@ const Home: React.FC<HomeProps> = ({ route }) => {
             <Pressable
               style={[styles.footerTab, activeTab === 'profile' && styles.footerTabActive]}
               onPress={() => {
+                if (route.params.isGuestMode) {
+                  // Show login prompt
+                  Alert.alert(
+                    'Login Required',
+                    'Please sign in to access your profile.',
+                    [
+                      {
+                        text: 'Cancel',
+                        style: 'cancel'
+                      },
+                      {
+                        text: 'Sign In',
+                        // onPress: () => navigation.navigate('Auth')
+                        onPress: handleSignOut
+                      }
+                    ]
+                  );
+                  return;
+                }
                 setActiveTab('profile');
                 handleScreenTransition('profile');
               }}
             >
               <View style={styles.footerIcon}>
                 {renderFooterIcon('profile', activeTab === 'profile')}
+                {route.params.isGuestMode && (
+                  <View style={styles.footerLockIcon}>
+                    <Icon name="lock" size={10} color="#FFFFFF" />
+                  </View>
+                )}
               </View>
               <Text style={[
                 styles.footerText, 
@@ -611,9 +705,10 @@ const styles = StyleSheet.create({
   },
   signOutText: {
     color: '#c70628',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
-    letterSpacing: 0.5,
+    // letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   contentContainer: {
     flex: 1,
@@ -767,7 +862,35 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-  }
+  },
+  disabledButton: {
+    opacity: 0.7,
+  },
+  lockIconContainer: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  disabledFooterTab: {
+    opacity: 0.7,
+  },
+  footerLockIcon: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#c70628',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
 
 export default Home;

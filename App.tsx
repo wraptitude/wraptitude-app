@@ -106,6 +106,7 @@ function Section({ children, title }: SectionProps): React.JSX.Element {
 function App(): React.JSX.Element {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isGuestMode, setIsGuestMode] = useState(false);
 
   // Check auth state on mount
   useEffect(() => {
@@ -127,6 +128,7 @@ function App(): React.JSX.Element {
       setIsSigningOut(true);
       await signOut();
       setIsAuthenticated(false);
+      setIsGuestMode(false);
     } catch (error) {
       console.error('Error signing out:', error);
     } finally {
@@ -295,7 +297,10 @@ function App(): React.JSX.Element {
           <Pressable onPress={toSignUp} style={appStyles.signInLink}>
             <Text style={appStyles.signInLinkText}>Create Account</Text>
           </Pressable>
-          {/* </View> */}
+
+          <Pressable onPress={() => setIsGuestMode(true)} style={appStyles.signInLink}>
+            <Text style={appStyles.signInLinkText}>In Guest Mode</Text>
+          </Pressable>
         </View>
       </View>
 
@@ -480,7 +485,7 @@ function App(): React.JSX.Element {
     );
   };
   // If authenticated, show Home directly
-  if (isAuthenticated) {
+  if (isAuthenticated || isGuestMode) {
     return (
       <ThemeProvider>
         <Authenticator.Provider>
@@ -491,7 +496,7 @@ function App(): React.JSX.Element {
                 name="Home" 
                 component={Home}
                 options={{ headerShown: false }}
-                initialParams={{ onSignOut: handleSignOut }}
+                initialParams={{ onSignOut: handleSignOut, isGuestMode: isGuestMode }}
               />
               <Stack.Screen 
                 name="Services" 
@@ -570,41 +575,8 @@ function App(): React.JSX.Element {
       >
         <ThemeProvider theme={theme}>
         <Authenticator.Provider>
-          {isAuthenticated ? (
-            <NavigationContainer>
-              <Stack.Navigator>
-                <Stack.Screen 
-                name="Home" 
-                component={Home}
-                options={{ headerShown: false }}
-                initialParams={{ onSignOut: handleSignOut }}
-              />
-              <Stack.Screen 
-                name="Services" 
-                component={Services}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen 
-                name="FreeQuote" 
-                component={FreeQuote}
-                options={{
-                  headerShown: true,
-                  headerTitle: "Free Quote",
-                  headerStyle: {
-                    backgroundColor: '#040404',
-                  },
-                  headerTintColor: '#fff',
-                  headerTitleStyle: {
-                    fontWeight: 'bold',
-                  },
-                }}
-              />
-              </Stack.Navigator>
-            </NavigationContainer>
-            // <Home onSignOut={() => setIsAuthenticated(false)} />
-          ) : (
-            <View style={appStyles.rootContainer}>
-              <Text>.</Text>
+        <View style={appStyles.rootContainer}>
+              {/* <Text>.</Text> */}
               <Authenticator
                 Header={components.Header}
                 components={{
@@ -613,16 +585,13 @@ function App(): React.JSX.Element {
                 }}
               >
               </Authenticator>
-
             </View>
-          )}
-
         </Authenticator.Provider>
-
         </ThemeProvider>
       </ImageBackground>
 
   );
+
 }
 
 export default App;
