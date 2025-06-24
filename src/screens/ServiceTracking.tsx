@@ -35,15 +35,24 @@ interface ServiceStep {
 const INITIAL_STEPS: ServiceStep[] = [
   {
     id: '1',
+    title: 'Deposit',
+    description: 'Deposit payment received and confirmed',
+    status: 'completed',
+    images: '',
+    weight: 2,
+    icon: 'account-balance-wallet',
+  },
+  {
+    id: '2',
     title: 'Vehicle Inspection and Cleaning',
     description: 'Detailed vehicle condition check and deep cleaning',
     status: 'completed',
     images: '',
-    weight: 20,
+    weight: 18,
     icon: 'fact-check',
   },
   {
-    id: '2',
+    id: '3',
     title: 'Film Preparation',
     description: 'Prepare film materials, confirm measurements and cutting',
     status: 'completed',
@@ -52,7 +61,7 @@ const INITIAL_STEPS: ServiceStep[] = [
     icon: 'content-cut',
   },
   {
-    id: '3',
+    id: '4',
     title: 'Film Installation',
     description: 'Professional film installation process',
     status: 'in_progress',
@@ -61,7 +70,7 @@ const INITIAL_STEPS: ServiceStep[] = [
     icon: 'build',
   },
   {
-    id: '4',
+    id: '5',
     title: 'Quality Check',
     description: 'Comprehensive film quality inspection',
     status: 'pending',
@@ -70,7 +79,7 @@ const INITIAL_STEPS: ServiceStep[] = [
     icon: 'verified',
   },
   {
-    id: '5',
+    id: '6',
     title: 'Final Presentation',
     description: 'Final result presentation and customer confirmation',
     status: 'pending',
@@ -144,14 +153,13 @@ const ServiceTracking: React.FC = () => {
 
             const responseData = await response.json();
             const parsedBody = JSON.parse(responseData.body);
-            console.log('parsedBody', parsedBody);
+
             if (!parsedBody.data || parsedBody.data.length === 0) {
               setSteps([]);
               return;
             }
 
             const data = parsedBody.data[0];
-            
             // Set service details
             setServiceDetails({
               serviceType: data.serviceType || '',
@@ -162,20 +170,24 @@ const ServiceTracking: React.FC = () => {
 
             const updatedSteps = [...INITIAL_STEPS];
             
-            updatedSteps[0].status = data.step1;
-            updatedSteps[0].images = data.step1Img && data.step1Img !== '' ? `${data.step1Img}?${new Date().getTime()}` : '';
+            updatedSteps[0].status = data.step0 || 'completed';
+            updatedSteps[0].description = data.depositAmount ?  'Deposit payment received and confirmed: $' + data.depositAmount : 'Deposit payment received and confirmed';
+            updatedSteps[0].images = data.step0Img && data.step0Img !== '' ? `${data.step0Img}?${new Date().getTime()}` : '';
             
-            updatedSteps[1].status = data.step2;
-            updatedSteps[1].images = data.step2Img && data.step2Img !== '' ? `${data.step2Img}?${new Date().getTime()}` : '';
+            updatedSteps[1].status = data.step1 || 'pending';
+            updatedSteps[1].images = data.step1Img && data.step1Img !== '' ? `${data.step1Img}?${new Date().getTime()}` : '';
             
-            updatedSteps[2].status = data.step3;
-            updatedSteps[2].images = data.step3Img && data.step3Img !== '' ? `${data.step3Img}?${new Date().getTime()}` : '';
+            updatedSteps[2].status = data.step2 || 'pending';
+            updatedSteps[2].images = data.step2Img && data.step2Img !== '' ? `${data.step2Img}?${new Date().getTime()}` : '';
             
-            updatedSteps[3].status = data.step4;
-            updatedSteps[3].images = data.step4Img && data.step4Img !== '' ? `${data.step4Img}?${new Date().getTime()}` : '';
+            updatedSteps[3].status = data.step3 || 'pending';
+            updatedSteps[3].images = data.step3Img && data.step3Img !== '' ? `${data.step3Img}?${new Date().getTime()}` : '';
             
-            updatedSteps[4].status = data.step5;
-            updatedSteps[4].images = data.step5Img && data.step5Img !== '' ? `${data.step5Img}?${new Date().getTime()}` : '';
+            updatedSteps[4].status = data.step4 || 'pending';
+            updatedSteps[4].images = data.step4Img && data.step4Img !== '' ? `${data.step4Img}?${new Date().getTime()}` : '';
+            
+            updatedSteps[5].status = data.step5 || 'pending';
+            updatedSteps[5].images = data.step5Img && data.step5Img !== '' ? `${data.step5Img}?${new Date().getTime()}` : '';
 
             setSteps(updatedSteps);
           }
