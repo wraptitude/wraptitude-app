@@ -108,16 +108,35 @@ const ServiceHistory: React.FC = () => {
     });
   };
 
-  const getDisplayServiceType = (serviceType: string): string => {
+  const getDisplayServiceType = (serviceType: string | string[]): string => {
+    // Handle array case
+    if (Array.isArray(serviceType)) {
+      return serviceType.map(type => {
+        switch (type) {
+          case 'window_tinting':
+            return 'Window Tinting';
+          case 'full_wrap':
+            return 'Full Wrap';
+          case 'partial_wrap':
+            return 'Partial Wrap';
+          case 'paint_protection':
+            return 'Paint Protection';
+          default:
+            return type.replace(/_/g, ' ');
+        }
+      }).join(', ');
+    }
+    
+    // Handle string case
     switch (serviceType) {
       case 'window_tinting':
         return 'Window Tinting';
-      case 'vinyl_wrap':
-        return 'Vinyl Wrap';
-      case 'ceramic_coating':
-        return 'Ceramic Coating';
-      case 'paint_protection_film':
-        return 'Paint Protection Film (PPF)';
+      case 'full_wrap':
+        return 'Full Wrap';
+      case 'partial_wrap':
+        return 'Partial Wrap';
+      case 'paint_protection':
+        return 'Paint Protection';
       default:
         return serviceType.replace(/_/g, ' ');
     }
