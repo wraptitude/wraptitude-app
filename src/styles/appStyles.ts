@@ -56,7 +56,7 @@ export const appStyles = StyleSheet.create({
     marginBottom: 15,
   },
   countryCodePicker: {
-    width: 100,
+    width: 120,
     height: 50,
     borderWidth: 1,
     borderColor: '#7c7c7c',

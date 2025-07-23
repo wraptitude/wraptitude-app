@@ -167,7 +167,7 @@ function App(): React.JSX.Element {
   // Custom Sign In component
   const CustomSignIn = ({ fields, ...props }) => {
     const [phoneNumber, setPhoneNumber] = React.useState('');
-    const [selectedCode, setSelectedCode] = React.useState('+1');
+    const [selectedCode, setSelectedCode] = React.useState('+852');
     const [password, setPassword] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
 
@@ -176,20 +176,22 @@ function App(): React.JSX.Element {
 
     const formatPhoneNumber = (text: string) => {
       const cleaned = text.replace(/\D/g, '');
-
+      
       switch (cleaned.length) {
         case 0:
           return '';
         case 1:
         case 2:
         case 3:
-          return `(${cleaned}`;
         case 4:
+          return cleaned;
         case 5:
         case 6:
-          return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
+        case 7:
+        case 8:
+          return `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`;
         default:
-          return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
+          return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 8)}`;
       }
     };
 
@@ -253,15 +255,15 @@ function App(): React.JSX.Element {
                 style={appStyles.picker}
                 dropdownIconColor="#FFFFFF"
               >
-                <Picker.Item label="+1" value="+1" color="#FFFFFF" />
+                <Picker.Item label="+852" value="+852" color="#FFFFFF" />
               </Picker>
             </View>
             <TextInput
               style={appStyles.phoneInput}
-              placeholder="(XXX) XXX-XXXX"
+              placeholder="XXXX-XXXX"
               placeholderTextColor="#7c7c7c"
               keyboardType="phone-pad"
-              maxLength={14}
+              maxLength={9}
               value={phoneNumber}
               onChangeText={(text) => {
                 const formatted = formatPhoneNumber(text);
@@ -309,7 +311,7 @@ function App(): React.JSX.Element {
 
   const CustomSignUp = (props: AuthenticatorProps) => {
     const [phoneNumber, setPhoneNumber] = React.useState('');
-    const [selectedCode, setSelectedCode] = React.useState('+1');
+    const [selectedCode, setSelectedCode] = React.useState('+852');
     const [password, setPassword] = React.useState('');
     const [confirmPassword, setConfirmPassword] = React.useState('');
     const [email, setEmail] = React.useState('');
@@ -320,20 +322,22 @@ function App(): React.JSX.Element {
 
     const formatPhoneNumber = (text: string) => {
       const cleaned = text.replace(/\D/g, '');
-
+      
       switch (cleaned.length) {
         case 0:
           return '';
         case 1:
         case 2:
         case 3:
-          return `(${cleaned}`;
         case 4:
+          return cleaned;
         case 5:
         case 6:
-          return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
+        case 7:
+        case 8:
+          return `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`;
         default:
-          return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
+          return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 8)}`;
       }
     };
 
@@ -397,7 +401,7 @@ function App(): React.JSX.Element {
               style={appStyles.picker}
               dropdownIconColor="#FFFFFF"
             >
-              <Picker.Item label="+1" value="+1" color="#FFFFFF" />
+              <Picker.Item label="+852" value="+852" color="#FFFFFF" />
               <Picker.Item label="+44" value="+44" color="#FFFFFF" />
               <Picker.Item label="+86" value="+86" color="#FFFFFF" />
               <Picker.Item label="+81" value="+81" color="#FFFFFF" />
@@ -405,10 +409,10 @@ function App(): React.JSX.Element {
           </View>
           <TextInput
             style={appStyles.phoneInput}
-            placeholder="(XXX) XXX-XXXX"
+            placeholder="XXXX-XXXX"
             placeholderTextColor="#7c7c7c"
             keyboardType="phone-pad"
-            maxLength={14}
+            maxLength={9}
             value={phoneNumber}
             onChangeText={(text) => {
               const formatted = formatPhoneNumber(text);
