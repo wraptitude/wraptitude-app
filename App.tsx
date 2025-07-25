@@ -298,12 +298,12 @@ function App(): React.JSX.Element {
             <Text style={appStyles.signInLinkText}>Create Account</Text>
           </Pressable>
 
-          <Pressable onPress={() => setIsGuestMode(true)} style={appStyles.signInLink}>
-            <Text style={appStyles.guestModeText}>Continue as Guest</Text>
-          </Pressable>
-
           <Pressable onPress={toForgotPassword} style={appStyles.signInLink}>
             <Text style={appStyles.signInLinkText}>Forgot Password?</Text>
+          </Pressable>
+
+          <Pressable onPress={() => setIsGuestMode(true)} style={appStyles.signInLink}>
+            <Text style={appStyles.guestModeText}>Continue as Guest</Text>
           </Pressable>
         </View>
       </View>
