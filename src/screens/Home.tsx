@@ -190,7 +190,7 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
   const menuItems = [
     { id: 'tracking', icon: 'directions-car', title: 'Service Tracking', description: 'Track your vehicle service progress' },
     { id: 'history', icon: 'history', title: 'Service History', description: 'View your past services' },
-    { id: 'emergency', icon: 'warning', title: 'Emergency Service', description: 'Call for emergency service' },
+    // { id: 'emergency', icon: 'warning', title: 'Emergency Service', description: 'Call for emergency service' },
     { id: 'services', icon: 'build', title: 'Our Services', description: 'Explore our professional services' },
     { id: 'knowledge', icon: 'book', title: 'Knowledge Base', description: 'Learn about car films' },
     { id: 'news', icon: 'newspaper', title: 'News', description: 'Latest updates' },
@@ -250,8 +250,8 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
           );
         case 'newsDetail':
           return <NewsDetail post={selectedPost!} />;
-        case 'emergency':
-          return <EmergencyService onServiceSelect={handleEmergencyServiceSelect} />;
+        // case 'emergency':
+        //   return <EmergencyService onServiceSelect={handleEmergencyServiceSelect} />;
         case 'emergencyUrgentNonUrgent':
           return (
             <EmergencyServiceUrgentNonUrgent 
@@ -410,7 +410,7 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
 
   return (
     <ImageBackground
-      source={require('../assets/images/1.jpg')}
+      source={require('../assets/images/4.jpeg')}
       style={styles.container}
       blurRadius={8}
       resizeMode="cover"
@@ -438,7 +438,7 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
                 <>
                   <View style={styles.logoContainer}>
                     <Image
-                      source={require('../assets/images/wraptitude-logo.webp')}
+                      source={require('../assets/images/HKTC_LOGO_NEW.png')}
                       style={styles.logo}
                       resizeMode="contain"
                     />

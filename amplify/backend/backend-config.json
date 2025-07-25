@@ -1,11 +1,30 @@
 {
   "auth": {
-    "wraptitudeappca363034": {
+    "wraptitudeappd5b4e0a0": {
       "customAuth": false,
       "dependsOn": [],
+      "frontendAuthConfig": {
+        "mfaConfiguration": "OFF",
+        "mfaTypes": [
+          "SMS"
+        ],
+        "passwordProtectionSettings": {
+          "passwordPolicyCharacters": [],
+          "passwordPolicyMinLength": 8
+        },
+        "signupAttributes": [
+          "EMAIL"
+        ],
+        "socialProviders": [],
+        "usernameAttributes": [
+          "PHONE_NUMBER"
+        ],
+        "verificationMechanisms": [
+          "EMAIL"
+        ]
+      },
       "providerPlugin": "awscloudformation",
-      "service": "Cognito",
-      "serviceType": "imported"
+      "service": "Cognito"
     },
     "wraptitudeappd8d1d34c": {
       "customAuth": false,
@@ -16,38 +35,6 @@
     }
   },
   "parameters": {
-    "AMPLIFY_auth_wraptitudeappca363034_nativeClientId": {
-      "usedBy": [
-        {
-          "category": "auth",
-          "resourceName": "wraptitudeappca363034"
-        }
-      ]
-    },
-    "AMPLIFY_auth_wraptitudeappca363034_userPoolId": {
-      "usedBy": [
-        {
-          "category": "auth",
-          "resourceName": "wraptitudeappca363034"
-        }
-      ]
-    },
-    "AMPLIFY_auth_wraptitudeappca363034_userPoolName": {
-      "usedBy": [
-        {
-          "category": "auth",
-          "resourceName": "wraptitudeappca363034"
-        }
-      ]
-    },
-    "AMPLIFY_auth_wraptitudeappca363034_webClientId": {
-      "usedBy": [
-        {
-          "category": "auth",
-          "resourceName": "wraptitudeappca363034"
-        }
-      ]
-    },
     "AMPLIFY_auth_wraptitudeappd8d1d34c_nativeClientId": {
       "usedBy": [
         {

@@ -155,7 +155,7 @@ function App(): React.JSX.Element {
       return (
         <View style={appStyles.headerContainer}>
           <Image
-            source={require('./src/assets/images/wraptitude-logo.webp')}
+            source={require('./src/assets/images/HKTC_LOGO_NEW.png')}
             style={appStyles.logoImage}
             resizeMode="contain"
           />
@@ -492,7 +492,7 @@ function App(): React.JSX.Element {
   if (isAuthenticated || isGuestMode) {
     return (
       <ImageBackground
-        source={require('./src/assets/images/1.jpg')} // Your background image
+        source={require('./src/assets/images/4.jpeg')} // Your background image
         style={appStyles.backgroundImage}
         resizeMode="cover"
       >
@@ -579,7 +579,7 @@ function App(): React.JSX.Element {
 
   return (
     <ImageBackground
-      source={require('./src/assets/images/1.jpg')} // Your background image
+      source={require('./src/assets/images/4.jpeg')} // Your background image
       style={appStyles.backgroundImage}
       resizeMode="cover"
     >
