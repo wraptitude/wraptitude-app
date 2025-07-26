@@ -26,7 +26,7 @@ import {
 import { Button } from 'react-native';
 import { Amplify, Auth } from 'aws-amplify';
 import { Authenticator, AuthenticatorProps, ThemeProvider, useAuthenticator, useTheme } from '@aws-amplify/ui-react-native';
-import awsconfig from './src/aws-exports';
+import awsConfig from './src/aws-config';
 import { SignIn } from '@aws-amplify/ui-react-native/dist/Authenticator/Defaults/SignIn';
 import { Picker } from '@react-native-picker/picker';
 import { signIn, getCurrentUser, signUp, signOut } from 'aws-amplify/auth';
@@ -41,7 +41,7 @@ import EmergencyServiceUrgentNonUrgent from './src/screens/EmergencyServiceUrgen
 import NonUrgentForm from './src/screens/NonUrgentForm';
 
 // Configure Amplify
-Amplify.configure(awsconfig);
+Amplify.configure(awsConfig);
 
 const Stack = createNativeStackNavigator();
 

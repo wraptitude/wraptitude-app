@@ -10,6 +10,12 @@
       "StackName": "amplify-wraptitudeapp-prod-1a44a",
       "StackId": "arn:aws:cloudformation:us-east-2:539247487854:stack/amplify-wraptitudeapp-prod-1a44a/be262660-039f-11f0-83df-0ad32b1e836f",
       "AmplifyAppId": "dd8f7ei7n104b"
+    },
+    "categories": {
+      "auth": {
+        "wraptitudeappd5b4e0a0": {},
+        "wraptitudeappca363034": {}
+      }
     }
   },
   "dev": {

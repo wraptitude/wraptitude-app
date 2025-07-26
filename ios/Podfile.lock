@@ -1728,7 +1728,7 @@ PODS:
     - React-Core
     - SDWebImage (~> 5.11.1)
     - SDWebImageWebPCoder (~> 0.8.4)
-  - RNScreens (4.11.1):
+  - RNScreens (4.13.1):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2024.11.18.00)
@@ -1749,9 +1749,9 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNScreens/common (= 4.11.1)
+    - RNScreens/common (= 4.13.1)
     - Yoga
-  - RNScreens/common (4.11.1):
+  - RNScreens/common (4.13.1):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2024.11.18.00)
@@ -1773,7 +1773,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNVectorIcons (10.2.0):
+  - RNVectorIcons (10.3.0):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2024.11.18.00)
@@ -2134,8 +2134,8 @@ SPEC CHECKSUMS:
   RNCAsyncStorage: e90a7ba02f726490143039acb9a43449674a8efc
   RNCPicker: a5d707ffa4b88142d0971273fcb9602f2f27ccda
   RNFastImage: 462a183c4b0b6b26fdfd639e1ed6ba37536c3b87
-  RNScreens: 8d9c717491c2396033196290eac81724b6428ff0
-  RNVectorIcons: 3bcc7d69519bcac82308d2464579c4203a451c28
+  RNScreens: 45b2bf5f750215cb831fdd16455804b97042be3a
+  RNVectorIcons: 4deb5acb18b6dfc8da128993fb8ef0ef5b7cbf32
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
