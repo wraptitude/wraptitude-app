@@ -536,7 +536,7 @@ function App(): React.JSX.Element {
         setCodeSent(true);
         RNAlert.alert(
           'Code Sent',
-          'A verification code has been sent to your phone number.'
+          'A verification code has been sent to your email.'
         );
       } catch (error: any) {
         console.error('Reset password error:', error);

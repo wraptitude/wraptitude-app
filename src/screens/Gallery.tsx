@@ -1,148 +1,126 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
-  Pressable,
+  FlatList,
+  Image,
   Dimensions,
   ActivityIndicator,
-  Linking,
+  TouchableOpacity,
+  Modal,
 } from 'react-native';
-import WebView from 'react-native-webview';
 
-// Hardcoded post IDs from wraptitude.ca Instagram
-const INSTAGRAM_POSTS = [
-  'DHKgKObOVbz', // Replace with actual post IDs from wraptitude.ca
-  'DHRq8E9Ot94',
-];
+// Define the type for our gallery item
+interface GalleryItem {
+  id: string;
+  imageUrl: string;
+  title: string;
+  description: string;
+}
 
 const Gallery: React.FC = () => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [photos, setPhotos] = useState<GalleryItem[]>([]);
+  const [selectedPhoto, setSelectedPhoto] = useState<GalleryItem | null>(null);
 
-  // Simplified HTML template
-  const generateEmbedHtml = (postIds: string[]) => {
-    const embedsHtml = postIds.map(id => `
-      <iframe 
-        src="https://www.instagram.com/p/${id}/embed" 
-        width="100%" 
-        height="400" 
-        frameborder="0" 
-        scrolling="no" 
-        allowtransparency="true"
-      ></iframe>
-    `).join('<div style="margin: 16px 0;"></div>');
+  useEffect(() => {
+    fetchPhotos();
+  }, []);
 
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-          <style>
-            body { 
-              margin: 0; 
-              padding: 16px;
-              background-color: #040404;
-              font-family: -apple-system, system-ui, BlinkMacSystemFont;
-            }
-            iframe {
-              border-radius: 8px;
-              background: white;
-            }
-          </style>
-        </head>
-        <body>
-          ${embedsHtml}
-        </body>
-      </html>
-    `;
+  const fetchPhotos = async () => {
+    try {
+      setLoading(true);
+      // Replace with your actual API endpoint
+      const response = await fetch('YOUR_API_ENDPOINT');
+      const data = await response.json();
+      setPhotos(data);
+    } catch (error) {
+      console.error('Error fetching photos:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-//   const injectedJavaScript = `
-//     window.addEventListener('message', function(event) {
-//       window.ReactNativeWebView.postMessage(event.data);
-//     });
-//   `;
-const injectedJavaScript = `
-    (function() {
-      const img = document.querySelector('img');
-      if (img) {
-        window.ReactNativeWebView.postMessage(img.src);
-      } else {
-        window.ReactNativeWebView.postMessage('No image found');
-      }
-    })();
-  `;
+  const renderGalleryItem = ({ item }: { item: GalleryItem }) => (
+    <TouchableOpacity 
+      style={styles.photoContainer}
+      onPress={() => setSelectedPhoto(item)}
+    >
+      <Image
+        source={{ uri: item.imageUrl }}
+        style={styles.photo}
+        resizeMode="cover"
+      />
+      <View style={styles.photoInfo}>
+        <Text style={styles.photoTitle}>{item.title}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const PhotoModal = () => (
+    <Modal
+      visible={selectedPhoto !== null}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={() => setSelectedPhoto(null)}
+    >
+      <TouchableOpacity 
+        style={styles.modalOverlay}
+        onPress={() => setSelectedPhoto(null)}
+      >
+        {selectedPhoto && (
+          <View style={styles.modalContent}>
+            <Image
+              source={{ uri: selectedPhoto.imageUrl }}
+              style={styles.modalImage}
+              resizeMode="contain"
+            />
+            <View style={styles.modalInfo}>
+              <Text style={styles.modalTitle}>{selectedPhoto.title}</Text>
+              <Text style={styles.modalDescription}>{selectedPhoto.description}</Text>
+            </View>
+          </View>
+        )}
+      </TouchableOpacity>
+    </Modal>
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>@wraptitude.ca Gallery</Text>
-        <Pressable 
-          style={styles.followButton}
-          onPress={() => Linking.openURL('https://www.instagram.com/wraptitude.ca/')}
-        >
-          <Text style={styles.followButtonText}>Follow Us</Text>
-        </Pressable>
+        <Text style={styles.headerTitle}>我們的相簿</Text>
       </View>
 
-      {/* <WebView
-    source={{ html: '<blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/p/DHRsB2UulS3/"></blockquote><script async src="//www.instagram.com/embed.js"></script>' }}
-    style={{ height: 500,width: '100%',flex: 1 }}
-  /> */}
-
-      {/* <View style={styles.container}>
-      <WebView
-        source={{ uri: 'https://www.instagram.com/p/DHRsB2UulS3/embed' }}
-        style={styles.webview}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        onError={(syntheticEvent) => {
-          const { nativeEvent } = syntheticEvent;
-          console.warn('WebView error: ', nativeEvent);
-        }}
-        onLoadEnd={() => console.log('WebView finished loading')}
-      />
-    </View> */}
-    {/* </View> */}
-      <WebView
-        source={{ html: generateEmbedHtml(INSTAGRAM_POSTS) }}
-        style={styles.webview}
-        onLoadStart={() => setLoading(true)}
-        onLoadEnd={() => setLoading(false)}
-        scrollEnabled={true}
-        showsVerticalScrollIndicator={false}
-        originWhitelist={['*']}
-        scalesPageToFit={true}
-        injectedJavaScript={injectedJavaScript}
-        onMessage={(event) => {
-          console.log('Message from WebView:', event.nativeEvent.data);
-        }}
-        startInLoadingState={true}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        mixedContentMode="always"
-        allowsFullscreenVideo={true}
-      />
-
-      {loading && (
+      {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#c70628" />
         </View>
+      ) : (
+        <FlatList
+          data={photos}
+          renderItem={renderGalleryItem}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          contentContainerStyle={styles.galleryGrid}
+          showsVerticalScrollIndicator={false}
+        />
       )}
+
+      <PhotoModal />
     </View>
   );
 };
 
+const windowWidth = Dimensions.get('window').width;
+const photoSize = (windowWidth - 48) / 2; // 2 columns with padding
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor: '#040404',
+    backgroundColor: '#040404',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     padding: 16,
     backgroundColor: '#1a1a1a',
     borderBottomWidth: 1,
@@ -150,35 +128,66 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: '600',
+    textAlign: 'center',
   },
-  followButton: {
-    backgroundColor: '#c70628',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+  galleryGrid: {
+    padding: 8,
   },
-  followButtonText: {
+  photoContainer: {
+    margin: 8,
+    borderRadius: 12,
+    backgroundColor: '#1a1a1a',
+    overflow: 'hidden',
+  },
+  photo: {
+    width: photoSize,
+    height: photoSize,
+  },
+  photoInfo: {
+    padding: 8,
+  },
+  photoTitle: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
-  },
-  webview: {
-    flex: 1,
-    width: '100%', // 明確設置寬度
-    height: 500,
-    backgroundColor: '#040404',
+    fontWeight: '500',
   },
   loadingContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  modalImage: {
+    width: '100%',
+    height: 300,
+  },
+  modalInfo: {
+    padding: 16,
+  },
+  modalTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  modalDescription: {
+    color: '#CCCCCC',
+    fontSize: 14,
+    lineHeight: 20,
   },
 });
 
