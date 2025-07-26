@@ -16,60 +16,44 @@ interface ServicesProps {
 
 const services = [
   {
-    id: 'tinting',
-    title: '車窗貼膜',
-    description: '專業車窗貼膜服務，阻擋紫外線，減少眩光，增強隱私性。',
-    features: [
-      '紫外線防護：阻擋高達99%的有害紫外線',
-      '隔熱效果：保持車內涼爽',
-      '隱私與安全：增強乘客隱私',
-      '減少眩光：提升駕駛安全性',
-    ],
-    image: require('../assets/images/tinting.webp'), // Add your service image
-    // duration: '2-4 hours',
-    // warranty: '5 years',
-  },
-  {
-    id: 'wrap',
-    title: '車身貼膜',
-    description: '使用我們的優質車身貼膜服務改造您的車輛。從多種顏色和表面處理中選擇。',
-    features: [
-      '漆面保護：保護原廠漆面',
-      '個性化：無限顏色選擇',
-      '可逆性：移除時不會損傷',
-      '經濟實惠：相比重新噴漆更划算',
-    ],
-    image: require('../assets/images/wrap.webp'), // Add your service image
-    // duration: '3-5 days',
-    // warranty: '3 years',
-  },
-  {
-    id: 'ceramic',
-    title: '陶瓷鍍膜',
-    description: '長效保護，維持您車輛的光澤並提供卓越的保護。',
-    features: [
-      '疏水性：防水防污',
-      '紫外線防護：防止漆面氧化',
-      '化學抗性：防護污染物',
-      '增強光澤：維持展廳般的光澤',
-    ],
-    image: require('../assets/images/ceramic.webp'), // Add your service image
-    // duration: '2-3 days',
-    // warranty: '5 years',
-  },
-  {
     id: 'ppf',
-    title: '漆面保護膜 (PPF)',
-    description: '對抗石頭撞擊、刮痕和環境損害的終極保護。',
+    title: '透明保護膜 PPF',
+    description: '香港的優質汽車自動修復保護膜服務，為您的車輛提供卓越的防護，強效抵禦碎石、刮痕和路面雜物。',
     features: [
-      '自癒合：修復輕微刮痕',
-      '撞擊防護：防護石頭撞擊',
-      '隱形護盾：幾乎無法察覺',
-      '保值：維持車輛狀況',
+      '自動修復功能：輕微刮擦時能自動修復',
+      '卓越保護性能：抗刮、抗衝擊、耐磨損',
+      '強效抗紫外線：減少漆面褪色及老化',
+      '高度透明無痕：幾乎無法察覺，不影響美觀',
+      '展現個人風格：光面及啞面透明PPF選擇',
     ],
-    image: require('../assets/images/ppf.webp'), // Add your service image
-    // duration: '2-3 days',
-    // warranty: '10 years',
+    image: require('../assets/images/gloss-ppf.png'),
+  },
+  {
+    id: 'colorppf',
+    title: '顏料保護膜 COLOR PPF',
+    description: '現時已擁有超過 150 款顏色選擇的 COLOR PPF，其特性早已超越轉色膜，除了具有多種顏色和紋理選擇外，還擁有自動修復功能。',
+    features: [
+      '超過 150 款顏色選擇',
+      '啞光、亮面、金屬質感選擇',
+      '厚度、光澤度、跣水能力優勝',
+      '保養年期較長',
+      '擁有自動修復功能',
+      '獨家提供各大車廠原廠車漆保護膜',
+    ],
+    image: require('../assets/images/color-ppf.png'), // You might want to add a specific color PPF image
+  },
+  {
+    id: 'vinylwrap',
+    title: '顏色貼膜 VINYL WRAP',
+    description: '汽車顏色貼膜是一種流行的汽車改裝方式，旨在改變汽車外觀車身。主要由高品質的聚氯乙烯（PVC）材料製成。',
+    features: [
+      '多種顏色和紋理選擇',
+      '啞光、亮面、金屬質感',
+      '滿足個性化需求',
+      '高品質 PVC 材料',
+      '專業施工技術',
+    ],
+    image: require('../assets/images/vinyl.png'),
   },
 ];
 
@@ -88,6 +72,27 @@ const Services: React.FC<ServicesProps> = ({ onGetQuote }) => {
       >
         <Text style={styles.mainTitle}>我們的專業服務</Text>
         
+        {/* Add company highlights section */}
+        <View style={styles.highlightsSection}>
+          <Text style={styles.highlightsTitle}>HKTC 服務特色</Text>
+          <View style={styles.highlightItem}>
+            <Text style={styles.highlightBullet}>•</Text>
+            <Text style={styles.highlightText}>專業 • 就是專一服務 - 專營透明保護膜服務，絕非普通汽車美容</Text>
+          </View>
+          <View style={styles.highlightItem}>
+            <Text style={styles.highlightBullet}>•</Text>
+            <Text style={styles.highlightText}>價錢透明 • 簡單易明 - 價格只計算車身用料，對客戶更公平</Text>
+          </View>
+          <View style={styles.highlightItem}>
+            <Text style={styles.highlightBullet}>•</Text>
+            <Text style={styles.highlightText}>10+ 年經驗 • 7500+ 車輛服務</Text>
+          </View>
+          <View style={styles.highlightItem}>
+            <Text style={styles.highlightBullet}>•</Text>
+            <Text style={styles.highlightText}>施工期僅需兩天</Text>
+          </View>
+        </View>
+
         {services.map((service) => (
           <View key={service.id} style={styles.serviceCard}>
             <Image
@@ -295,6 +300,41 @@ const styles = StyleSheet.create({
     backgroundColor: '#b30523',
     borderColor: 'rgba(255, 255, 255, 1)',
     transform: [{ scale: 0.98 }],
+  },
+  highlightsSection: {
+    backgroundColor: 'rgba(40, 40, 40, 0.9)',
+    borderRadius: 16,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  highlightsTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 16,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  highlightItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    paddingVertical: 4,
+  },
+  highlightBullet: {
+    color: '#c70628',
+    fontSize: 16,
+    marginRight: 8,
+    marginTop: -2,
+  },
+  highlightText: {
+    color: '#A0A0A0',
+    fontSize: 15,
+    flex: 1,
+    lineHeight: 22,
   },
 });
 

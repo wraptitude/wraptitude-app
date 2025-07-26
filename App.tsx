@@ -29,7 +29,7 @@ import { Authenticator, AuthenticatorProps, ThemeProvider, useAuthenticator, use
 import awsConfig from './src/aws-config';
 import { SignIn } from '@aws-amplify/ui-react-native/dist/Authenticator/Defaults/SignIn';
 import { Picker } from '@react-native-picker/picker';
-import { signIn, getCurrentUser, signUp, signOut } from 'aws-amplify/auth';
+import { signIn, getCurrentUser, signUp, signOut, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
 import Home from './src/screens/Home';
 import { appStyles } from './src/styles/appStyles';
 import { NavigationContainer } from '@react-navigation/native';
@@ -172,7 +172,7 @@ function App(): React.JSX.Element {
     const [isLoading, setIsLoading] = React.useState(false);
 
     // Get navigation methods from useAuthenticator
-    const { toSignUp } = useAuthenticator();
+    const { toSignUp, toForgotPassword } = useAuthenticator();
 
     const formatPhoneNumber = (text: string) => {
       const cleaned = text.replace(/\D/g, '');
@@ -298,6 +298,10 @@ function App(): React.JSX.Element {
           {/* Sign In Link */}
           <Pressable onPress={toSignUp} style={appStyles.signInLink}>
             <Text style={appStyles.signInLinkText}>建立帳戶</Text>
+          </Pressable>
+
+          <Pressable onPress={toForgotPassword} style={appStyles.signInLink}>
+            <Text style={appStyles.signInLinkText}>忘記密碼</Text>
           </Pressable>
 
           <Pressable onPress={() => setIsGuestMode(true)} style={appStyles.signInLink}>
@@ -488,6 +492,215 @@ function App(): React.JSX.Element {
       </View>
     );
   };
+
+  // Custom Forgot Password component
+  const CustomForgotPassword = ({ fields, ...props }) => {
+    const [phoneNumber, setPhoneNumber] = React.useState('');
+    const [selectedCode, setSelectedCode] = React.useState('+852');
+    const [verificationCode, setVerificationCode] = React.useState('');
+    const [newPassword, setNewPassword] = React.useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = React.useState('');
+    const [isLoading, setIsLoading] = React.useState(false);
+    const [codeSent, setCodeSent] = React.useState(false);
+
+    const { toSignIn } = useAuthenticator();
+
+    const formatPhoneNumber = (text: string) => {
+      const cleaned = text.replace(/\D/g, '');
+      
+      switch (cleaned.length) {
+        case 0:
+          return '';
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+          return cleaned;
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+          return `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`;
+        default:
+          return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 8)}`;
+      }
+    };
+
+    const handleSendCode = async () => {
+      if (!phoneNumber) {
+        RNAlert.alert('Error', 'Please enter your phone number');
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const fullNumber = `${selectedCode}${phoneNumber.replace(/\D/g, '')}`;
+        await resetPassword({
+          username: fullNumber
+        });
+
+        setCodeSent(true);
+        RNAlert.alert(
+          'Code Sent',
+          'A verification code has been sent to your email.'
+        );
+      } catch (error: any) {
+        console.error('Reset password error:', error);
+        RNAlert.alert('Error', error.message || 'Failed to send verification code');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const handleConfirmReset = async () => {
+      if (!verificationCode || !newPassword || !confirmNewPassword) {
+        RNAlert.alert('Error', 'Please fill in all fields');
+        return;
+      }
+
+      if (newPassword !== confirmNewPassword) {
+        RNAlert.alert('Error', 'Passwords do not match');
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        RNAlert.alert('Error', 'Password must be at least 6 characters long');
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const fullNumber = `${selectedCode}${phoneNumber.replace(/\D/g, '')}`;
+        await confirmResetPassword({
+          username: fullNumber,
+          confirmationCode: verificationCode,
+          newPassword: newPassword
+        });
+
+        RNAlert.alert(
+          'Success',
+          'Password reset successfully! You can now sign in with your new password.',
+          [{ text: 'OK', onPress: () => toSignIn() }]
+        );
+      } catch (error: any) {
+        console.error('Confirm reset password error:', error);
+        RNAlert.alert('Error', error.message || 'Failed to reset password');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    return (
+      <View style={appStyles.rootContainer}>
+        <View style={appStyles.forgotPasswordContainer}>
+          <View style={appStyles.overlay} />
+          <Text style={appStyles.forgotPasswordTitle}>
+            {codeSent ? 'Reset Password' : 'Forgot Password'}
+          </Text>
+
+          {!codeSent ? (
+            <>
+              <Text style={appStyles.inputLabel}>Phone Number</Text>
+              <View style={appStyles.phoneFieldContainer}>
+                <View style={appStyles.countryCodePicker}>
+                  <Picker
+                    selectedValue={selectedCode}
+                    onValueChange={setSelectedCode}
+                    style={appStyles.picker}
+                    dropdownIconColor="#FFFFFF"
+                  >
+                    <Picker.Item label="+852" value="+852" color="#FFFFFF" />
+                    <Picker.Item label="+44" value="+44" color="#FFFFFF" />
+                    <Picker.Item label="+86" value="+86" color="#FFFFFF" />
+                    <Picker.Item label="+81" value="+81" color="#FFFFFF" />
+                  </Picker>
+                </View>
+                <TextInput
+                  style={appStyles.phoneInput}
+                  placeholder="XXXX-XXXX"
+                  placeholderTextColor="#7c7c7c"
+                  keyboardType="phone-pad"
+                  maxLength={14}
+                  value={phoneNumber}
+                  onChangeText={(text) => {
+                    const formatted = formatPhoneNumber(text);
+                    setPhoneNumber(formatted);
+                  }}
+                />
+              </View>
+
+              <Pressable
+                style={[
+                  appStyles.sendCodeButton,
+                  isLoading && appStyles.buttonDisabled
+                ]}
+                onPress={handleSendCode}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={appStyles.buttonText}>Send Code</Text>
+                )}
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <Text style={appStyles.inputLabel}>Verification Code</Text>
+              <TextInput
+                style={appStyles.input}
+                placeholder="Enter verification code"
+                placeholderTextColor="#7c7c7c"
+                keyboardType="number-pad"
+                value={verificationCode}
+                onChangeText={setVerificationCode}
+              />
+
+              <Text style={appStyles.inputLabel}>New Password</Text>
+              <TextInput
+                style={appStyles.input}
+                placeholder="Enter new password"
+                placeholderTextColor="#7c7c7c"
+                secureTextEntry
+                value={newPassword}
+                onChangeText={setNewPassword}
+              />
+
+              <Text style={appStyles.inputLabel}>Confirm New Password</Text>
+              <TextInput
+                style={appStyles.input}
+                placeholder="Confirm new password"
+                placeholderTextColor="#7c7c7c"
+                secureTextEntry
+                value={confirmNewPassword}
+                onChangeText={setConfirmNewPassword}
+              />
+
+              <Pressable
+                style={[
+                  appStyles.sendCodeButton,
+                  isLoading && appStyles.buttonDisabled
+                ]}
+                onPress={handleConfirmReset}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={appStyles.buttonText}>Reset Password</Text>
+                )}
+              </Pressable>
+            </>
+          )}
+
+          <Pressable onPress={toSignIn} style={appStyles.backToSignIn}>
+            <Text style={appStyles.backToSignInText}>Back to Sign In</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  };
+
   // If authenticated, show Home directly
   if (isAuthenticated || isGuestMode) {
     return (
@@ -592,6 +805,7 @@ function App(): React.JSX.Element {
               components={{
                 SignIn: CustomSignIn,
                 SignUp: CustomSignUp,
+                ForgotPassword: CustomForgotPassword,
               }}
             >
             </Authenticator>
