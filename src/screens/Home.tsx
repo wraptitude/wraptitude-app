@@ -177,11 +177,11 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
 
   const handleEmergencyCall = async () => {
     try {
-      await Linking.openURL('tel:4373401121');
+      await Linking.openURL('tel:+85255617766');
     } catch (error) {
       Alert.alert(
         '錯誤',
-        '無法撥打電話。請直接撥打 437-340-1121。',
+        '無法撥打電話。請直接撥打 +852 5561 7766。',
         [{ text: '確定', style: 'default' }]
       );
     }

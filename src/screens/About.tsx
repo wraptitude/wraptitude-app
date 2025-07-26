@@ -10,12 +10,13 @@ import {
   Linking,
   TouchableOpacity,
   Alert,
+  Pressable,
 } from 'react-native';
 
 const About: React.FC = () => {
   const handlePhoneCall = async () => {
     try {
-      await Linking.openURL('tel:4373401121');
+      await Linking.openURL('tel:+85255617766');
     } catch (error) {
       console.error('Failed to make phone call:', error);
       Alert.alert('錯誤', '無法撥打電話。請重試。');
@@ -24,7 +25,7 @@ const About: React.FC = () => {
 
   const handleEmail = async () => {
     try {
-      await Linking.openURL('mailto:wraptitude.ca@gmail.com?subject=Inquiry from App');
+      await Linking.openURL('mailto:hktrendycar@gmail.com?subject=查詢');
     } catch (error) {
       Alert.alert('錯誤', '無法開啟郵件客戶端。請重試。');
     }
@@ -32,14 +33,14 @@ const About: React.FC = () => {
 
   const handleOpenMaps = async () => {
     try {
-      const url = 'https://maps.app.goo.gl/fu4c8t3dBP48Jnrd8';
+      const url = 'https://maps.app.goo.gl/qFSq4tjRnuvmyhxe7';
       const canOpen = await Linking.canOpenURL(url);
       
       if (canOpen) {
         await Linking.openURL(url);
       } else {
         // Fallback to coordinates if the direct link doesn't work
-        await Linking.openURL('https://www.google.com/maps/search/?api=1&query=23+Laidlaw+Blvd+Unit+3+Markham');
+        await Linking.openURL('https://www.google.com/maps/search/?api=1&query=屯門沛榮里德榮工業大廈地下B1');
       }
     } catch (error) {
       Alert.alert('錯誤', '無法開啟地圖。請重試。');
@@ -55,9 +56,9 @@ const About: React.FC = () => {
         // blurRadius={3}
       >
         <View style={styles.heroOverlay}>
-          <Text style={styles.mainTitle}>關於 Wraptitude</Text>
+          <Text style={styles.mainTitle}>關於 HKTC</Text>
           <Text style={styles.heroText}>
-            專業汽車貼膜服務，擁有超過10年經驗
+            專業汽車貼膜服務，專營透明保護膜 PPF 及顏色貼膜 VINYL WRAP
           </Text>
         </View>
       </ImageBackground>
@@ -70,8 +71,8 @@ const About: React.FC = () => {
           </View>
           <Text style={styles.missionTitle}>我們的承諾</Text>
           <Text style={styles.missionText}>
-            在 Wraptitude，我們重視每一位走進我們店鋪的客戶。您可以信賴我們的安裝師傅，
-            每位都擁有5-10年以上的經驗，提供高品質、專業的汽車貼膜服務。
+            在 HKTC，我們專營透明保護膜服務，絕非普通汽車美容。我們手工裁膜技術、選用世界級品牌 PPF 及 VINYL WRAP 的精品施工，
+            讓您的汽車保持原始狀態外，更能為您的愛車增添了格外保護及時尚的觸感。
           </Text>
           {/* <View style={styles.statsContainer}>
             <View style={styles.statItem}>
@@ -98,143 +99,90 @@ const About: React.FC = () => {
         
         <View style={styles.highlightBox}>
           <View style={styles.highlightContent}>
-            <View style={styles.iconContainer}>
-              <Text style={styles.highlightIcon}>🎯</Text>
-            </View>
-            <View style={styles.textContainer}>
-              <Text style={styles.highlightTitle}>Our Mission</Text>
-              <Text style={styles.highlightText}>
-                To improve the aesthetic and durability of your vehicle
-              </Text>
-            </View>
+            <Text style={styles.highlightIcon}>🎯</Text>
+            <Text style={styles.highlightTitle}>專業 • 就是專一服務</Text>
+            <Text style={styles.highlightText}>
+              專營透明保護膜服務，絕非普通汽車美容。沒有打蠟、洗車、鍍膜、噴油等服務，專注於汽車貼膜專業技術。
+            </Text>
           </View>
-          <View style={[styles.highlightAccent, { backgroundColor: '#c70628' }]} />
         </View>
 
         <View style={styles.highlightBox}>
           <View style={styles.highlightContent}>
-            <View style={styles.iconContainer}>
-              <Text style={styles.highlightIcon}>⚡</Text>
-            </View>
-            <View style={styles.textContainer}>
-              <Text style={styles.highlightTitle}>Premium Equipment</Text>
-              <Text style={styles.highlightText}>
-                High-end anti-dust system that minimize 99.9% of dust for perfect finishing
-              </Text>
-            </View>
+            <Text style={styles.highlightIcon}>💰</Text>
+            <Text style={styles.highlightTitle}>價錢透明 • 簡單易明</Text>
+            <Text style={styles.highlightText}>
+              價格只計算車身用料，對客戶更公平。絕對不會以客戶車價作收費標準。施工期僅需兩天。
+            </Text>
           </View>
-          <View style={[styles.highlightAccent, { backgroundColor: '#FF9500' }]} />
         </View>
 
         <View style={styles.highlightBox}>
           <View style={styles.highlightContent}>
-            <View style={styles.iconContainer}>
-              <Text style={styles.highlightIcon}>👥</Text>
-            </View>
-            <View style={styles.textContainer}>
-              <Text style={styles.highlightTitle}>Expert Team</Text>
-              <Text style={styles.highlightText}>
-                8 qualified installers with 5-10+ years of professional experience
-              </Text>
-            </View>
+            <Text style={styles.highlightIcon}>🛡️</Text>
+            <Text style={styles.highlightTitle}>世界級品牌</Text>
+            <Text style={styles.highlightText}>
+              選用世界級品牌 PPF 及 VINYL WRAP，提供最高品質的汽車保護膜服務，確保您的愛車得到最佳保護。
+            </Text>
           </View>
-          <View style={[styles.highlightAccent, { backgroundColor: '#32D74B' }]} />
         </View>
-      </View>
 
-      {/* Founder Section */}
-      <View style={styles.founderSection}>
-        <Text style={styles.sectionTitle}>Meet Our Founder</Text>
-        <View style={styles.founderCard}>
-          <Image 
-            source={require('../assets/images/rex-big-boss.webp')}
-            style={styles.founderImage}
-            resizeMode="cover"
-          />
-          <View style={styles.founderContent}>
-            <Text style={styles.founderName}>Rex</Text>
-            <Text style={styles.founderText}>
-              Hey, thanks for visiting my website. I started Wraptitude because I wanted to bring high quality 
-              car wrapping to Ontario. We only use the best materials at our Markham location, giving your vehicle 
-              an amazing, long-lasting finish.
+        <View style={styles.highlightBox}>
+          <View style={styles.highlightContent}>
+            <Text style={styles.highlightIcon}>✂️</Text>
+            <Text style={styles.highlightTitle}>手工裁膜技術</Text>
+            <Text style={styles.highlightText}>
+              專業的手工裁膜技術，確保每一寸保護膜都完美貼合您的車輛，提供最佳的保護效果。
             </Text>
           </View>
         </View>
       </View>
 
-      {/* Innovation Section */}
-      <View style={styles.innovationSection}>
-        <View style={styles.innovationHeader}>
-          <View style={styles.innovationTitleContainer}>
-            <Text style={styles.sectionTitle}>Innovation & Growth</Text>
-            {/* <Text style={styles.innovationSubtitle}>Pushing boundaries in car wrapping excellence</Text> */}
-          </View>
-        </View>
-
-        <View style={styles.innovationContent}>
-          <View style={styles.innovationCard}>
-            <Image 
-              source={require('../assets/images/about-us-img.webp')}
-              style={styles.innovationImage}
-              resizeMode="cover"
-            />
-            <View style={styles.innovationOverlay} />
-            
-            {/* <View style={styles.innovationStats}>
-              <View style={styles.statBox}>
-                <Text style={styles.statValue}>50+</Text>
-                <Text style={styles.statLabel}>Global Workshops</Text>
-              </View>
-              <View style={styles.statBox}>
-                <Text style={styles.statValue}>20+</Text>
-                <Text style={styles.statLabel}>New Techniques</Text>
-              </View>
-              <View style={styles.statBox}>
-                <Text style={styles.statValue}>15+</Text>
-                <Text style={styles.statLabel}>Industry Awards</Text>
-              </View>
-            </View> */}
-
-            <View style={styles.innovationTextContainer}>
-              <Text style={styles.innovationHeadline}>We're constantly innovating</Text>
-              <Text style={styles.innovationText}>
-              In recent years, we've broadened our global presence through workshops and seminars worldwide, focusing on enhancing skills and creativity. These experiences deepen our understanding of diverse markets and global trends, empowering us to innovate effectively. Moving forward, our commitment to continuous learning and collaboration drives our leadership in delivering impactful solutions globally.
-              </Text>
-              {/* <View style={styles.bulletPoints}>
-                <Text style={styles.bulletPoint}>• Master cutting-edge wrapping techniques</Text>
-                <Text style={styles.bulletPoint}>• Adopt latest industry technologies</Text>
-                <Text style={styles.bulletPoint}>• Participate in international training</Text>
-                <Text style={styles.bulletPoint}>• Lead in sustainable practices</Text>
-              </View> */}
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* Contact Info */}
+      {/* Contact Section */}
       <View style={styles.contactSection}>
+        <Text style={styles.contactTitle}>聯絡我們</Text>
+        
         <View style={styles.contactCard}>
-          <Text style={styles.contactTitle}>Visit Us</Text>
-          <TouchableOpacity onPress={handleOpenMaps}>
-            <Text style={[styles.contactText, { textDecorationLine: 'underline' }]}>
-              23 Laidlaw Blvd Unit 3, Markham
-            </Text>
-          </TouchableOpacity>
-          <Text style={styles.contactText}>Mon-Sat: 11:00am – 7:00pm</Text>
-          <Text style={styles.contactText}>Sunday: Closed</Text>
-        </View>
-        <View style={styles.contactCard}>
-          <Text style={styles.contactTitle}>Contact</Text>
-          <TouchableOpacity onPress={handlePhoneCall}>
-            <Text style={[styles.contactText, { textDecorationLine: 'underline' }]}>
-              (437) 340-1121
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleEmail}>
-            <Text style={[styles.contactText, { textDecorationLine: 'underline' }]}>
-              wraptitude.ca@gmail.com
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.contactItem}>
+            <Text style={styles.contactIcon}>📍</Text>
+            <View style={styles.contactInfo}>
+              <Text style={styles.contactLabel}>地址</Text>
+              <Text style={styles.contactValue}>屯門沛榮里德榮工業大廈地下 B1</Text>
+              <Pressable onPress={handleOpenMaps} style={styles.contactButton}>
+                <Text style={styles.contactButtonText}>開啟地圖</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          <View style={styles.contactItem}>
+            <Text style={styles.contactIcon}>📞</Text>
+            <View style={styles.contactInfo}>
+              <Text style={styles.contactLabel}>電話</Text>
+              <Text style={styles.contactValue}>+852 5561 7766</Text>
+              <Pressable onPress={handlePhoneCall} style={styles.contactButton}>
+                <Text style={styles.contactButtonText}>撥打電話</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          <View style={styles.contactItem}>
+            <Text style={styles.contactIcon}>📧</Text>
+            <View style={styles.contactInfo}>
+              <Text style={styles.contactLabel}>電子郵件</Text>
+              <Text style={styles.contactValue}>hktrendycar@gmail.com</Text>
+              <Pressable onPress={handleEmail} style={styles.contactButton}>
+                <Text style={styles.contactButtonText}>發送郵件</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          <View style={styles.contactItem}>
+            <Text style={styles.contactIcon}>🕒</Text>
+            <View style={styles.contactInfo}>
+              <Text style={styles.contactLabel}>營業時間</Text>
+              <Text style={styles.contactValue}>週一至週六 10:00 - 19:00</Text>
+            </View>
+          </View>
         </View>
       </View>
     </ScrollView>
@@ -512,27 +460,55 @@ const styles = StyleSheet.create({
   },
   contactSection: {
     padding: 20,
-    flexDirection: 'row',
-    gap: 20,
-  },
-  contactCard: {
-    flex: 1,
     backgroundColor: '#1a1a1a',
     borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#333',
+    marginHorizontal: 20,
+    marginBottom: 20,
+  },
+  contactCard: {
+    backgroundColor: 'transparent',
   },
   contactTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 12,
+    textAlign: 'center',
   },
-  contactText: {
+  contactItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  contactIcon: {
+    fontSize: 24,
+    marginRight: 12,
+    color: '#c70628',
+  },
+  contactInfo: {
+    flex: 1,
+  },
+  contactLabel: {
     fontSize: 14,
     color: '#cccccc',
     marginBottom: 4,
+  },
+  contactValue: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  contactButton: {
+    backgroundColor: '#c70628',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  contactButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
 

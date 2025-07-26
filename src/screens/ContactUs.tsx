@@ -27,23 +27,23 @@ const ContactUs: React.FC = () => {
     {
       icon: '📍',
       title: '地址',
-      description: '我們位於加拿大安大略省美麗的萬錦市。',
-      value: '23 Laidlaw Blvd Unit 3, Markham',
-      action: () => Linking.openURL('https://maps.app.goo.gl/fu4c8t3dBP48Jnrd8'),
+      description: '我們位於香港屯門沛榮里德榮工業大廈地下B1。',
+      value: '屯門沛榮里德榮工業大廈地下 B1',
+      action: () => Linking.openURL('https://maps.app.goo.gl/qFSq4tjRnuvmyhxe7'),
     },
     {
       icon: '📞',
       title: '電話',
       description: '致電我們進行查詢或緊急服務',
-      value: '(437) 340-1121',
-      action: () => Linking.openURL('tel:4373401121'),
+      value: '+852 5561 7766',
+      action: () => Linking.openURL('tel:+85255617766'),
     },
     {
       icon: '📧',
       title: '電子郵件',
       description: '隨時發送您的問題給我們',
-      value: 'wraptitude.ca@gmail.com',
-      action: () => Linking.openURL('mailto:wraptitude.ca@gmail.com'),
+      value: 'hktrendycar@gmail.com',
+      action: () => Linking.openURL('mailto:hktrendycar@gmail.com'),
     },
   ];
 
@@ -97,16 +97,16 @@ const ContactUs: React.FC = () => {
 
         {/* Business Hours */}
         <View style={styles.hoursSection}>
-          <Text style={styles.hoursTitle}>OPENING HOURS</Text>
+          <Text style={styles.hoursTitle}>營業時間</Text>
           <View style={styles.hoursCard}>
             <View style={styles.hoursRow}>
-              <Text style={styles.dayText}>Monday - Saturday</Text>
-              <Text style={styles.timeText}>11:00am – 7:00pm</Text>
+              <Text style={styles.dayText}>週一至週六</Text>
+              <Text style={styles.timeText}>10:00 - 19:00</Text>
             </View>
             <View style={styles.hoursDivider} />
             <View style={styles.hoursRow}>
-              <Text style={styles.dayText}>Sunday</Text>
-              <Text style={styles.timeText}>Closed</Text>
+              <Text style={styles.dayText}>週日</Text>
+              <Text style={styles.timeText}>休息</Text>
             </View>
           </View>
         </View>
