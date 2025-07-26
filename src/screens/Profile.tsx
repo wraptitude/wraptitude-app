@@ -107,39 +107,39 @@ const Profile: React.FC = () => {
       </View>
 
       <View style={styles.infoSection}>
-        <Text style={styles.sectionTitle}>Account Information</Text>
+        <Text style={styles.sectionTitle}>帳戶資訊</Text>
         
         <View style={styles.infoItem}>
-          <Text style={styles.infoLabel}>Email</Text>
-          <Text style={styles.infoValue}>{userAttributes?.email || 'Not provided'}</Text>
+          <Text style={styles.infoLabel}>電子郵件</Text>
+          <Text style={styles.infoValue}>{userAttributes?.email || '未提供'}</Text>
           {userAttributes?.email_verified && (
-            <Text style={styles.verifiedBadge}>✓ Verified</Text>
+            <Text style={styles.verifiedBadge}>✓ 已驗證</Text>
           )}
         </View>
 
         <View style={styles.infoItem}>
-          <Text style={styles.infoLabel}>Phone</Text>
+          <Text style={styles.infoLabel}>電話號碼</Text>
           <Text style={styles.infoValue}>
-            {userAttributes?.phone_number || 'Not provided'}
+            {userAttributes?.phone_number || '未提供'}
           </Text>
         </View>
 
         <View style={styles.infoItem}>
-          <Text style={styles.infoLabel}>User ID</Text>
-          <Text style={styles.infoValue}>{userAttributes?.sub || 'Not available'}</Text>
+          <Text style={styles.infoLabel}>用戶 ID</Text>
+          <Text style={styles.infoValue}>{userAttributes?.sub || '無法取得'}</Text>
         </View>
       </View>
 
       <View style={styles.infoSection}>
-        <Text style={styles.sectionTitle}>Account Status</Text>
+        <Text style={styles.sectionTitle}>帳戶狀態</Text>
         <View style={styles.statusContainer}>
-          <Text style={styles.statusText}>Active</Text>
+          <Text style={styles.statusText}>啟用中</Text>
           <View style={styles.statusDot} />
         </View>
       </View>
 
       <View style={styles.infoSection}>
-        <Text style={styles.sectionTitle}>Danger Zone</Text>
+        <Text style={styles.sectionTitle}>危險區域</Text>
         <Pressable
           style={[styles.deleteButton, isDeleting && styles.deleteButtonDisabled]}
           onPress={handleDeleteAccount}
@@ -148,7 +148,7 @@ const Profile: React.FC = () => {
           {isDeleting ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.deleteButtonText}>Delete Account</Text>
+            <Text style={styles.deleteButtonText}>刪除帳戶</Text>
           )}
         </Pressable>
       </View>
