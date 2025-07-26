@@ -6,13 +6,6 @@
       "providerPlugin": "awscloudformation",
       "service": "Cognito",
       "serviceType": "imported"
-    },
-    "wraptitudeappd8d1d34c": {
-      "customAuth": false,
-      "dependsOn": [],
-      "providerPlugin": "awscloudformation",
-      "service": "Cognito",
-      "serviceType": "imported"
     }
   },
   "parameters": {
@@ -45,38 +38,6 @@
         {
           "category": "auth",
           "resourceName": "wraptitudeappca363034"
-        }
-      ]
-    },
-    "AMPLIFY_auth_wraptitudeappd8d1d34c_nativeClientId": {
-      "usedBy": [
-        {
-          "category": "auth",
-          "resourceName": "wraptitudeappd8d1d34c"
-        }
-      ]
-    },
-    "AMPLIFY_auth_wraptitudeappd8d1d34c_userPoolId": {
-      "usedBy": [
-        {
-          "category": "auth",
-          "resourceName": "wraptitudeappd8d1d34c"
-        }
-      ]
-    },
-    "AMPLIFY_auth_wraptitudeappd8d1d34c_userPoolName": {
-      "usedBy": [
-        {
-          "category": "auth",
-          "resourceName": "wraptitudeappd8d1d34c"
-        }
-      ]
-    },
-    "AMPLIFY_auth_wraptitudeappd8d1d34c_webClientId": {
-      "usedBy": [
-        {
-          "category": "auth",
-          "resourceName": "wraptitudeappd8d1d34c"
         }
       ]
     }
