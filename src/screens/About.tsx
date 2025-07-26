@@ -51,7 +51,7 @@ const About: React.FC = () => {
     <ScrollView style={styles.container}>
       {/* Hero Section */}
       <ImageBackground
-        source={require('../assets/images/about-us-img.webp')}
+        source={require('../assets/images/4.jpeg')}
         style={styles.hero}
         // blurRadius={3}
       >

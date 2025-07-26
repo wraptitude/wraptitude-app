@@ -194,7 +194,7 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
     { id: 'services', icon: 'build', title: '我們的服務', description: '探索我們的專業服務' },
     { id: 'knowledge', icon: 'book', title: '知識庫', description: '了解汽車貼膜知識' },
     { id: 'news', icon: 'newspaper', title: '最新消息', description: '最新更新資訊' },
-    { id: 'about', icon: 'person', title: '關於我們', description: '了解更多關於 Wraptitude' },
+    { id: 'about', icon: 'person', title: '關於我們', description: '了解更多關於 hktc' },
     { id: 'quote', icon: 'calculate', title: '免費報價', description: '為您的車輛獲取即時報價' },
     { id: 'contact', icon: 'phone', title: '聯絡我們', description: '與我們聯繫' },
     { id: 'profile', icon: 'person', title: '個人資料', description: '管理您的帳戶' },
