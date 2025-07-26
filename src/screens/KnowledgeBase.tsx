@@ -25,8 +25,10 @@ const KnowledgeBase: React.FC = () => {
 
   const fetchFAQs = async () => {
     try {
-      const response = await fetch('https://j662vojljl.execute-api.us-east-2.amazonaws.com/PROD');
+      const response = await fetch('https://q1u0q9z27l.execute-api.us-east-2.amazonaws.com/PROD');
+      console.log('response', response);
       const data = await response.json();
+      console.log(data);
       setFaqs(JSON.parse(data.body));
       setLoading(false);
     } catch (error) {

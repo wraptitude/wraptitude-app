@@ -66,10 +66,10 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
   }, [selectedService]);
 
   const services = [
-    '車窗貼膜',
-    '車身貼膜',
-    '陶瓷鍍膜',
-    '漆面保護膜 (PPF)',
+    '透明保護膜 光面 GLOSS PPF',
+    '透明保護膜 啞面 MATTE PPF',
+    '顏色保護膜 COLOR PPF',
+    '顏色貼膜',
   ];
 
   const handleSubmit = async () => {
@@ -98,7 +98,7 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
         });
       }
       
-      const response = await fetch('https://xb4ot97nih.execute-api.us-east-2.amazonaws.com/PROD', {
+      const response = await fetch('https://7zspcyzyl4.execute-api.us-east-2.amazonaws.com/PROD', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
         const errorText = await response.text();
         throw new Error(`Failed to submit quote request: ${response.status} ${errorText}`);
       }
-
+      console.log(response);
       Alert.alert(
         '報價申請已送出',
         '感謝您的興趣！我們將盡快與您聯繫，提供詳細報價。',
@@ -161,9 +161,9 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.headerSection}>
-          <Text style={styles.title}>GET YOUR FREE QUOTE</Text>
+          <Text style={styles.title}>免費報價申請</Text>
           <Text style={styles.description}>
-            Fill out the form below and we'll provide you with a detailed quote for your vehicle enhancement needs.
+            請填寫下列表格，我們會為您的愛車提供詳細報價。
           </Text>
         </View>
 
@@ -173,14 +173,14 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
           <View style={styles.formCard}>
             <View style={styles.cardHeader}>
               <Icon name="person" size={20} color="#FFFFFF" />
-              <Text style={styles.sectionTitle}>Personal Information</Text>
+              <Text style={styles.sectionTitle}>個人資料</Text>
             </View>
             
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Name <Text style={styles.required}>*</Text></Text>
+              <Text style={styles.label}>姓名 <Text style={styles.required}>*</Text></Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your name"
+                placeholder="請輸入您的姓名"
                 placeholderTextColor="rgba(255, 255, 255, 0.5)"
                 value={formData.name}
                 onChangeText={(text) => setFormData({ ...formData, name: text })}
@@ -188,10 +188,10 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email <Text style={styles.required}>*</Text></Text>
+              <Text style={styles.label}>電子郵件 <Text style={styles.required}>*</Text></Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your email"
+                placeholder="請輸入您的電子郵件"
                 placeholderTextColor="rgba(255, 255, 255, 0.5)"
                 keyboardType="email-address"
                 value={formData.email}
@@ -201,10 +201,10 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Phone <Text style={styles.required}>*</Text></Text>
+              <Text style={styles.label}>電話號碼 <Text style={styles.required}>*</Text></Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your phone number"
+                placeholder="請輸入您的電話號碼"
                 placeholderTextColor="rgba(255, 255, 255, 0.5)"
                 keyboardType="phone-pad"
                 value={formData.phone}
@@ -217,14 +217,14 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
           <View style={styles.formCard}>
             <View style={styles.cardHeader}>
               <Icon name="directions-car" size={20} color="#FFFFFF" />
-              <Text style={styles.sectionTitle}>Vehicle Information</Text>
+              <Text style={styles.sectionTitle}>車輛資料</Text>
             </View>
             
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Vehicle Make</Text>
+              <Text style={styles.label}>車廠</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g., BMW, Tesla, Porsche"
+                placeholder="例如：BMW, Tesla, Porsche"
                 placeholderTextColor="rgba(255, 255, 255, 0.5)"
                 value={formData.vehicleMake}
                 onChangeText={(text) => setFormData({ ...formData, vehicleMake: text })}
@@ -232,10 +232,10 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Vehicle Model</Text>
+              <Text style={styles.label}>車型</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g., Model 3, M3, 911"
+                placeholder="例如：Model 3, M3, 911"
                 placeholderTextColor="rgba(255, 255, 255, 0.5)"
                 value={formData.vehicleModel}
                 onChangeText={(text) => setFormData({ ...formData, vehicleModel: text })}
@@ -243,10 +243,10 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Vehicle Year</Text>
+              <Text style={styles.label}>年份</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g., 2024"
+                placeholder="例如：2024"
                 placeholderTextColor="rgba(255, 255, 255, 0.5)"
                 keyboardType="numeric"
                 value={formData.vehicleYear}
@@ -259,11 +259,11 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
           <View style={styles.formCard}>
             <View style={styles.cardHeader}>
               <Icon name="build" size={20} color="#FFFFFF" />
-              <Text style={styles.sectionTitle}>Service Details</Text>
+              <Text style={styles.sectionTitle}>服務詳情</Text>
             </View>
             
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Service Type</Text>
+              <Text style={styles.label}>服務類型</Text>
               <View style={styles.pickerContainer}>
                 <Picker
                   selectedValue={formData.serviceType}
@@ -284,10 +284,10 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Additional Details</Text>
+              <Text style={styles.label}>其他需求</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="Tell us more about your requirements"
+                placeholder="請描述您的需求"
                 placeholderTextColor="rgba(255, 255, 255, 0.5)"
                 multiline
                 numberOfLines={4}
@@ -297,7 +297,7 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Vehicle Image</Text>
+              <Text style={styles.label}>車輛圖片</Text>
               <Pressable
                 style={({ pressed }) => [
                   styles.imageUploadButton,
@@ -307,7 +307,7 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
               >
                 <Icon name="photo-camera" size={18} color="#FFFFFF" style={styles.buttonIcon} />
                 <Text style={styles.buttonText}>
-                  {formData.image ? 'Change Image' : 'Select Image'}
+                  {formData.image ? '更換圖片' : '選擇圖片'}
                 </Text>
               </Pressable>
               {formData.image && (
@@ -333,12 +333,12 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
             {loading ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator color="#FFFFFF" size="small" />
-                <Text style={styles.loadingText}>Submitting request...</Text>
+                <Text style={styles.loadingText}>提交中...</Text>
               </View>
             ) : (
               <View style={styles.buttonContent}>
                 <Icon name="send" size={18} color="#FFFFFF" style={styles.buttonIcon} />
-                <Text style={styles.submitButtonText}>SUBMIT QUOTE REQUEST</Text>
+                <Text style={styles.submitButtonText}>送出報價申請</Text>
               </View>
             )}
           </Pressable>
