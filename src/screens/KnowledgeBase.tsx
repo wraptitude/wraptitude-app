@@ -50,9 +50,9 @@ const KnowledgeBase: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Frequently Asked Questions</Text>
+          <Text style={styles.title}>常見問題</Text>
           <Text style={styles.subtitle}>
-            Everything you need to know about car films and our services
+            關於汽車貼膜和我們服務的一切資訊
           </Text>
         </View>
         

@@ -17,13 +17,13 @@ interface ServicesProps {
 const services = [
   {
     id: 'tinting',
-    title: 'Window Tinting',
-    description: 'Professional window tinting service that blocks UV rays, reduces glare, and enhances privacy.',
+    title: '車窗貼膜',
+    description: '專業車窗貼膜服務，阻擋紫外線，減少眩光，增強隱私性。',
     features: [
-      'UV Protection: blocks up to 99% of harmful UV rays',
-      'Heat Reduction: keeps your car cool',
-      'Privacy & Security: enhanced privacy for passengers',
-      'Glare Reduction: improved driving safety',
+      '紫外線防護：阻擋高達99%的有害紫外線',
+      '隔熱效果：保持車內涼爽',
+      '隱私與安全：增強乘客隱私',
+      '減少眩光：提升駕駛安全性',
     ],
     image: require('../assets/images/tinting.webp'), // Add your service image
     // duration: '2-4 hours',
@@ -31,13 +31,13 @@ const services = [
   },
   {
     id: 'wrap',
-    title: 'Vinyl Wrap',
-    description: 'Transform your vehicle with our premium vinyl wrapping service. Choose from a wide range of colors and finishes.',
+    title: '車身貼膜',
+    description: '使用我們的優質車身貼膜服務改造您的車輛。從多種顏色和表面處理中選擇。',
     features: [
-      'Paint Protection: shields original paint',
-      'Customization: unlimited color options',
-      'Reversible: removable without damage',
-      'Cost-effective: compared to repainting',
+      '漆面保護：保護原廠漆面',
+      '個性化：無限顏色選擇',
+      '可逆性：移除時不會損傷',
+      '經濟實惠：相比重新噴漆更划算',
     ],
     image: require('../assets/images/wrap.webp'), // Add your service image
     // duration: '3-5 days',
@@ -45,13 +45,13 @@ const services = [
   },
   {
     id: 'ceramic',
-    title: 'Ceramic Coating',
-    description: 'Long-lasting protection that maintains your vehicle\'s shine and provides superior protection.',
+    title: '陶瓷鍍膜',
+    description: '長效保護，維持您車輛的光澤並提供卓越的保護。',
     features: [
-      'Hydrophobic: water and dirt resistant',
-      'UV Protection: prevents paint oxidation',
-      'Chemical Resistant: protects against contaminants',
-      'Enhanced Gloss: maintains showroom shine',
+      '疏水性：防水防污',
+      '紫外線防護：防止漆面氧化',
+      '化學抗性：防護污染物',
+      '增強光澤：維持展廳般的光澤',
     ],
     image: require('../assets/images/ceramic.webp'), // Add your service image
     // duration: '2-3 days',
@@ -59,13 +59,13 @@ const services = [
   },
   {
     id: 'ppf',
-    title: 'Paint Protection Film (PPF)',
-    description: 'Ultimate protection against rock chips, scratches, and environmental damage.',
+    title: '漆面保護膜 (PPF)',
+    description: '對抗石頭撞擊、刮痕和環境損害的終極保護。',
     features: [
-      'Self-Healing: repairs minor scratches',
-      'Impact Protection: guards against rock chips',
-      'Invisible Shield: virtually undetectable',
-      'Preserves Value: maintains vehicle condition',
+      '自癒合：修復輕微刮痕',
+      '撞擊防護：防護石頭撞擊',
+      '隱形護盾：幾乎無法察覺',
+      '保值：維持車輛狀況',
     ],
     image: require('../assets/images/ppf.webp'), // Add your service image
     // duration: '2-3 days',
@@ -86,7 +86,7 @@ const Services: React.FC<ServicesProps> = ({ onGetQuote }) => {
         style={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.mainTitle}>Our Professional Services</Text>
+        <Text style={styles.mainTitle}>我們的專業服務</Text>
         
         {services.map((service) => (
           <View key={service.id} style={styles.serviceCard}>
@@ -111,7 +111,7 @@ const Services: React.FC<ServicesProps> = ({ onGetQuote }) => {
                 </View>
               </View> */}
 
-              <Text style={styles.featuresTitle}>Key Features:</Text>
+              <Text style={styles.featuresTitle}>主要特色：</Text>
               {service.features.map((feature, index) => (
                 <View key={index} style={styles.featureItem}>
                   <Text style={styles.featureBullet}>•</Text>
@@ -127,7 +127,7 @@ const Services: React.FC<ServicesProps> = ({ onGetQuote }) => {
                 onPress={() => handleGetQuote(service.title)}
               >
                 <View style={styles.buttonContent}>
-                  <Text style={styles.quoteButtonText}>GET A QUOTE</Text>
+                  <Text style={styles.quoteButtonText}>獲取報價</Text>
                   {/* <Text style={styles.buttonSubtext}>Free Consultation</Text> */}
                 </View>
               </Pressable>

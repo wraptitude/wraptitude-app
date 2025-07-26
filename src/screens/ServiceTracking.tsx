@@ -35,8 +35,8 @@ interface ServiceStep {
 const INITIAL_STEPS: ServiceStep[] = [
   {
     id: '1',
-    title: 'Deposit',
-    description: 'Deposit payment received and confirmed',
+    title: '訂金',
+    description: '訂金付款已收到並確認',
     status: 'completed',
     images: '',
     weight: 2,
@@ -44,8 +44,8 @@ const INITIAL_STEPS: ServiceStep[] = [
   },
   {
     id: '2',
-    title: 'Vehicle Inspection and Cleaning',
-    description: 'Detailed vehicle condition check and deep cleaning',
+    title: '車輛檢查和清潔',
+    description: '詳細的車輛狀況檢查和深度清潔',
     status: 'completed',
     images: '',
     weight: 18,
@@ -53,8 +53,8 @@ const INITIAL_STEPS: ServiceStep[] = [
   },
   {
     id: '3',
-    title: 'Film Preparation',
-    description: 'Prepare film materials, confirm measurements and cutting',
+    title: '貼膜準備',
+    description: '準備貼膜材料，確認尺寸和切割',
     status: 'completed',
     images: '',
     weight: 20,
@@ -62,8 +62,8 @@ const INITIAL_STEPS: ServiceStep[] = [
   },
   {
     id: '4',
-    title: 'Film Installation',
-    description: 'Professional film installation process',
+    title: '貼膜安裝',
+    description: '專業貼膜安裝過程',
     status: 'in_progress',
     images: '',
     weight: 50,
@@ -71,8 +71,8 @@ const INITIAL_STEPS: ServiceStep[] = [
   },
   {
     id: '5',
-    title: 'Quality Check',
-    description: 'Comprehensive film quality inspection',
+    title: '品質檢查',
+    description: '全面的貼膜品質檢查',
     status: 'pending',
     images: '',
     weight: 5,
@@ -80,8 +80,8 @@ const INITIAL_STEPS: ServiceStep[] = [
   },
   {
     id: '6',
-    title: 'Final Presentation',
-    description: 'Final result presentation and customer confirmation',
+    title: '最終展示',
+    description: '最終結果展示和客戶確認',
     status: 'pending',
     images: '',
     weight: 5,

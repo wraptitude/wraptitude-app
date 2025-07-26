@@ -29,14 +29,14 @@ const emergencyServices = [
   {
     id: 'collision',
     icon: 'car-crash',
-    title: 'Vehicle Collision',
-    description: 'Emergency assistance for vehicle accidents or collisions'
+    title: '車輛碰撞',
+    description: '車輛事故或碰撞的緊急協助'
   },
   {
     id: 'other',
     icon: 'help',
-    title: 'Other Emergencies',
-    description: 'Other situations requiring immediate assistance'
+    title: '其他緊急情況',
+    description: '需要立即協助的其他情況'
   },
 ];
 
@@ -62,7 +62,7 @@ const NonUrgentForm: React.FC<NonUrgentFormProps> = ({
         const attrs = await fetchUserAttributes();
         setUserAttributes(attrs);
       } catch {
-        Alert.alert('Error', 'Failed to fetch user information.');
+        Alert.alert('錯誤', '無法獲取用戶資訊。');
       }
     };
     fetchAttributes();
@@ -88,7 +88,7 @@ const NonUrgentForm: React.FC<NonUrgentFormProps> = ({
       const result = await launchCamera({ mediaType: 'photo', quality: 0.7 });
       if (result.assets && result.assets[0]) setPhoto({ uri: result.assets[0].uri });
     } catch {
-      Alert.alert('Error', 'Failed to take photo. Please try again.');
+      Alert.alert('錯誤', '拍照失敗。請重試。');
     }
   };
 
@@ -97,7 +97,7 @@ const NonUrgentForm: React.FC<NonUrgentFormProps> = ({
       const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.7 });
       if (result.assets && result.assets[0]) setPhoto({ uri: result.assets[0].uri });
     } catch {
-      Alert.alert('Error', 'Failed to pick image. Please try again.');
+      Alert.alert('錯誤', '選擇圖片失敗。請重試。');
     }
   };
 

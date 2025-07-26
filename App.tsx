@@ -24,7 +24,7 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 import { Button } from 'react-native';
-import { Amplify, Auth } from 'aws-amplify';
+import { Amplify } from 'aws-amplify';
 import { Authenticator, AuthenticatorProps, ThemeProvider, useAuthenticator, useTheme } from '@aws-amplify/ui-react-native';
 import awsConfig from './src/aws-config';
 import { SignIn } from '@aws-amplify/ui-react-native/dist/Authenticator/Defaults/SignIn';
@@ -197,7 +197,7 @@ function App(): React.JSX.Element {
 
     const handleSubmit = async () => {
       if (!phoneNumber || !password) {
-        RNAlert.alert('Error', 'Please enter both phone number and password');
+        RNAlert.alert('錯誤', '請輸入電話號碼和密碼');
         return;
       }
 
@@ -210,15 +210,15 @@ function App(): React.JSX.Element {
         });
 
         if (isSignedIn) {
-          console.log('Successfully signed in');
+          console.log('登入成功');
           setIsAuthenticated(true); // Update auth state
         } else if (nextStep) {
           switch (nextStep.signInStep) {
             case 'CONFIRM_SIGN_IN_WITH_SMS_CODE':
-              RNAlert.alert('Verification Required', 'Please check your phone for a verification code.');
+              RNAlert.alert('需要驗證', '請檢查您的手機以獲取驗證碼。');
               break;
             case 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED':
-              RNAlert.alert('Action Required', 'Please update your password.');
+              RNAlert.alert('需要操作', '請更新您的密碼。');
               break;
             default:
               console.log('Additional step required:', nextStep.signInStep);
@@ -228,8 +228,8 @@ function App(): React.JSX.Element {
       } catch (error: any) {
         console.error('Sign in error:', error);
         RNAlert.alert(
-          'Error',
-          'Incorrect phone number or password' || 'Failed to sign in. Please check your credentials.'
+          '錯誤',
+          '電話號碼或密碼不正確' || '登入失敗。請檢查您的憑證。'
           // error.message || 'Failed to sign in. Please check your credentials.'
         );
       } finally {
@@ -244,7 +244,7 @@ function App(): React.JSX.Element {
         <View style={appStyles.signInContainer}>
           <View style={appStyles.overlay} />
           {/* <View style={appStyles.formContainer}> */}
-          <Text style={appStyles.signUpTitle}>Sign In</Text>
+          <Text style={appStyles.signUpTitle}>登入</Text>
 
           <View style={appStyles.phoneFieldContainer}>
             <View style={appStyles.countryCodePicker}>
@@ -274,7 +274,7 @@ function App(): React.JSX.Element {
 
           <TextInput
             style={appStyles.passwordInput}
-            placeholder="Password"
+            placeholder="密碼"
             placeholderTextColor="#7c7c7c"
             secureTextEntry
             value={password}
@@ -292,16 +292,16 @@ function App(): React.JSX.Element {
             {isLoading ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={appStyles.signUpButtonText}>Sign In</Text>
+              <Text style={appStyles.signUpButtonText}>登入</Text>
             )}
           </Pressable>
           {/* Sign In Link */}
           <Pressable onPress={toSignUp} style={appStyles.signInLink}>
-            <Text style={appStyles.signInLinkText}>Create Account</Text>
+            <Text style={appStyles.signInLinkText}>建立帳戶</Text>
           </Pressable>
 
           <Pressable onPress={() => setIsGuestMode(true)} style={appStyles.signInLink}>
-            <Text style={appStyles.guestModeText}>Continue as Guest</Text>
+            <Text style={appStyles.guestModeText}>以訪客身份繼續</Text>
           </Pressable>
         </View>
       </View>
@@ -343,12 +343,12 @@ function App(): React.JSX.Element {
 
     const handleSignUp = async () => {
       if (!phoneNumber || !password || !confirmPassword || !email || !name) {
-        RNAlert.alert('Error', 'Please fill in all fields');
+        RNAlert.alert('錯誤', '請填寫所有欄位');
         return;
       }
 
       if (password !== confirmPassword) {
-        RNAlert.alert('Error', 'Passwords do not match');
+        RNAlert.alert('錯誤', '密碼不匹配');
         return;
       }
 
@@ -368,19 +368,19 @@ function App(): React.JSX.Element {
 
         if (isSignUpComplete) {
           RNAlert.alert(
-            'Success',
-            'Account created successfully! Please sign in.',
-            [{ text: 'OK', onPress: () => toSignIn() }]
+            '成功',
+            '帳戶建立成功！請登入。',
+            [{ text: '確定', onPress: () => toSignIn() }]
           );
         } else if (nextStep?.signUpStep === 'CONFIRM_SIGN_UP') {
           RNAlert.alert(
-            'Verification Required',
-            'Please check your phone for the verification code.'
+            '需要驗證',
+            '請檢查您的手機以獲取驗證碼。'
           );
         }
       } catch (error: any) {
         console.error('Sign up error:', error);
-        RNAlert.alert('Error', error.message || 'Failed to create account');
+        RNAlert.alert('錯誤', error.message || '建立帳戶失敗');
       } finally {
         setIsLoading(false);
       }
@@ -389,10 +389,10 @@ function App(): React.JSX.Element {
     return (
       <View style={appStyles.signUpContainer}>
         <View style={appStyles.overlay} />
-        <Text style={appStyles.signUpTitle}>Create Account</Text>
+        <Text style={appStyles.signUpTitle}>建立帳戶</Text>
 
         {/* Phone Number Input */}
-        <Text style={appStyles.inputLabel}>Phone Number</Text>
+        <Text style={appStyles.inputLabel}>電話號碼</Text>
         <View style={appStyles.phoneFieldContainer}>
           <View style={appStyles.countryCodePicker}>
             <Picker
@@ -422,10 +422,10 @@ function App(): React.JSX.Element {
         </View>
 
         {/* Password Input */}
-        <Text style={appStyles.inputLabel}>Password</Text>
+        <Text style={appStyles.inputLabel}>密碼</Text>
         <TextInput
           style={appStyles.input}
-          placeholder="Enter your Password"
+          placeholder="請輸入您的密碼"
           placeholderTextColor="#7c7c7c"
           secureTextEntry
           value={password}
@@ -433,10 +433,10 @@ function App(): React.JSX.Element {
         />
 
         {/* Confirm Password Input */}
-        <Text style={appStyles.inputLabel}>Confirm Password</Text>
+        <Text style={appStyles.inputLabel}>確認密碼</Text>
         <TextInput
           style={appStyles.input}
-          placeholder="Please confirm your Password"
+          placeholder="請確認您的密碼"
           placeholderTextColor="#7c7c7c"
           secureTextEntry
           value={confirmPassword}
@@ -444,10 +444,10 @@ function App(): React.JSX.Element {
         />
 
         {/* Email Input */}
-        <Text style={appStyles.inputLabel}>Email</Text>
+        <Text style={appStyles.inputLabel}>電子郵件</Text>
         <TextInput
           style={appStyles.input}
-          placeholder="Enter your Email"
+          placeholder="請輸入您的電子郵件"
           placeholderTextColor="#7c7c7c"
           keyboardType="email-address"
           autoCapitalize="none"
@@ -456,10 +456,10 @@ function App(): React.JSX.Element {
         />
 
         {/* Name Input */}
-        <Text style={appStyles.inputLabel}>Name</Text>
+        <Text style={appStyles.inputLabel}>姓名</Text>
         <TextInput
           style={appStyles.input}
-          placeholder="Enter your Name"
+          placeholder="請輸入您的姓名"
           placeholderTextColor="#7c7c7c"
           value={name}
           onChangeText={setName}
@@ -477,13 +477,13 @@ function App(): React.JSX.Element {
           {isLoading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={appStyles.signUpButtonText}>Create Account</Text>
+            <Text style={appStyles.signUpButtonText}>建立帳戶</Text>
           )}
         </Pressable>
 
         {/* Sign In Link */}
         <Pressable onPress={toSignIn} style={appStyles.signInLink}>
-          <Text style={appStyles.signInLinkText}>Sign In</Text>
+          <Text style={appStyles.signInLinkText}>登入</Text>
         </Pressable>
       </View>
     );
@@ -517,8 +517,8 @@ function App(): React.JSX.Element {
                     component={FreeQuote}
                     options={{
                       headerShown: true,
-                      headerTitle: "Free Quote",
-                      headerBackTitle: "Back",
+                      headerTitle: "免費報價",
+                      headerBackTitle: "返回",
                       headerStyle: {
                         backgroundColor: '#040404',
                       },
@@ -531,8 +531,8 @@ function App(): React.JSX.Element {
                   <Stack.Screen name="EmergencyService" component={EmergencyService}
                     options={{
                       headerShown: true,
-                      headerTitle: "Emergency Service",
-                      headerBackTitle: "Back",
+                      headerTitle: "緊急服務",
+                      headerBackTitle: "返回",
                       headerStyle: {
                         backgroundColor: '#040404',
                       },
@@ -544,8 +544,8 @@ function App(): React.JSX.Element {
                   <Stack.Screen name="EmergencyServiceUrgentNonUrgent" component={EmergencyServiceUrgentNonUrgent}
                     options={{
                       headerShown: true,
-                      headerTitle: "Emergency Service",
-                      headerBackTitle: "Back",
+                      headerTitle: "緊急服務",
+                      headerBackTitle: "返回",
                       headerStyle: {
                         backgroundColor: '#040404',
                       },
@@ -557,8 +557,8 @@ function App(): React.JSX.Element {
                   <Stack.Screen name="NonUrgentForm" component={NonUrgentForm}
                     options={{
                       headerShown: true,
-                      headerTitle: "Non-Urgent Form",
-                      headerBackTitle: "Back",
+                      headerTitle: "非緊急表格",
+                      headerBackTitle: "返回",
                       headerStyle: {
                         backgroundColor: '#040404',
                       },

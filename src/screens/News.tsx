@@ -74,8 +74,8 @@ const News: React.FC<NewsProps> = ({ onPostPress }) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Our Latest Blog Posts</Text>
-          <Text style={styles.headerSubtitle}>Stay updated with our latest news and insights</Text>
+          <Text style={styles.headerTitle}>我們的最新部落格文章</Text>
+          <Text style={styles.headerSubtitle}>隨時了解我們的最新消息和見解</Text>
         </View>
 
         <View style={styles.postsContainer}>

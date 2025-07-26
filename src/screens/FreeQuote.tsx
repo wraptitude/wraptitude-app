@@ -66,19 +66,19 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
   }, [selectedService]);
 
   const services = [
-    'Window Tinting',
-    'Vinyl Wrap',
-    'Ceramic Coating',
-    'Paint Protection Film (PPF)',
+    '車窗貼膜',
+    '車身貼膜',
+    '陶瓷鍍膜',
+    '漆面保護膜 (PPF)',
   ];
 
   const handleSubmit = async () => {
     // Validate required fields
     if (!formData.name || !formData.email || !formData.phone) {
       Alert.alert(
-        'Missing Information',
-        'Please fill in all required fields (Name, Email, Phone)',
-        [{ text: 'OK' }]
+        '缺少資訊',
+        '請填寫所有必填欄位（姓名、電子郵件、電話）',
+        [{ text: '確定' }]
       );
       return;
     }
@@ -122,16 +122,16 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
       }
 
       Alert.alert(
-        'Quote Request Sent',
-        'Thank you for your interest! We will contact you shortly with a detailed quote.',
-        [{ text: 'OK' }]
+        '報價申請已送出',
+        '感謝您的興趣！我們將盡快與您聯繫，提供詳細報價。',
+        [{ text: '確定' }]
       );
 
     } catch (error) {
       Alert.alert(
-        'Error',
-        'Failed to submit quote request. Please try again later.',
-        [{ text: 'OK' }]
+        '錯誤',
+        '報價申請失敗。請稍後再試。',
+        [{ text: '確定' }]
       );
       console.error('Error submitting quote:', error);
     } finally {

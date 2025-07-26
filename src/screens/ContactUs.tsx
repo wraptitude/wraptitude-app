@@ -26,22 +26,22 @@ const ContactUs: React.FC = () => {
   const contactInfo = [
     {
       icon: '📍',
-      title: 'Location',
-      description: 'We are located in the beautiful city of Markham, Ontario, Canada.',
+      title: '地址',
+      description: '我們位於加拿大安大略省美麗的萬錦市。',
       value: '23 Laidlaw Blvd Unit 3, Markham',
       action: () => Linking.openURL('https://maps.app.goo.gl/fu4c8t3dBP48Jnrd8'),
     },
     {
       icon: '📞',
-      title: 'Phone',
-      description: 'Call us for inquiries or emergency service',
+      title: '電話',
+      description: '致電我們進行查詢或緊急服務',
       value: '(437) 340-1121',
       action: () => Linking.openURL('tel:4373401121'),
     },
     {
       icon: '📧',
-      title: 'Email',
-      description: 'Send us your questions anytime',
+      title: '電子郵件',
+      description: '隨時發送您的問題給我們',
       value: 'wraptitude.ca@gmail.com',
       action: () => Linking.openURL('mailto:wraptitude.ca@gmail.com'),
     },
@@ -50,9 +50,9 @@ const ContactUs: React.FC = () => {
   const handleSubmit = () => {
     // Here you would typically send the form data to your backend
     Alert.alert(
-      'Quote Request Sent',
-      'Thank you for your interest. We will contact you shortly!',
-      [{ text: 'OK' }]
+      '報價請求已發送',
+      '感謝您的興趣。我們將很快與您聯繫！',
+      [{ text: '確定' }]
     );
   };
 
@@ -64,11 +64,11 @@ const ContactUs: React.FC = () => {
       >
         {/* Get In Touch Section */}
         <View style={styles.section}>
-          <Text style={styles.mainTitle}>GET IN TOUCH</Text>
+          <Text style={styles.mainTitle}>聯絡我們</Text>
           <Text style={styles.description}>
-            If you want to learn more about our car wrap and enhancement services, 
-            please feel free to reach out. We are never too busy to answer your questions 
-            and talk about how we can help upgrade your vehicle to new heights.
+            如果您想了解更多關於我們的汽車貼膜和升級服務，
+            請隨時與我們聯繫。我們永遠不會太忙而無法回答您的問題，
+            並討論我們如何幫助您將車輛升級到新的高度。
           </Text>
         </View>
 

@@ -18,7 +18,7 @@ const About: React.FC = () => {
       await Linking.openURL('tel:4373401121');
     } catch (error) {
       console.error('Failed to make phone call:', error);
-      Alert.alert('Error', 'Could not make phone call. Please try again.');
+      Alert.alert('錯誤', '無法撥打電話。請重試。');
     }
   };
 
@@ -26,7 +26,7 @@ const About: React.FC = () => {
     try {
       await Linking.openURL('mailto:wraptitude.ca@gmail.com?subject=Inquiry from App');
     } catch (error) {
-      Alert.alert('Error', 'Could not open email client. Please try again.');
+      Alert.alert('錯誤', '無法開啟郵件客戶端。請重試。');
     }
   };
 
@@ -42,7 +42,7 @@ const About: React.FC = () => {
         await Linking.openURL('https://www.google.com/maps/search/?api=1&query=23+Laidlaw+Blvd+Unit+3+Markham');
       }
     } catch (error) {
-      Alert.alert('Error', 'Could not open Maps. Please try again.');
+      Alert.alert('錯誤', '無法開啟地圖。請重試。');
     }
   };
 
@@ -55,9 +55,9 @@ const About: React.FC = () => {
         // blurRadius={3}
       >
         <View style={styles.heroOverlay}>
-          <Text style={styles.mainTitle}>About Wraptitude</Text>
+          <Text style={styles.mainTitle}>關於 Wraptitude</Text>
           <Text style={styles.heroText}>
-            Professional car wrapping services with over 10 years of experience
+            專業汽車貼膜服務，擁有超過10年經驗
           </Text>
         </View>
       </ImageBackground>
@@ -68,10 +68,10 @@ const About: React.FC = () => {
           <View style={styles.missionIconContainer}>
             <Text style={styles.missionIcon}>💫</Text>
           </View>
-          <Text style={styles.missionTitle}>Our Commitment</Text>
+          <Text style={styles.missionTitle}>我們的承諾</Text>
           <Text style={styles.missionText}>
-            At Wraptitude, we value every client that walks into our shop. You can count on our installers 
-            each with 5 – 10+ years of experience in providing high quality, professional car wrapping services.
+            在 Wraptitude，我們重視每一位走進我們店鋪的客戶。您可以信賴我們的安裝師傅，
+            每位都擁有5-10年以上的經驗，提供高品質、專業的汽車貼膜服務。
           </Text>
           {/* <View style={styles.statsContainer}>
             <View style={styles.statItem}>

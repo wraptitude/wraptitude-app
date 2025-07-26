@@ -36,7 +36,7 @@ const Profile: React.FC = () => {
       const attributes = await fetchUserAttributes();
       setUserAttributes(attributes as UserAttributes);
     } catch (err) {
-      setError('Failed to load user information');
+      setError('無法載入用戶資訊');
       console.error('Error fetching user attributes:', err);
     } finally {
       setLoading(false);
@@ -45,15 +45,15 @@ const Profile: React.FC = () => {
 
   const handleDeleteAccount = async () => {
     Alert.alert(
-      'Delete Account',
-      'Are you sure you want to delete your account? This action cannot be undone.',
+      '刪除帳戶',
+      '您確定要刪除您的帳戶嗎？此操作無法撤銷。',
       [
         {
-          text: 'Cancel',
+          text: '取消',
           style: 'cancel',
         },
         {
-          text: 'Delete',
+          text: '刪除',
           style: 'destructive',
           onPress: async () => {
             try {
@@ -61,10 +61,10 @@ const Profile: React.FC = () => {
               await deleteUser();
               // After successful deletion, you might want to navigate to the sign-in screen
               // or handle the post-deletion state
-              Alert.alert('Success', 'Your account has been deleted successfully.');
+              Alert.alert('成功', '您的帳戶已成功刪除。');
             } catch (error) {
               console.error('Error deleting account:', error);
-              Alert.alert('Error', 'Failed to delete account. Please try again.');
+              Alert.alert('錯誤', '刪除帳戶失敗。請重試。');
             } finally {
               setIsDeleting(false);
             }
@@ -79,7 +79,7 @@ const Profile: React.FC = () => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#c70628" />
-        <Text style={styles.loadingText}>Loading profile...</Text>
+        <Text style={styles.loadingText}>載入個人資料中...</Text>
       </View>
     );
   }
@@ -89,7 +89,7 @@ const Profile: React.FC = () => {
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
         <Pressable style={styles.retryButton} onPress={fetchUserData}>
-          <Text style={styles.retryButtonText}>Retry</Text>
+          <Text style={styles.retryButtonText}>重試</Text>
         </Pressable>
       </View>
     );

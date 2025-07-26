@@ -111,15 +111,15 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
     if (route.params.isGuestMode && protectedScreens.includes(screen)) {
       // Show login prompt for protected features
       Alert.alert(
-        'Login Required',
-        'Please sign in to access this feature.',
+        '登入要求',
+        '請先登入以存取此功能。',
         [
           {
-            text: 'Cancel',
+            text: '取消',
             style: 'cancel'
           },
           {
-            text: 'Sign In',
+            text: '登入',
             // onPress: () => navigation.navigate('Auth')
             onPress: handleSignOut
           }
@@ -180,24 +180,24 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
       await Linking.openURL('tel:4373401121');
     } catch (error) {
       Alert.alert(
-        'Error',
-        'Unable to make the call. Please dial 437-340-1121 directly.',
-        [{ text: 'OK', style: 'default' }]
+        '錯誤',
+        '無法撥打電話。請直接撥打 437-340-1121。',
+        [{ text: '確定', style: 'default' }]
       );
     }
   };
 
   const menuItems = [
-    { id: 'tracking', icon: 'directions-car', title: 'Service Tracking', description: 'Track your vehicle service progress' },
-    { id: 'history', icon: 'history', title: 'Service History', description: 'View your past services' },
+    { id: 'tracking', icon: 'directions-car', title: '服務追蹤', description: '追蹤您的車輛服務進度' },
+    { id: 'history', icon: 'history', title: '服務歷史', description: '查看您過往的服務記錄' },
     // { id: 'emergency', icon: 'warning', title: 'Emergency Service', description: 'Call for emergency service' },
-    { id: 'services', icon: 'build', title: 'Our Services', description: 'Explore our professional services' },
-    { id: 'knowledge', icon: 'book', title: 'Knowledge Base', description: 'Learn about car films' },
-    { id: 'news', icon: 'newspaper', title: 'News', description: 'Latest updates' },
-    { id: 'about', icon: 'person', title: 'About Us', description: 'Learn more about Wraptitude' },
-    { id: 'quote', icon: 'calculate', title: 'Free Quote', description: 'Get an instant quote for your vehicle' },
-    { id: 'contact', icon: 'phone', title: 'Contact Us', description: 'Get in touch' },
-    { id: 'profile', icon: 'person', title: 'Profile', description: 'Manage your account' },
+    { id: 'services', icon: 'build', title: '我們的服務', description: '探索我們的專業服務' },
+    { id: 'knowledge', icon: 'book', title: '知識庫', description: '了解汽車貼膜知識' },
+    { id: 'news', icon: 'newspaper', title: '最新消息', description: '最新更新資訊' },
+    { id: 'about', icon: 'person', title: '關於我們', description: '了解更多關於 Wraptitude' },
+    { id: 'quote', icon: 'calculate', title: '免費報價', description: '為您的車輛獲取即時報價' },
+    { id: 'contact', icon: 'phone', title: '聯絡我們', description: '與我們聯繫' },
+    { id: 'profile', icon: 'person', title: '個人資料', description: '管理您的帳戶' },
   ];
 
   const renderFooterIcon = (iconName: string, isActive: boolean) => {
@@ -453,9 +453,9 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
                     {/* <Icon name="logout" size={22} color="#FFFFFF" />
                      <Icon name="login" size={22} color="#FFFFFF" /> */}
                      {route.params.isGuestMode ? (
-                      <Text style={styles.signOutText}>Sign In</Text>
+                      <Text style={styles.signOutText}>登入</Text>
                      ) : (
-                      <Text style={styles.signOutText}>Sign Out</Text>
+                      <Text style={styles.signOutText}>登出</Text>
                      )}
                   </Pressable>
                 </>
@@ -484,9 +484,9 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
                   </Pressable>
                   <Text style={styles.screenTitle}>
                     {currentScreen === 'newsDetail' 
-                      ? 'News' 
+                      ? '最新消息' 
                       : currentScreen === 'emergencyUrgentNonUrgent' || currentScreen === 'nonUrgentForm'
-                        ? 'Emergency Service'
+                        ? '緊急服務'
                         : menuItems.find((item) => item.id === currentScreen)?.title}
                   </Text>
                 </>
@@ -522,7 +522,7 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
                 styles.footerText, 
                 activeTab === 'home' && styles.footerTextActive
               ]}>
-                Home
+                首頁
               </Text>
             </Pressable>
             
@@ -532,15 +532,15 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
                 if (route.params.isGuestMode) {
                   // Show login prompt
                   Alert.alert(
-                    'Login Required',
-                    'Please sign in to access tracking features.',
+                    '登入要求',
+                    '請先登入以存取追蹤功能。',
                     [
                       {
-                        text: 'Cancel',
+                        text: '取消',
                         style: 'cancel'
                       },
                       {
-                        text: 'Sign In',
+                        text: '登入',
                         // onPress: () => navigation.navigate('Auth')
                         onPress: handleSignOut
                       }
@@ -564,7 +564,7 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
                 styles.footerText, 
                 activeTab === 'tracking' && styles.footerTextActive
               ]}>
-                Tracking
+                追蹤
               </Text>
             </Pressable>
             
@@ -582,7 +582,7 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
                 styles.footerText, 
                 activeTab === 'quote' && styles.footerTextActive
               ]}>
-                Quote
+                報價
               </Text>
             </Pressable>
             
@@ -592,15 +592,15 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
                 if (route.params.isGuestMode) {
                   // Show login prompt
                   Alert.alert(
-                    'Login Required',
-                    'Please sign in to access your profile.',
+                    '登入要求',
+                    '請先登入以存取您的個人資料。',
                     [
                       {
-                        text: 'Cancel',
+                        text: '取消',
                         style: 'cancel'
                       },
                       {
-                        text: 'Sign In',
+                        text: '登入',
                         // onPress: () => navigation.navigate('Auth')
                         onPress: handleSignOut
                       }
@@ -624,7 +624,7 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
                 styles.footerText, 
                 activeTab === 'profile' && styles.footerTextActive
               ]}>
-                Profile
+                個人資料
               </Text>
             </Pressable>
           </View>

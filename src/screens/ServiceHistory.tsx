@@ -114,13 +114,13 @@ const ServiceHistory: React.FC = () => {
       return serviceType.map(type => {
         switch (type) {
           case 'window_tinting':
-            return 'Window Tinting';
+            return '車窗貼膜';
           case 'full_wrap':
-            return 'Full Wrap';
+            return '全車貼膜';
           case 'partial_wrap':
-            return 'Partial Wrap';
+            return '部分貼膜';
           case 'paint_protection':
-            return 'Paint Protection';
+            return '漆面保護';
           default:
             return type.replace(/_/g, ' ');
         }
@@ -130,13 +130,13 @@ const ServiceHistory: React.FC = () => {
     // Handle string case
     switch (serviceType) {
       case 'window_tinting':
-        return 'Window Tinting';
+        return '車窗貼膜';
       case 'full_wrap':
-        return 'Full Wrap';
+        return '全車貼膜';
       case 'partial_wrap':
-        return 'Partial Wrap';
+        return '部分貼膜';
       case 'paint_protection':
-        return 'Paint Protection';
+        return '漆面保護';
       default:
         return serviceType.replace(/_/g, ' ');
     }
@@ -145,15 +145,15 @@ const ServiceHistory: React.FC = () => {
   const getStepDescription = (stepNumber: number): string => {
     switch (stepNumber) {
       case 1:
-        return "Vehicle Inspection and Cleaning";
+        return "車輛檢查和清潔";
       case 2:
-        return "Film Preparation";
+        return "貼膜準備";
       case 3:
-        return "Film Installation";
+        return "貼膜安裝";
       case 4:
-        return "Quality Check";
+        return "品質檢查";
       case 5:
-        return "Final Presentation";
+        return "最終展示";
       default:
         return "";
     }

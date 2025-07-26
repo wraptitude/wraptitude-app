@@ -23,15 +23,15 @@ const emergencyServices = [
     id: 'collision',
     icon: 'car-crash',
     iconFallback: '🚗',
-    title: 'Vehicle Collision',
-    description: 'Emergency assistance for vehicle accidents or collisions'
+    title: '車輛碰撞',
+    description: '車輛事故或碰撞的緊急協助'
   },
   {
     id: 'other',
     icon: 'help',
     iconFallback: '❓',
-    title: 'Other Emergencies',
-    description: 'Other situations requiring immediate assistance'
+    title: '其他緊急情況',
+    description: '需要立即協助的其他情況'
   },
 ];
 
@@ -63,9 +63,9 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({ onServiceSelect }) 
       await Linking.openURL('tel:4373401121');
     } catch (error) {
       Alert.alert(
-        'Error',
-        'Unable to make the call. Please dial 437-340-1121 directly.',
-        [{ text: 'OK', style: 'default' }]
+        '錯誤',
+        '無法撥打電話。請直接撥打 437-340-1121。',
+        [{ text: '確定', style: 'default' }]
       );
     }
   };
@@ -77,9 +77,9 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({ onServiceSelect }) 
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerSection}>
-          <Text style={styles.title}>Emergency Services</Text>
+          <Text style={styles.title}>緊急服務</Text>
           <Text style={styles.description}>
-            Select the type of emergency you're experiencing or call our hotline for immediate assistance.
+            選擇您遇到的緊急情況類型，或撥打我們的熱線尋求立即協助。
           </Text>
         </View>
 
@@ -114,9 +114,9 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({ onServiceSelect }) 
         <View style={styles.divider} />
 
         <View style={styles.callSection}>
-          <Text style={styles.callSectionTitle}>24/7 Emergency Hotline</Text>
+          <Text style={styles.callSectionTitle}>24/7 緊急熱線</Text>
           <Text style={styles.callSectionDescription}>
-            Need immediate assistance? Call our emergency service hotline.
+            需要立即協助嗎？撥打我們的緊急服務熱線。
           </Text>
           <Animated.View
             style={{
@@ -140,19 +140,19 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({ onServiceSelect }) 
         <View style={styles.infoCard}>
           <View style={styles.infoHeader}>
             <Icon name="info" size={20} color="#c70628" />
-            <Text style={styles.infoTitle}>When to Call Emergency Services</Text>
+            <Text style={styles.infoTitle}>何時撥打緊急服務</Text>
           </View>
           <View style={styles.infoItem}>
             <Icon name="check-circle" size={16} color="#c70628" />
-            <Text style={styles.infoText}>Vehicle collision or accidents</Text>
+            <Text style={styles.infoText}>車輛碰撞或事故</Text>
           </View>
           <View style={styles.infoItem}>
             <Icon name="check-circle" size={16} color="#c70628" />
-            <Text style={styles.infoText}>Vehicle stranded in unsafe location</Text>
+            <Text style={styles.infoText}>車輛被困在危險地點</Text>
           </View>
           <View style={styles.infoItem}>
             <Icon name="check-circle" size={16} color="#c70628" />
-            <Text style={styles.infoText}>Any situation requiring immediate assistance</Text>
+            <Text style={styles.infoText}>任何需要立即協助的情況</Text>
           </View>
         </View>
       </ScrollView>
