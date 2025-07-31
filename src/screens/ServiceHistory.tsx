@@ -251,6 +251,15 @@ const ServiceHistory: React.FC = () => {
             </Text>
           </View>
 
+          {record.details && (
+            <View style={styles.detailsContainer}>
+              <Icon name="info" size={16} color="#9CA3AF" style={styles.detailsIcon} />
+              <Text style={styles.detailsText}>
+                {record.details}
+              </Text>
+            </View>
+          )}
+
           {isExpanded && (
             <View style={styles.stepsContainer}>
               <Text style={styles.stepsLabel}>Service Progress</Text>
@@ -503,6 +512,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFFFFF',
     fontWeight: '500',
+  },
+  detailsContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 8,
+  },
+  detailsIcon: {
+    marginRight: 8,
+    marginTop: 2,
+  },
+  detailsText: {
+    fontSize: 14,
+    color: '#A0A0A0',
+    fontWeight: '400',
+    flex: 1,
+    lineHeight: 20,
   },
   stepsContainer: {
     marginTop: 16,

@@ -100,6 +100,7 @@ const ServiceTracking: React.FC = () => {
     vehicleMake: '',
     vehicleModel: '',
     vehicleYear: '',
+    vehicleDetails: '',
   });
   // Animation values
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -166,6 +167,7 @@ const ServiceTracking: React.FC = () => {
               vehicleMake: data.vehicleMake || '',
               vehicleModel: data.vehicleModel || '',
               vehicleYear: data.vehicleYear || '',
+              vehicleDetails: data.details || '',
             });
 
             const updatedSteps = [...INITIAL_STEPS];
@@ -484,6 +486,16 @@ const ServiceTracking: React.FC = () => {
           <Text style={styles.serviceDetailsLabel}>Vehicle:</Text>
           <Text style={styles.serviceDetailsValue}>
             {`${serviceDetails.vehicleYear} ${serviceDetails.vehicleMake} ${serviceDetails.vehicleModel}`}
+          </Text>
+        </View>
+        {serviceDetails.vehicleDetails && (
+          <View style={styles.serviceDetailsRow}>
+            <Text style={styles.serviceDetailsLabel}>Details:</Text>
+          </View>
+        )}
+        <View style={styles.serviceDetailsValueContainer}>
+          <Text style={styles.serviceDetailsValue}>
+            {serviceDetails.vehicleDetails}
           </Text>
         </View>
       {/* </LinearGradient> */}
@@ -868,6 +880,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+    flexWrap: 'wrap',
+    lineHeight: 20,
+  },
+  serviceDetailsValueContainer: {
+    marginBottom: 8,
+    paddingLeft: 16,
   },
 });
 
