@@ -198,7 +198,7 @@ const ServiceHistory: React.FC = () => {
         {loadingImage && (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color="#ffffff" />
-              <Text style={styles.loadingText}>Loading image...</Text>
+              <Text style={styles.loadingText}>載入圖片中...</Text>
             </View>
           )}
         <FastImage
@@ -355,7 +355,7 @@ const ServiceHistory: React.FC = () => {
           style={styles.loadingGradient}
         > */}
           <ActivityIndicator size="large" color="#c70628" />
-          <Text style={styles.loadingText}>Loading service history...</Text>
+          <Text style={styles.loadingText}>載入服務歷史中...</Text>
         {/* </LinearGradient> */}
       </View>
     );
@@ -394,16 +394,16 @@ const ServiceHistory: React.FC = () => {
             style={styles.noRecordsGradient}
           > */}
             <Icon name="history" size={48} color="#9CA3AF" />
-            <Text style={styles.noRecordsTitle}>No Service History</Text>
+            <Text style={styles.noRecordsTitle}>沒有服務記錄</Text>
             <Text style={styles.noRecordsText}>
-              You haven't completed any services yet.
-              Book a service to get started with Wraptitude.
+              你還沒有完成任何服務。
+              預約服務以開始使用。
             </Text>
           {/* </LinearGradient> */}
         </View>
       ) : (
         <View style={styles.historyContainer}>
-          <Text style={styles.historyTitle}>Your Service History</Text>
+          <Text style={styles.historyTitle}>你的服務歷史</Text>
           {serviceHistory.map((record) => (
             <ServiceCard key={record.id} record={record} />
           ))}

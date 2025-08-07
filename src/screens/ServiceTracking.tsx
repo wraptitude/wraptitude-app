@@ -244,7 +244,7 @@ const ServiceTracking: React.FC = () => {
           {loadingImage && (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color="#ffffff" />
-              <Text style={styles.loadingText}>Loading image...</Text>
+              <Text style={styles.loadingText}>載入圖片中...</Text>
             </View>
           )}
             <FastImage
@@ -499,7 +499,7 @@ const ServiceTracking: React.FC = () => {
             style={styles.loadingGradient}
           > */}
             <ActivityIndicator size="large" color="#c70628" />
-            <Text style={styles.loadingText}>Loading service details...</Text>
+            <Text style={styles.loadingText}>載入服務詳情中...</Text>
           {/* </LinearGradient> */}
         {/* </View> */}
       </View>
@@ -515,10 +515,10 @@ const ServiceTracking: React.FC = () => {
             style={styles.noDataGradient}
           > */}
             <Icon name="assignment-late" size={64} color="rgba(255, 255, 255, 0.1)" style={{textAlign: 'center'}}/>
-            <Text style={styles.noDataTitle}>No Active Services</Text>
+            <Text style={styles.noDataTitle}>沒有正在進行的服務</Text>
             <Text style={styles.noDataText}>
-              You currently don't have any active services being tracked.
-              Visit our service center or request a quote to get started.
+              你目前沒有正在進行的服務。
+              請到我們的服務中心或要求報價以開始。
             </Text>
             
             {/* <View style={styles.actionButtonContainer}>
