@@ -134,7 +134,7 @@ const ServiceTracking: React.FC = () => {
           setUserId(userId);
           
           if (userId) {
-            const response = await fetch('https://nfn5asoyp7.execute-api.us-east-2.amazonaws.com/PROD', {
+            const response = await fetch('https://9d7h3w16rj.execute-api.us-east-2.amazonaws.com/PROD', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

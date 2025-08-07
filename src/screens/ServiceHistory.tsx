@@ -61,7 +61,7 @@ const ServiceHistory: React.FC = () => {
       setUserId(userId);
       
       // Make API call
-      const response = await fetch('https://v3l0ylwh6a.execute-api.us-east-2.amazonaws.com/PROD/', {
+      const response = await fetch('https://v8yt2c6uw0.execute-api.us-east-2.amazonaws.com/PROD', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
