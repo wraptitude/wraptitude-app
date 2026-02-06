@@ -32,6 +32,7 @@ import EmergencyServiceUrgentNonUrgent from './EmergencyServiceUrgentNonUrgent';
 import NonUrgentForm from './NonUrgentForm';
 import FreeQuote from './FreeQuote';
 import Profile from './Profile';
+import AIChatbot from './AIChatbot';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -45,7 +46,7 @@ interface HomeProps {
   navigation: any;
 }
 
-type Screen = 'menu' | 'tracking' | 'history' | 'services' | 'knowledge' | 'gallery' | 'about' | 'contact' | 'profile' | 'news' | 'newsDetail' | 'emergency' | 'emergencyUrgentNonUrgent' | 'nonUrgentForm' | 'quote' | 'profile';
+type Screen = 'menu' | 'tracking' | 'history' | 'services' | 'knowledge' | 'gallery' | 'about' | 'contact' | 'profile' | 'news' | 'newsDetail' | 'emergency' | 'emergencyUrgentNonUrgent' | 'nonUrgentForm' | 'quote' | 'chatbot' | 'profile';
 
 const Home: React.FC<HomeProps> = ({ route, navigation }) => {
   const { toSignIn } = useAuthenticator();
@@ -72,6 +73,7 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
     news: useRef(new Animated.Value(1)).current,
     emergency: useRef(new Animated.Value(1)).current,
     quote: useRef(new Animated.Value(1)).current,
+    chatbot: useRef(new Animated.Value(1)).current,
   };
 
   const screenOpacity = useRef(new Animated.Value(1)).current;
@@ -193,6 +195,7 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
     { id: 'emergency', icon: 'warning', title: 'Emergency Service', description: 'Call for emergency service' },
     { id: 'services', icon: 'build', title: 'Our Services', description: 'Explore our professional services' },
     { id: 'knowledge', icon: 'book', title: 'Knowledge Base', description: 'Learn about car films' },
+    { id: 'chatbot', icon: 'chat', title: 'AI Assistant', description: 'Chat with our AI assistant' },
     { id: 'news', icon: 'newspaper', title: 'News', description: 'Latest updates' },
     { id: 'about', icon: 'person', title: 'About Us', description: 'Learn more about Wraptitude' },
     { id: 'quote', icon: 'calculate', title: 'Free Quote', description: 'Get an instant quote for your vehicle' },
@@ -229,6 +232,8 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
           return <ServiceHistory />;
         case 'knowledge':
           return <KnowledgeBase />;
+        case 'chatbot':
+          return <AIChatbot />;
         case 'contact':
           return <ContactUs />;
         case 'profile':
