@@ -1,11 +1,25 @@
 PODS:
-  - AmplifyRTNCore (1.1.10):
-    - RCT-Folly
+  - AmplifyRTNCore (1.3.3):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
     - RCTRequired
     - RCTTypeSafety
-    - React-Codegen
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
+    - Yoga
   - boost (1.84.0)
   - BVLinearGradient (2.8.3):
     - React-Core
@@ -68,7 +82,6 @@ PODS:
     - React-RCTText (= 0.78.0)
     - React-RCTVibration (= 0.78.0)
   - React-callinvoker (0.78.0)
-  - React-Codegen (0.1.0)
   - React-Core (0.78.0):
     - glog
     - hermes-engine
@@ -1283,11 +1296,30 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-netinfo (11.4.1):
+  - react-native-netinfo (11.5.2):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - react-native-render-html (6.3.4):
     - React-Core
-  - react-native-safe-area-context (5.5.2):
+  - react-native-safe-area-context (5.6.2):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1300,8 +1332,8 @@ PODS:
     - React-featureflags
     - React-graphics
     - React-ImageManager
-    - react-native-safe-area-context/common (= 5.5.2)
-    - react-native-safe-area-context/fabric (= 5.5.2)
+    - react-native-safe-area-context/common (= 5.6.2)
+    - react-native-safe-area-context/fabric (= 5.6.2)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-rendererdebug
@@ -1310,7 +1342,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-safe-area-context/common (5.5.2):
+  - react-native-safe-area-context/common (5.6.2):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1331,7 +1363,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-safe-area-context/fabric (5.5.2):
+  - react-native-safe-area-context/fabric (5.6.2):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1355,7 +1387,7 @@ PODS:
     - Yoga
   - react-native-splash-screen (3.3.0):
     - React-Core
-  - react-native-video (6.16.1):
+  - react-native-video (6.19.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1368,7 +1400,7 @@ PODS:
     - React-featureflags
     - React-graphics
     - React-ImageManager
-    - react-native-video/Video (= 6.16.1)
+    - react-native-video/Video (= 6.19.0)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-rendererdebug
@@ -1377,7 +1409,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-video/Fabric (6.16.1):
+  - react-native-video/Fabric (6.19.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1398,7 +1430,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-video/Video (6.16.1):
+  - react-native-video/Video (6.19.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1420,7 +1452,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-webview (13.15.0):
+  - react-native-webview (13.16.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1749,7 +1781,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNCPicker (2.11.1):
+  - RNCPicker (2.11.4):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1774,7 +1806,7 @@ PODS:
     - React-Core
     - SDWebImage (~> 5.11.1)
     - SDWebImageWebPCoder (~> 0.8.4)
-  - RNScreens (4.13.1):
+  - RNScreens (4.18.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1795,9 +1827,9 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNScreens/common (= 4.13.1)
+    - RNScreens/common (= 4.18.0)
     - Yoga
-  - RNScreens/common (4.13.1):
+  - RNScreens/common (4.18.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1937,7 +1969,6 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - libwebp
-    - React-Codegen
     - SDWebImage
     - SDWebImageWebPCoder
     - SocketRocket
@@ -2108,7 +2139,7 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  AmplifyRTNCore: 919d0884addec22ea5ec43d22a7154cdbd5fad05
+  AmplifyRTNCore: 0801b5d20a729cffb0e2e56e4b85e832a1dfaab0
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
   BVLinearGradient: cb006ba232a1f3e4f341bb62c42d1098c284da70
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
@@ -2124,7 +2155,6 @@ SPEC CHECKSUMS:
   RCTTypeSafety: c135dd2bf50402d87fd12884cbad5d5e64850edd
   React: b229c49ed5898dab46d60f61ed5a0bfa2ee2fadb
   React-callinvoker: 2ac508e92c8bd9cf834cc7d7787d94352e4af58f
-  React-Codegen: 4b8b4817cea7a54b83851d4c1f91f79aa73de30a
   React-Core: 325b4f6d9162ae8b9a6ff42fe78e260eb124180d
   React-CoreModules: 558041e5258f70cd1092f82778d07b8b2ff01897
   React-cxxreact: 8fff17cbe76e6a8f9991b59552e1235429f9c74b
@@ -2151,12 +2181,12 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: 843f352b32aacbe13a9c750190d34df44c3e6c2c
   react-native-get-random-values: d16467cf726c618e9c7a8c3c39c31faa2244bbba
   react-native-image-picker: 84b261e109faa7312bca59f1f65c8f2b22865496
-  react-native-netinfo: cec9c4e86083cb5b6aba0e0711f563e2fbbff187
+  react-native-netinfo: dba12aca306f7081f3c1ef597f4840073b1b1647
   react-native-render-html: 5afc4751f1a98621b3009432ef84c47019dcb2bd
-  react-native-safe-area-context: 072f0334ce3c7e3ee4ae81871564eacad45c8ac5
+  react-native-safe-area-context: 90db9cb1243ba193ef6d05b26ff0600e69112214
   react-native-splash-screen: 95994222cc95c236bd3cdc59fe45ed5f27969594
-  react-native-video: bb03ea28ed6554fd615a71bb6e8c9bddab201555
-  react-native-webview: 80ef603d1df42e24fdde765686fbb9b8a6ecd554
+  react-native-video: a504577800c6acacc320cfae04afca2364120b85
+  react-native-webview: b729d1bcf8fbd141237355dcfd6bb65b9a1d3b1a
   React-NativeModulesApple: 88433b6946778bea9c153e27b671de15411bf225
   React-perflogger: 9e8d3c0dc0194eb932162812a168aa5dc662f418
   React-performancetimeline: 5a2d6efef52bdcefac079c7baa30934978acd023
@@ -2186,9 +2216,9 @@ SPEC CHECKSUMS:
   ReactCodegen: 008c319179d681a6a00966edfc67fda68f9fbb2e
   ReactCommon: 0c097b53f03d6bf166edbcd0915da32f3015dd90
   RNCAsyncStorage: 79cfba789fca205b204f3ce7948b874500129eb4
-  RNCPicker: 490a52d042dc1db36dc979947fced02fd1cf476e
+  RNCPicker: 477e5fe0132df530d943adf69bfa223770d3a085
   RNFastImage: 462a183c4b0b6b26fdfd639e1ed6ba37536c3b87
-  RNScreens: ef16970d0f91f1750ca82ba0db5d521fc0055fba
+  RNScreens: b0691b7488fc428136a2e7abab32f751b01b2696
   RNVectorIcons: 0e915baaf807d5dfed506a14f23a29476c1f07f9
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d

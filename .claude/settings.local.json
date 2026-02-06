@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pod install)",
+      "Bash(node -e:*)",
+      "Bash(npm ls:*)",
+      "Bash(npm install:*)",
+      "Bash(npx react-native run-ios:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(softwareupdate --list:*)",
+      "Bash(mas search:*)",
+      "Bash(open \"macappstore://apps.apple.com/app/xcode/id497799835\")"
+    ]
+  }
+}
