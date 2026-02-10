@@ -472,17 +472,17 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
                       pressed && styles.backButtonPressed
                     ]}
                     onPress={() => {
+                      let target: Screen = 'menu';
                       if (currentScreen === 'newsDetail') {
-                        setCurrentScreen('news');
+                        target = 'news';
                       } else if (currentScreen === 'quote') {
-                        setCurrentScreen(quoteSourceScreen);
+                        target = quoteSourceScreen;
                       } else if (currentScreen === 'emergencyUrgentNonUrgent') {
-                        setCurrentScreen('emergency');
+                        target = 'emergency';
                       } else if (currentScreen === 'nonUrgentForm') {
-                        setCurrentScreen('emergencyUrgentNonUrgent');
-                      } else {
-                        setCurrentScreen('menu');
+                        target = 'emergencyUrgentNonUrgent';
                       }
+                      handleScreenTransition(target);
                     }}
                   >
                     <Icon name="arrow-back-ios" size={20} color="#FFFFFF" />

@@ -8,8 +8,8 @@ import {
   ScrollView,
   Animated,
   Platform,
-  KeyboardAvoidingView,
   Keyboard,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
@@ -31,11 +31,31 @@ const WELCOME_MESSAGE: Message = {
 };
 
 
+// windowHeight - statusBar(44) - headerMarginTop(44) - scrollPaddingTop(20) - scrollPaddingBottom(100)
+const WINDOW_HEIGHT = Dimensions.get('window').height;
+const CHROME_HEIGHT = 44 + 44 + 20 + 100;
+
 const AIChatbot: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Typing indicator animation
   const dot1Opacity = useRef(new Animated.Value(0.3)).current;
@@ -206,69 +226,65 @@ const AIChatbot: React.FC = () => {
     );
   };
 
-  return (
-    <View style={styles.container}>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 108 : 0}>
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.messageList}
-          contentContainerStyle={styles.messageListContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          nestedScrollEnabled={true}>
-          {messages.map(item => (
-            <React.Fragment key={item.id}>
-              {renderMessage(item)}
-            </React.Fragment>
-          ))}
-          {renderTypingIndicator()}
-        </ScrollView>
+  // When keyboard is open, shrink container so input stays visible above keyboard
+  const chatHeight = keyboardHeight > 0
+    ? WINDOW_HEIGHT - 44 - 44 - 20 - keyboardHeight
+    : WINDOW_HEIGHT - CHROME_HEIGHT;
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.chatInput}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Type your message..."
-            placeholderTextColor="rgba(255, 255, 255, 0.4)"
-            multiline
-            maxLength={500}
-            returnKeyType="default"
-            editable={!isLoading}
+  return (
+    <View style={[styles.container, {height: chatHeight}]}>
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.messageList}
+        contentContainerStyle={styles.messageListContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={true}>
+        {messages.map(item => (
+          <React.Fragment key={item.id}>
+            {renderMessage(item)}
+          </React.Fragment>
+        ))}
+        {renderTypingIndicator()}
+      </ScrollView>
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.chatInput}
+          value={inputText}
+          onChangeText={setInputText}
+          placeholder="Type your message..."
+          placeholderTextColor="rgba(255, 255, 255, 0.4)"
+          multiline
+          maxLength={500}
+          returnKeyType="default"
+          editable={!isLoading}
+        />
+        <Pressable
+          style={[
+            styles.sendButton,
+            (!inputText.trim() || isLoading) && styles.sendButtonDisabled,
+          ]}
+          onPress={handleSend}
+          disabled={!inputText.trim() || isLoading}>
+          <Icon
+            name="send"
+            size={20}
+            color={
+              !inputText.trim() || isLoading
+                ? 'rgba(255, 255, 255, 0.3)'
+                : '#FFFFFF'
+            }
           />
-          <Pressable
-            style={[
-              styles.sendButton,
-              (!inputText.trim() || isLoading) && styles.sendButtonDisabled,
-            ]}
-            onPress={handleSend}
-            disabled={!inputText.trim() || isLoading}>
-            <Icon
-              name="send"
-              size={20}
-              color={
-                !inputText.trim() || isLoading
-                  ? 'rgba(255, 255, 255, 0.3)'
-                  : '#FFFFFF'
-              }
-            />
-          </Pressable>
-        </View>
-      </KeyboardAvoidingView>
+        </Pressable>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: 'transparent',
-  },
-  keyboardView: {
-    flex: 1,
   },
   messageList: {
     flex: 1,
@@ -351,8 +367,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    paddingBottom: Platform.OS === 'ios' ? 12 : 10,
+    paddingVertical: 8,
     backgroundColor: 'rgba(10, 10, 10, 0.95)',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.08)',
