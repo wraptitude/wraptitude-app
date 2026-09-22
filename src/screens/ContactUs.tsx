@@ -11,8 +11,10 @@ import {
   Alert,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import { useBranch } from '../branch/BranchContext';
 
 const ContactUs: React.FC = () => {
+  const { branch } = useBranch();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -27,23 +29,23 @@ const ContactUs: React.FC = () => {
     {
       icon: '📍',
       title: 'Location',
-      description: 'We are located in the beautiful city of Markham, Ontario, Canada.',
-      value: '23 Laidlaw Blvd Unit 3, Markham',
-      action: () => Linking.openURL('https://maps.app.goo.gl/fu4c8t3dBP48Jnrd8'),
+      description: `Visit our ${branch.name}, Ontario location.`,
+      value: branch.address,
+      action: () => Linking.openURL(branch.mapUrl),
     },
     {
       icon: '📞',
       title: 'Phone',
       description: 'Call us for inquiries or emergency service',
-      value: '(437) 340-1121',
-      action: () => Linking.openURL('tel:4373401121'),
+      value: branch.phone,
+      action: () => Linking.openURL(`tel:${branch.phoneDial}`),
     },
     {
       icon: '📧',
       title: 'Email',
       description: 'Send us your questions anytime',
-      value: 'wraptitude.ca@gmail.com',
-      action: () => Linking.openURL('mailto:wraptitude.ca@gmail.com'),
+      value: branch.email,
+      action: () => Linking.openURL(`mailto:${branch.email}`),
     },
   ];
 
@@ -294,4 +296,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ContactUs; 
+export default ContactUs;

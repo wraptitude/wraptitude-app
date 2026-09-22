@@ -11,12 +11,12 @@ import {
 import { fetchUserAttributes, deleteUser } from 'aws-amplify/auth';
 
 interface UserAttributes {
-  email: string;
-  email_verified: boolean;
-  name: string;
-  phone_number: string;
-  sub: string;
-  [key: string]: any;
+  email?: string;
+  email_verified?: string;
+  name?: string;
+  phone_number?: string;
+  sub?: string;
+  [key: string]: string | undefined;
 }
 
 const Profile: React.FC = () => {
@@ -283,4 +283,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Profile; 
+export default Profile;

@@ -11,11 +11,13 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { useBranch } from '../branch/BranchContext';
 
 const About: React.FC = () => {
+  const { branch } = useBranch();
   const handlePhoneCall = async () => {
     try {
-      await Linking.openURL('tel:4373401121');
+      await Linking.openURL(`tel:${branch.phoneDial}`);
     } catch (error) {
       console.error('Failed to make phone call:', error);
       Alert.alert('Error', 'Could not make phone call. Please try again.');
@@ -24,7 +26,7 @@ const About: React.FC = () => {
 
   const handleEmail = async () => {
     try {
-      await Linking.openURL('mailto:wraptitude.ca@gmail.com?subject=Inquiry from App');
+      await Linking.openURL(`mailto:${branch.email}?subject=Inquiry from App`);
     } catch (error) {
       Alert.alert('Error', 'Could not open email client. Please try again.');
     }
@@ -32,14 +34,14 @@ const About: React.FC = () => {
 
   const handleOpenMaps = async () => {
     try {
-      const url = 'https://maps.app.goo.gl/fu4c8t3dBP48Jnrd8';
+      const url = branch.mapUrl;
       const canOpen = await Linking.canOpenURL(url);
       
       if (canOpen) {
         await Linking.openURL(url);
       } else {
         // Fallback to coordinates if the direct link doesn't work
-        await Linking.openURL('https://www.google.com/maps/search/?api=1&query=23+Laidlaw+Blvd+Unit+3+Markham');
+        await Linking.openURL(branch.mapUrl);
       }
     } catch (error) {
       Alert.alert('Error', 'Could not open Maps. Please try again.');
@@ -155,7 +157,7 @@ const About: React.FC = () => {
             <Text style={styles.founderName}>Rex</Text>
             <Text style={styles.founderText}>
               Hey, thanks for visiting my website. I started Wraptitude because I wanted to bring high quality 
-              car wrapping to Ontario. We only use the best materials at our Markham location, giving your vehicle 
+              car wrapping to Ontario. We only use the best materials at every Wraptitude location, giving your vehicle
               an amazing, long-lasting finish.
             </Text>
           </View>
@@ -217,7 +219,7 @@ const About: React.FC = () => {
           <Text style={styles.contactTitle}>Visit Us</Text>
           <TouchableOpacity onPress={handleOpenMaps}>
             <Text style={[styles.contactText, { textDecorationLine: 'underline' }]}>
-              23 Laidlaw Blvd Unit 3, Markham
+              {branch.address}
             </Text>
           </TouchableOpacity>
           <Text style={styles.contactText}>Mon-Sat: 11:00am – 7:00pm</Text>
@@ -227,12 +229,12 @@ const About: React.FC = () => {
           <Text style={styles.contactTitle}>Contact</Text>
           <TouchableOpacity onPress={handlePhoneCall}>
             <Text style={[styles.contactText, { textDecorationLine: 'underline' }]}>
-              (437) 340-1121
+              {branch.phone}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleEmail}>
             <Text style={[styles.contactText, { textDecorationLine: 'underline' }]}>
-              wraptitude.ca@gmail.com
+              {branch.email}
             </Text>
           </TouchableOpacity>
         </View>
@@ -536,4 +538,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default About; 
+export default About;

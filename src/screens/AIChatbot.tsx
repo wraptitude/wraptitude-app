@@ -12,6 +12,7 @@ import {
   Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useBranch } from '../branch/BranchContext';
 
 interface Message {
   id: string;
@@ -36,6 +37,7 @@ const WINDOW_HEIGHT = Dimensions.get('window').height;
 const CHROME_HEIGHT = 44 + 44 + 20 + 100;
 
 const AIChatbot: React.FC = () => {
+  const { branchId, branch } = useBranch();
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -133,7 +135,7 @@ const AIChatbot: React.FC = () => {
       const response = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({messages: conversationHistory}),
+        body: JSON.stringify({messages: conversationHistory, branchId}),
       });
       console.log('response', response);
       if (!response.ok) throw new Error('Failed to get response');
@@ -158,7 +160,7 @@ const AIChatbot: React.FC = () => {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content:
-          "I'm sorry, I'm having trouble connecting right now. Please try again or contact us directly at (437) 340-1121.",
+          `I'm sorry, I'm having trouble connecting right now. Please try again or contact our ${branch.name} location at ${branch.phone}.`,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);

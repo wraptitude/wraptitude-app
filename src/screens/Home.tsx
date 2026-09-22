@@ -14,7 +14,6 @@ import {
   Linking,
   StatusBar,
   Platform,
-  BlurView,
 } from 'react-native';
 import { signOut } from 'aws-amplify/auth';
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
@@ -35,6 +34,8 @@ import Profile from './Profile';
 import AIChatbot from './AIChatbot';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LinearGradient from 'react-native-linear-gradient';
+import BranchSelector from '../branch/BranchSelector';
+import { useBranch } from '../branch/BranchContext';
 
 interface HomeProps {
   route: {
@@ -46,10 +47,22 @@ interface HomeProps {
   navigation: any;
 }
 
-type Screen = 'menu' | 'tracking' | 'history' | 'services' | 'knowledge' | 'gallery' | 'about' | 'contact' | 'profile' | 'news' | 'newsDetail' | 'emergency' | 'emergencyUrgentNonUrgent' | 'nonUrgentForm' | 'quote' | 'chatbot' | 'profile';
+interface BlogPost {
+  id: string;
+  image: string;
+  category: string;
+  date: string;
+  author: string;
+  title: string;
+  description: string;
+  content: string;
+}
+
+type Screen = 'menu' | 'tracking' | 'history' | 'services' | 'knowledge' | 'gallery' | 'about' | 'contact' | 'profile' | 'news' | 'newsDetail' | 'emergency' | 'emergencyUrgentNonUrgent' | 'nonUrgentForm' | 'quote' | 'chatbot';
 
 const Home: React.FC<HomeProps> = ({ route, navigation }) => {
   const { toSignIn } = useAuthenticator();
+  const { selectionVersion } = useBranch();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [currentScreen, setCurrentScreen] = useState<Screen>('menu');
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
@@ -60,13 +73,12 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
   const [scrollY, setScrollY] = useState(0);
 
   // Animation refs for buttons
-  const buttonScales = {
+  const buttonScales: Record<string, Animated.Value> = {
     tracking: useRef(new Animated.Value(1)).current,
     history: useRef(new Animated.Value(1)).current,
     profile: useRef(new Animated.Value(1)).current,
     knowledge: useRef(new Animated.Value(1)).current,
     contact: useRef(new Animated.Value(1)).current,
-    profile: useRef(new Animated.Value(1)).current,
     services: useRef(new Animated.Value(1)).current,
     gallery: useRef(new Animated.Value(1)).current,
     about: useRef(new Animated.Value(1)).current,
@@ -276,7 +288,7 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
         case 'quote':
           return (
             <FreeQuote 
-              selectedService={selectedService} 
+              selectedService={selectedService ?? undefined}
               onGoBack={() => {
                 setCurrentScreen(quoteSourceScreen);
               }}
@@ -386,7 +398,7 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
           transform: [{ translateY: screenTranslateY }],
         }}
       >
-        {content()}
+        <React.Fragment key={selectionVersion}>{content()}</React.Fragment>
       </Animated.View>
     );
   };
@@ -497,6 +509,7 @@ const Home: React.FC<HomeProps> = ({ route, navigation }) => {
                 </>
               )}
             </View>
+            <BranchSelector />
           </Animated.View>
 
           <View style={styles.contentContainer}>
@@ -717,7 +730,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    marginTop: 44, // Account for header
+    marginTop: 92, // Account for header and branch selector
   },
   scrollContainer: {
     flex: 1,

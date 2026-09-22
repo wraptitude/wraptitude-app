@@ -16,14 +16,12 @@ SYSTEM_PROMPT = """You are a helpful and friendly customer service assistant for
 
 COMPANY INFORMATION:
 - Company Name: Wraptitude
-- Location: 23 Laidlaw Blvd Unit 3, Markham, Ontario, Canada
-- Phone: (437) 340-1121
-- Email: wraptitude.ca@gmail.com
+- Location, phone, and email: use the selected location details appended to this prompt.
 - Website: https://wrap-titude.ca
 - Business Hours: Monday to Saturday 11:00am - 7:00pm, Sunday Closed
 
 COMPANY BACKGROUND:
-- Wraptitude is a boutique car wrapping shop serving the car-loving community in Markham and the GTA (Greater Toronto Area).
+- Wraptitude is a boutique car wrapping shop serving the car-loving community in Ontario and the GTA (Greater Toronto Area).
 - 10+ years of experience, 3,000+ vehicles serviced, 3,000+ happy customers.
 - 367+ five-star Google Reviews with a perfect 5.0 rating.
 - Team of 8 qualified installers with 5-10+ years of professional experience.
@@ -81,13 +79,28 @@ Customers can request a free quote through the app or contact directly. Info nee
 
 GUIDELINES FOR RESPONDING:
 - Be friendly, professional, and concise.
-- If asked about specific pricing, explain that pricing varies based on the vehicle make, model, and specific requirements. Encourage requesting a free quote through the app or calling (437) 340-1121.
-- If the customer has an urgent issue or emergency, direct them to call (437) 340-1121 immediately.
+- If asked about specific pricing, explain that pricing varies based on the vehicle make, model, and specific requirements. Encourage requesting a free quote through the app or calling the selected location.
+- If the customer has an urgent issue or emergency, direct them to call the selected location immediately.
 - If asked about topics unrelated to automotive services or Wraptitude, politely redirect the conversation.
 - Recommend booking a free consultation for detailed vehicle-specific questions.
 - Be enthusiastic about helping customers enhance and protect their vehicles.
 - Keep responses under 200 words unless the customer asks for detailed information.
 - Respond in the same language the customer uses (e.g., if they write in Chinese, respond in Chinese; if Cantonese, respond in Cantonese)."""
+
+BRANCHES = {
+    "markham": {
+        "name": "Markham",
+        "address": "23 Laidlaw Blvd Unit 3, Markham, ON L3P 1W7",
+        "phone": "(437) 340-1121",
+        "email": "wraptitude.ca@gmail.com",
+    },
+    "vaughan": {
+        "name": "Vaughan",
+        "address": "8635 Keele Street, Unit 8, Vaughan, ON L4K 3P5",
+        "phone": "(416) 818-1293",
+        "email": "info@wraptitude-vaughan.ca",
+    },
+}
 
 CORS_HEADERS = {
     "Content-Type": "application/json",
@@ -109,6 +122,7 @@ def lambda_handler(event, context):
     try:
         body = json.loads(event["body"])
         user_messages = body.get("messages", [])
+        branch = BRANCHES.get(body.get("branchId"), BRANCHES["markham"])
         print(f"[INPUT] Message count: {len(user_messages)}")
         print(f"[INPUT] Latest message: {user_messages[-1] if user_messages else 'None'}")
 
@@ -124,8 +138,16 @@ def lambda_handler(event, context):
         trimmed_messages = user_messages[-20:]
         print(f"[OPENAI] Sending {len(trimmed_messages)} messages + system prompt")
 
+        location_prompt = (
+            f"\nSELECTED LOCATION:\n"
+            f"- Name: {branch['name']}\n"
+            f"- Address: {branch['address']}\n"
+            f"- Phone: {branch['phone']}\n"
+            f"- Email: {branch['email']}\n"
+            "Use these details whenever the customer asks where to visit or how to contact Wraptitude."
+        )
         openai_messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": SYSTEM_PROMPT + location_prompt},
             *trimmed_messages,
         ]
 

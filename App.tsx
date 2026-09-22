@@ -24,7 +24,7 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 import { Button } from 'react-native';
-import { Amplify, Auth } from 'aws-amplify';
+import { Amplify } from 'aws-amplify';
 import { Authenticator, AuthenticatorProps, ThemeProvider, useAuthenticator, useTheme } from '@aws-amplify/ui-react-native';
 import awsconfig from './src/aws-exports';
 import { SignIn } from '@aws-amplify/ui-react-native/dist/Authenticator/Defaults/SignIn';
@@ -39,6 +39,7 @@ import FreeQuote from './src/screens/FreeQuote';
 import EmergencyService from './src/screens/EmergencyService';
 import EmergencyServiceUrgentNonUrgent from './src/screens/EmergencyServiceUrgentNonUrgent';
 import NonUrgentForm from './src/screens/NonUrgentForm';
+import { BranchProvider } from './src/branch/BranchContext';
 
 // Configure Amplify
 Amplify.configure(awsconfig);
@@ -165,7 +166,7 @@ function App(): React.JSX.Element {
   };
   // const { toForgotPassword } = useAuthenticator();
   // Custom Sign In component
-  const CustomSignIn = ({ fields, ...props }) => {
+  const CustomSignIn = ({ fields, ...props }: any) => {
     const [phoneNumber, setPhoneNumber] = React.useState('');
     const [selectedCode, setSelectedCode] = React.useState('+1');
     const [password, setPassword] = React.useState('');
@@ -490,7 +491,7 @@ function App(): React.JSX.Element {
   };
 
   // Custom Forgot Password component
-  const CustomForgotPassword = ({ fields, ...props }) => {
+  const CustomForgotPassword = ({ fields, ...props }: any) => {
     const [phoneNumber, setPhoneNumber] = React.useState('');
     const [selectedCode, setSelectedCode] = React.useState('+1');
     const [verificationCode, setVerificationCode] = React.useState('');
@@ -704,12 +705,13 @@ function App(): React.JSX.Element {
       >
         <ThemeProvider>
           <Authenticator.Provider>
-            <View style={{ flex: 1, backgroundColor: '#040404' }}>
-              <NavigationContainer>
+            <BranchProvider>
+              <View style={{ flex: 1, backgroundColor: '#040404' }}>
+                <NavigationContainer>
                 <Stack.Navigator>
                   <Stack.Screen
                     name="Home"
-                    component={Home}
+                    component={Home as React.ComponentType<any>}
                     options={{ headerShown: false }}
                     initialParams={{ onSignOut: handleSignOut, isGuestMode: isGuestMode }}
                   />
@@ -734,7 +736,7 @@ function App(): React.JSX.Element {
                       },
                     }}
                   />
-                  <Stack.Screen name="EmergencyService" component={EmergencyService}
+                  <Stack.Screen name="EmergencyService" component={EmergencyService as React.ComponentType<any>}
                     options={{
                       headerShown: true,
                       headerTitle: "Emergency Service",
@@ -747,7 +749,7 @@ function App(): React.JSX.Element {
                         fontWeight: 'bold',
                       },
                     }} />
-                  <Stack.Screen name="EmergencyServiceUrgentNonUrgent" component={EmergencyServiceUrgentNonUrgent}
+                  <Stack.Screen name="EmergencyServiceUrgentNonUrgent" component={EmergencyServiceUrgentNonUrgent as React.ComponentType<any>}
                     options={{
                       headerShown: true,
                       headerTitle: "Emergency Service",
@@ -760,7 +762,7 @@ function App(): React.JSX.Element {
                         fontWeight: 'bold',
                       },
                     }} />
-                  <Stack.Screen name="NonUrgentForm" component={NonUrgentForm}
+                  <Stack.Screen name="NonUrgentForm" component={NonUrgentForm as React.ComponentType<any>}
                     options={{
                       headerShown: true,
                       headerTitle: "Non-Urgent Form",
@@ -774,9 +776,10 @@ function App(): React.JSX.Element {
                       },
                     }} />
                 </Stack.Navigator>
-              </NavigationContainer>
-              {/* <Home onSignOut={() => setIsAuthenticated(false)} /> */}
-            </View>
+                </NavigationContainer>
+                {/* <Home onSignOut={() => setIsAuthenticated(false)} /> */}
+              </View>
+            </BranchProvider>
           </Authenticator.Provider>
         </ThemeProvider>
       </ImageBackground>

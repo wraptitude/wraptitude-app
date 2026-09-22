@@ -10,10 +10,11 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { fetchUserAttributes } from 'aws-amplify/auth';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import FastImage from 'react-native-fast-image';
+import { useBranch } from '../branch/BranchContext';
+import { branchApi } from '../branch/api';
 interface ServiceRecord {
   id: string;
   cost: string;
@@ -39,50 +40,25 @@ interface ServiceRecord {
 }
 
 const ServiceHistory: React.FC = () => {
+  const { branchId, branch } = useBranch();
   const [serviceHistory, setServiceHistory] = useState<ServiceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [expandedRecord, setExpandedRecord] = useState<string | null>(null);
   const [loadingImage, setLoadingImage] = useState(false);
 
   useEffect(() => {
-    fetchServiceHistory();
-  }, []);
+    void fetchServiceHistory();
+  }, [branchId]);
 
   const fetchServiceHistory = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Get user ID from Amplify
-      const userAttributes = await fetchUserAttributes();
-      const userId = userAttributes.sub;
-      setUserId(userId);
-      
-      // Make API call
-      const response = await fetch('https://v3l0ylwh6a.execute-api.us-east-2.amazonaws.com/PROD/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        },
-        body: JSON.stringify({
-          userID: userId
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch service history');
-      }
-
-      const responseData = await response.json();
-      // Parse the nested body string into an object
-      const parsedBody = JSON.parse(responseData.body);
-      // Extract the data array from the parsed body
-      const serviceRecords = parsedBody.data;
+      const serviceRecords = await branchApi<ServiceRecord[]>(
+        `/customer/services?branchId=${branchId}`,
+      );
       
       // Transform the data to match our interface (ID -> id)
       const transformedRecords = serviceRecords.map((record: any) => ({
@@ -92,7 +68,7 @@ const ServiceHistory: React.FC = () => {
 
       setServiceHistory(transformedRecords);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : `Unable to load ${branch.name} service history`);
       console.error('Error fetching service history:', err);
     } finally {
       setLoading(false);
@@ -708,4 +684,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ServiceHistory; 
+export default ServiceHistory;

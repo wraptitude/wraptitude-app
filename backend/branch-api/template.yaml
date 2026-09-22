@@ -1,0 +1,211 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Authenticated multi-branch API for Wraptitude mobile and admin applications.
+
+Parameters:
+  CustomerUserPoolId:
+    Type: String
+    Default: us-east-2_YkquiI7T9
+  CustomerAppClientId:
+    Type: String
+    Default: 7vlqq7r376oloodmlr2vgucfgl
+  AdminOrigin:
+    Type: String
+    Default: https://main.dfik0czr5tmeb.amplifyapp.com
+
+Resources:
+  AdminUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: wraptitude-admin
+      UsernameAttributes: [email]
+      AutoVerifiedAttributes: [email]
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+      MfaConfiguration: 'ON'
+      EnabledMfas: [SOFTWARE_TOKEN_MFA]
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 12
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          RequireUppercase: true
+          TemporaryPasswordValidityDays: 7
+      UserPoolAddOns:
+        AdvancedSecurityMode: ENFORCED
+      UserAttributeUpdateSettings:
+        AttributesRequireVerificationBeforeUpdate: [email]
+
+  AdminUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: wraptitude-admin-web
+      UserPoolId: !Ref AdminUserPool
+      GenerateSecret: false
+      PreventUserExistenceErrors: ENABLED
+      EnableTokenRevocation: true
+      ExplicitAuthFlows:
+        - ALLOW_ADMIN_USER_PASSWORD_AUTH
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      AccessTokenValidity: 1
+      IdTokenValidity: 1
+      RefreshTokenValidity: 7
+      TokenValidityUnits:
+        AccessToken: hours
+        IdToken: hours
+        RefreshToken: days
+
+  SuperAdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: super-admin
+      Description: Access to all Wraptitude branches
+      UserPoolId: !Ref AdminUserPool
+
+  MarkhamAdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: markham-admin
+      Description: Access to Markham only
+      UserPoolId: !Ref AdminUserPool
+
+  VaughanAdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: vaughan-admin
+      Description: Access to Vaughan only
+      UserPoolId: !Ref AdminUserPool
+
+  BranchMembershipTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: wraptitudeBranchMembership
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: branchId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: branchId
+          KeyType: HASH
+        - AttributeName: userId
+          KeyType: RANGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+
+  BranchApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: '$default'
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref AdminOrigin
+        AllowHeaders:
+          - Authorization
+          - Content-Type
+        AllowMethods:
+          - GET
+          - POST
+          - PATCH
+          - DELETE
+          - OPTIONS
+        MaxAge: 600
+      Auth:
+        Authorizers:
+          CustomerAuthorizer:
+            IdentitySource: $request.header.Authorization
+            JwtConfiguration:
+              audience:
+                - !Ref CustomerAppClientId
+              issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${CustomerUserPoolId}
+          AdminAuthorizer:
+            IdentitySource: $request.header.Authorization
+            JwtConfiguration:
+              audience:
+                - !Ref AdminUserPoolClient
+              issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${AdminUserPool}
+
+  BranchApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: wraptitudeBranchApi
+      Runtime: python3.12
+      Handler: app.lambda_handler
+      CodeUri: .
+      MemorySize: 512
+      Timeout: 29
+      Environment:
+        Variables:
+          SERVICE_TABLE: wraptitudeAppService
+          USER_TABLE: wraptitudeAppUser
+          QUOTE_TABLE: wraptitudeAppQuote
+          NON_URGENT_TABLE: wraptitudeAppEmergencyServiceNonUrgentForm
+          URGENT_TABLE: wraptitudeAppEmergencyServiceUrgentRecord
+          MEMBERSHIP_TABLE: !Ref BranchMembershipTable
+          SERVICE_BUCKET: wraptitude-service
+          QUOTE_BUCKET: wraptitude-quote
+          EMERGENCY_BUCKET: wraptitude-emergency-service-non-urgent-form
+          INVOICE_EMAIL_FUNCTION: send_invoice_email
+          NON_URGENT_TOPIC_ARN: arn:aws:sns:us-east-2:539247487854:wraptitudeAppEmergencyServiceNonUrgentForm
+          ADMIN_ORIGIN: !Ref AdminOrigin
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: wraptitudeAppService
+        - DynamoDBCrudPolicy:
+            TableName: wraptitudeAppUser
+        - DynamoDBCrudPolicy:
+            TableName: wraptitudeAppQuote
+        - DynamoDBCrudPolicy:
+            TableName: wraptitudeAppEmergencyServiceNonUrgentForm
+        - DynamoDBCrudPolicy:
+            TableName: wraptitudeAppEmergencyServiceUrgentRecord
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BranchMembershipTable
+        - S3CrudPolicy:
+            BucketName: wraptitude-service
+        - S3CrudPolicy:
+            BucketName: wraptitude-quote
+        - S3CrudPolicy:
+            BucketName: wraptitude-emergency-service-non-urgent-form
+        - LambdaInvokePolicy:
+            FunctionName: send_invoice_email
+        - SNSPublishMessagePolicy:
+            TopicName: wraptitudeAppEmergencyServiceNonUrgentForm
+      Events:
+        PublicApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BranchApi
+            Path: /public/{proxy+}
+            Method: ANY
+        CustomerApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BranchApi
+            Path: /customer/{proxy+}
+            Method: ANY
+            Auth:
+              Authorizer: CustomerAuthorizer
+        AdminApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BranchApi
+            Path: /admin/{proxy+}
+            Method: ANY
+            Auth:
+              Authorizer: AdminAuthorizer
+
+Outputs:
+  ApiUrl:
+    Value: !Sub https://${BranchApi}.execute-api.${AWS::Region}.amazonaws.com
+  AdminUserPoolId:
+    Value: !Ref AdminUserPool
+  AdminUserPoolClientId:
+    Value: !Ref AdminUserPoolClient
+  MembershipTableName:
+    Value: !Ref BranchMembershipTable

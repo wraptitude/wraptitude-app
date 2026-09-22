@@ -13,9 +13,11 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
-import { fetchUserAttributes } from 'aws-amplify/auth';
+import { fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useBranch } from '../branch/BranchContext';
+import { branchApi, publicBranchApi } from '../branch/api';
 
 // Update the props interface
 interface FreeQuoteProps {
@@ -27,6 +29,7 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
   selectedService,
   onGoBack 
 }) => {
+  const { branchId, branch } = useBranch();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -43,14 +46,16 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
 
   useEffect(() => {
     (async () => {
-      const userAttributes = await fetchUserAttributes();
-      if (userAttributes) {
+      try {
+        const userAttributes = await fetchUserAttributes();
         setFormData(prevData => ({
           ...prevData,
           name: userAttributes.name || '',
           email: userAttributes.email || '',
           phone: userAttributes.phone_number?.replace('+1', '') || '',
         }));
+      } catch {
+        // Guest quotes collect contact details in the form.
       }
     })();
   }, []);
@@ -98,32 +103,28 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
         });
       }
       
-      const response = await fetch('https://xb4ot97nih.execute-api.us-east-2.amazonaws.com/PROD', {
+      const payload = {
+        branchId,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        vehicleMake: formData.vehicleMake,
+        vehicleModel: formData.vehicleModel,
+        vehicleYear: formData.vehicleYear,
+        serviceType: formData.serviceType,
+        message: formData.message,
+        image: imageBase64,
+      };
+      const session = await fetchAuthSession();
+      const submit = session.tokens?.idToken ? branchApi : publicBranchApi;
+      await submit('/' + (session.tokens?.idToken ? 'customer' : 'public') + '/quotes', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          vehicleMake: formData.vehicleMake,
-          vehicleModel: formData.vehicleModel,
-          vehicleYear: formData.vehicleYear,
-          serviceType: formData.serviceType,
-          message: formData.message,
-          image: imageBase64, // Send base64 string
-        }),
+        body: JSON.stringify(payload),
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to submit quote request: ${response.status} ${errorText}`);
-      }
 
       Alert.alert(
         'Quote Request Sent',
-        'Thank you for your interest! We will contact you shortly with a detailed quote.',
+        `Thank you for your interest in our ${branch.name} location! We will contact you shortly.`,
         [{ text: 'OK' }]
       );
 
@@ -142,13 +143,14 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
   const handleImagePick = async () => {
     const result = await launchImageLibrary({
       mediaType: 'photo',
-      quality: 0.01,
+      quality: 0.1,
     });
 
-    if (result.assets && result.assets[0]) {
+    const uri = result.assets?.[0]?.uri;
+    if (uri) {
       setFormData(prev => ({
         ...prev,
-        image: { uri: result.assets[0].uri }
+        image: { uri }
       }));
     }
   };

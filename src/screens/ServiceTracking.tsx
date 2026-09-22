@@ -15,11 +15,12 @@ import {
 } from 'react-native';
 import { useAuthenticator } from '@aws-amplify/ui-react-native';
 import { post } from 'aws-amplify/api';
-import { fetchUserAttributes } from 'aws-amplify/auth';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import FastImage from 'react-native-fast-image';
+import { useBranch } from '../branch/BranchContext';
+import { branchApi } from '../branch/api';
 
 interface ServiceStep {
   id: string;
@@ -90,11 +91,11 @@ const INITIAL_STEPS: ServiceStep[] = [
 ];
 
 const ServiceTracking: React.FC = () => {
+  const { branchId, branch } = useBranch();
   const [steps, setSteps] = useState<ServiceStep[]>(INITIAL_STEPS);
   const [loading, setLoading] = useState(true);
   const [loadingImage, setLoadingImage] = useState(false);
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [serviceDetails, setServiceDetails] = useState({
     serviceType: '',
     vehicleMake: '',
@@ -130,37 +131,16 @@ const ServiceTracking: React.FC = () => {
 
       const getUserData = async () => {
         try {
-          const userAttributes = await fetchUserAttributes();
-          const userId = userAttributes.sub;
-          setUserId(userId);
-          
-          if (userId) {
-            const response = await fetch('https://nfn5asoyp7.execute-api.us-east-2.amazonaws.com/PROD', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-              },
-              body: JSON.stringify({
-                userID: userId
-              })
-            });
+            const services = await branchApi<any[]>(`/customer/services?branchId=${branchId}`);
 
-            if (!response.ok) {
-              throw new Error('Failed to fetch service data');
-            }
-
-            const responseData = await response.json();
-            const parsedBody = JSON.parse(responseData.body);
-
-            if (!parsedBody.data || parsedBody.data.length === 0) {
+            if (!services || services.length === 0) {
               setSteps([]);
               return;
             }
 
-            const data = parsedBody.data[0];
+            const data = [...services].sort((a, b) =>
+              String(b.createAt || '').localeCompare(String(a.createAt || '')),
+            )[0];
             // Set service details
             setServiceDetails({
               serviceType: data.serviceType || '',
@@ -174,31 +154,30 @@ const ServiceTracking: React.FC = () => {
             
             updatedSteps[0].status = data.step0 || 'completed';
             updatedSteps[0].description = data.depositAmount ?  'Deposit payment received and confirmed: $' + data.depositAmount : 'Deposit payment received and confirmed';
-            updatedSteps[0].images = data.step0Img && data.step0Img !== '' ? `${data.step0Img}?${new Date().getTime()}` : '';
+            updatedSteps[0].images = data.step0Img || '';
             
             updatedSteps[1].status = data.step1 || 'pending';
-            updatedSteps[1].images = data.step1Img && data.step1Img !== '' ? `${data.step1Img}?${new Date().getTime()}` : '';
+            updatedSteps[1].images = data.step1Img || '';
             
             updatedSteps[2].status = data.step2 || 'pending';
-            updatedSteps[2].images = data.step2Img && data.step2Img !== '' ? `${data.step2Img}?${new Date().getTime()}` : '';
+            updatedSteps[2].images = data.step2Img || '';
             
             updatedSteps[3].status = data.step3 || 'pending';
-            updatedSteps[3].images = data.step3Img && data.step3Img !== '' ? `${data.step3Img}?${new Date().getTime()}` : '';
+            updatedSteps[3].images = data.step3Img || '';
             
             updatedSteps[4].status = data.step4 || 'pending';
-            updatedSteps[4].images = data.step4Img && data.step4Img !== '' ? `${data.step4Img}?${new Date().getTime()}` : '';
+            updatedSteps[4].images = data.step4Img || '';
             
             updatedSteps[5].status = data.step5 || 'pending';
-            updatedSteps[5].images = data.step5Img && data.step5Img !== '' ? `${data.step5Img}?${new Date().getTime()}` : '';
+            updatedSteps[5].images = data.step5Img || '';
 
             setSteps(updatedSteps);
-          }
         } catch (error) {
           console.error('Error fetching data:', error);
           setSteps([]);
           Alert.alert(
             'Error',
-            'Failed to load service tracking data. Please try again later.'
+            `Failed to load ${branch.name} service tracking data. Please try again later.`
           );
         } finally {
           setLoading(false);
@@ -212,7 +191,7 @@ const ServiceTracking: React.FC = () => {
         setExpandedStep(null);
         setLoading(true);
       };
-    }, [])
+    }, [branchId, branch.name])
   );
 
   useEffect(() => {
@@ -889,4 +868,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ServiceTracking; 
+export default ServiceTracking;
