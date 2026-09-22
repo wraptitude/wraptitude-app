@@ -22,8 +22,7 @@ Resources:
       AutoVerifiedAttributes: [email]
       AdminCreateUserConfig:
         AllowAdminCreateUserOnly: true
-      MfaConfiguration: 'ON'
-      EnabledMfas: [SOFTWARE_TOKEN_MFA]
+      MfaConfiguration: 'OFF'
       Policies:
         PasswordPolicy:
           MinimumLength: 12
