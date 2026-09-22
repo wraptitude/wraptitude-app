@@ -98,6 +98,63 @@ Resources:
       SSESpecification:
         SSEEnabled: true
 
+  PrivateServiceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub wraptitude-service-private-${AWS::AccountId}-${AWS::Region}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+
+  PrivateQuoteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub wraptitude-quote-private-${AWS::AccountId}-${AWS::Region}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+
+  PrivateEmergencyBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub wraptitude-emergency-private-${AWS::AccountId}-${AWS::Region}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+
   BranchApi:
     Type: AWS::Serverless::HttpApi
     Properties:
@@ -147,9 +204,12 @@ Resources:
           NON_URGENT_TABLE: wraptitudeAppEmergencyServiceNonUrgentForm
           URGENT_TABLE: wraptitudeAppEmergencyServiceUrgentRecord
           MEMBERSHIP_TABLE: !Ref BranchMembershipTable
-          SERVICE_BUCKET: wraptitude-service
-          QUOTE_BUCKET: wraptitude-quote
-          EMERGENCY_BUCKET: wraptitude-emergency-service-non-urgent-form
+          PRIVATE_SERVICE_BUCKET: !Ref PrivateServiceBucket
+          PRIVATE_QUOTE_BUCKET: !Ref PrivateQuoteBucket
+          PRIVATE_EMERGENCY_BUCKET: !Ref PrivateEmergencyBucket
+          LEGACY_SERVICE_BUCKET: wraptitude-service
+          LEGACY_QUOTE_BUCKET: wraptitude-quote
+          LEGACY_EMERGENCY_BUCKET: wraptitude-emergency-service-non-urgent-form
           INVOICE_EMAIL_FUNCTION: send_invoice_email
           NON_URGENT_TOPIC_ARN: arn:aws:sns:us-east-2:539247487854:wraptitudeAppEmergencyServiceNonUrgentForm
           ADMIN_ORIGIN: !Ref AdminOrigin
@@ -169,9 +229,15 @@ Resources:
         - S3CrudPolicy:
             BucketName: wraptitude-service
         - S3CrudPolicy:
+            BucketName: !Ref PrivateServiceBucket
+        - S3CrudPolicy:
             BucketName: wraptitude-quote
         - S3CrudPolicy:
+            BucketName: !Ref PrivateQuoteBucket
+        - S3CrudPolicy:
             BucketName: wraptitude-emergency-service-non-urgent-form
+        - S3CrudPolicy:
+            BucketName: !Ref PrivateEmergencyBucket
         - LambdaInvokePolicy:
             FunctionName: send_invoice_email
         - SNSPublishMessagePolicy:
@@ -209,3 +275,9 @@ Outputs:
     Value: !Ref AdminUserPoolClient
   MembershipTableName:
     Value: !Ref BranchMembershipTable
+  PrivateServiceBucketName:
+    Value: !Ref PrivateServiceBucket
+  PrivateQuoteBucketName:
+    Value: !Ref PrivateQuoteBucket
+  PrivateEmergencyBucketName:
+    Value: !Ref PrivateEmergencyBucket

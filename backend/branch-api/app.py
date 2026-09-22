@@ -24,9 +24,12 @@ NON_URGENT_TABLE = dynamodb.Table(os.environ["NON_URGENT_TABLE"])
 URGENT_TABLE = dynamodb.Table(os.environ["URGENT_TABLE"])
 MEMBERSHIP_TABLE = dynamodb.Table(os.environ["MEMBERSHIP_TABLE"])
 
-SERVICE_BUCKET = os.environ["SERVICE_BUCKET"]
-QUOTE_BUCKET = os.environ["QUOTE_BUCKET"]
-EMERGENCY_BUCKET = os.environ["EMERGENCY_BUCKET"]
+SERVICE_BUCKET = os.environ["PRIVATE_SERVICE_BUCKET"]
+QUOTE_BUCKET = os.environ["PRIVATE_QUOTE_BUCKET"]
+EMERGENCY_BUCKET = os.environ["PRIVATE_EMERGENCY_BUCKET"]
+LEGACY_SERVICE_BUCKET = os.environ["LEGACY_SERVICE_BUCKET"]
+LEGACY_QUOTE_BUCKET = os.environ["LEGACY_QUOTE_BUCKET"]
+LEGACY_EMERGENCY_BUCKET = os.environ["LEGACY_EMERGENCY_BUCKET"]
 INVOICE_EMAIL_FUNCTION = os.environ.get("INVOICE_EMAIL_FUNCTION", "")
 NON_URGENT_TOPIC_ARN = os.environ.get("NON_URGENT_TOPIC_ARN", "")
 ADMIN_ORIGIN = os.environ.get("ADMIN_ORIGIN", "https://main.dfik0czr5tmeb.amplifyapp.com")
@@ -218,16 +221,25 @@ def add_membership(user_id: str, branch_id: str, source: str) -> None:
     )
 
 
-def key_from_url(value: str, expected_bucket: str) -> str:
+def image_location(
+    value: str,
+    private_bucket: str,
+    legacy_bucket: str,
+    private_prefix: str,
+) -> tuple[str, str]:
     if not value:
-        return ""
+        return private_bucket, ""
     if not value.startswith("http"):
-        return value.lstrip("/")
+        key = value.lstrip("/")
+        bucket = private_bucket if key.startswith(f"{private_prefix}/") else legacy_bucket
+        return bucket, key
     parsed = urlparse(value)
     host = parsed.netloc.lower()
-    if expected_bucket not in host:
-        raise ApiError(400, "Image belongs to an unexpected bucket")
-    return parsed.path.lstrip("/")
+    if private_bucket in host:
+        return private_bucket, parsed.path.lstrip("/")
+    if legacy_bucket in host:
+        return legacy_bucket, parsed.path.lstrip("/")
+    raise ApiError(400, "Image belongs to an unexpected bucket")
 
 
 def signed_get(bucket: str, key: str) -> str:
@@ -238,15 +250,25 @@ def signed_get(bucket: str, key: str) -> str:
     )
 
 
-def sign_item_images(item: dict[str, Any], bucket: str) -> dict[str, Any]:
+def sign_item_images(
+    item: dict[str, Any],
+    private_bucket: str,
+    legacy_bucket: str,
+    private_prefix: str,
+) -> dict[str, Any]:
     signed = dict(item)
-    fields = IMAGE_FIELDS if bucket == SERVICE_BUCKET else {"imageUrl"}
+    fields = IMAGE_FIELDS if private_bucket == SERVICE_BUCKET else {"imageUrl"}
     for field in fields:
         raw_value = str(item.get(field) or "")
         if not raw_value:
             continue
         try:
-            key = key_from_url(raw_value, bucket)
+            bucket, key = image_location(
+                raw_value,
+                private_bucket,
+                legacy_bucket,
+                private_prefix,
+            )
             signed[f"{field}Key"] = key
             signed[field] = signed_get(bucket, key)
         except ApiError:
@@ -294,7 +316,10 @@ def services_for_user(user_id: str, branch_id: str) -> list[dict[str, Any]]:
         KeyConditionExpression=Key("userID").eq(user_id),
         FilterExpression=Attr("branchId").eq(branch_id),
     )
-    return [sign_item_images(item, SERVICE_BUCKET) for item in services]
+    return [
+        sign_item_images(item, SERVICE_BUCKET, LEGACY_SERVICE_BUCKET, "service")
+        for item in services
+    ]
 
 
 def admin_client_services(event: dict[str, Any], user_id: str) -> list[dict[str, Any]]:
@@ -338,7 +363,7 @@ def create_service(event: dict[str, Any]) -> dict[str, Any]:
     )
     SERVICE_TABLE.put_item(Item=item)
     add_membership(user_id, branch_id, "service")
-    return sign_item_images(item, SERVICE_BUCKET)
+    return sign_item_images(item, SERVICE_BUCKET, LEGACY_SERVICE_BUCKET, "service")
 
 
 def update_service(event: dict[str, Any], service_id: str) -> dict[str, Any]:
@@ -350,7 +375,7 @@ def update_service(event: dict[str, Any], service_id: str) -> dict[str, Any]:
     updated["branchId"] = branch_id
     updated["editAt"] = now_iso()
     SERVICE_TABLE.put_item(Item=updated)
-    return sign_item_images(updated, SERVICE_BUCKET)
+    return sign_item_images(updated, SERVICE_BUCKET, LEGACY_SERVICE_BUCKET, "service")
 
 
 def delete_service(event: dict[str, Any], service_id: str) -> dict[str, Any]:
@@ -380,11 +405,25 @@ def list_branch_records(event: dict[str, Any], record_type: str) -> list[dict[st
     branch_id = admin_branch(event)
     if record_type == "quotes":
         records = scan_all(QUOTE_TABLE, Attr("branchId").eq(branch_id))
-        return [sign_item_images(item, QUOTE_BUCKET) for item in records]
+        return [
+            sign_item_images(item, QUOTE_BUCKET, LEGACY_QUOTE_BUCKET, "quotes")
+            for item in records
+        ]
     records = scan_all(NON_URGENT_TABLE, Attr("branchId").eq(branch_id))
     urgent = scan_all(URGENT_TABLE, Attr("branchId").eq(branch_id))
     return [
-        *[{**sign_item_images(item, EMERGENCY_BUCKET), "urgency": "non-urgent"} for item in records],
+        *[
+            {
+                **sign_item_images(
+                    item,
+                    EMERGENCY_BUCKET,
+                    LEGACY_EMERGENCY_BUCKET,
+                    "emergency",
+                ),
+                "urgency": "non-urgent",
+            }
+            for item in records
+        ],
         *[{**item, "urgency": "urgent"} for item in urgent],
     ]
 
