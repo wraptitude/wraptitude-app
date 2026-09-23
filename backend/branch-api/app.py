@@ -490,6 +490,21 @@ def customer_services(event: dict[str, Any]) -> list[dict[str, Any]]:
     return services_for_user(customer_id(event), branch_id)
 
 
+def customer_branches(event: dict[str, Any]) -> list[dict[str, str]]:
+    user_id = customer_id(event)
+    memberships = []
+    for branch_id in BRANCHES:
+        membership = MEMBERSHIP_TABLE.get_item(
+            Key={"branchId": branch_id, "userId": user_id}
+        ).get("Item")
+        if membership:
+            memberships.append({
+                "branchId": branch_id,
+                "joinedAt": str(membership.get("createdAt") or ""),
+            })
+    return memberships
+
+
 def store_base64_image(value: str, bucket: str, prefix: str) -> str:
     if not value:
         return ""
@@ -525,8 +540,9 @@ def create_quote(event: dict[str, Any], authenticated: bool) -> dict[str, Any]:
     }
     if user_id:
         item["userId"] = user_id
-        add_membership(user_id, branch_id, "quote")
     QUOTE_TABLE.put_item(Item=item)
+    if user_id:
+        add_membership(user_id, branch_id, "quote")
     return {"id": item["ID"], "branchId": branch_id}
 
 
@@ -613,6 +629,8 @@ def route(event: dict[str, Any]) -> Any:
         return create_quote(event, False)
     if method == "GET" and path == "/customer/services":
         return customer_services(event)
+    if method == "GET" and path == "/customer/branches":
+        return customer_branches(event)
     if method == "POST" and path == "/customer/quotes":
         return create_quote(event, True)
     if method == "POST" and path == "/customer/emergencies/non-urgent":

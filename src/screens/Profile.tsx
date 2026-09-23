@@ -9,6 +9,9 @@ import {
   Alert,
 } from 'react-native';
 import { fetchUserAttributes, deleteUser } from 'aws-amplify/auth';
+import { branchApi } from '../branch/api';
+import { useBranch } from '../branch/BranchContext';
+import { BRANCHES, BranchId } from '../branch/config';
 
 interface UserAttributes {
   email?: string;
@@ -19,8 +22,16 @@ interface UserAttributes {
   [key: string]: string | undefined;
 }
 
+interface CustomerBranch {
+  branchId: BranchId;
+  joinedAt: string;
+}
+
 const Profile: React.FC = () => {
+  const { branch } = useBranch();
   const [userAttributes, setUserAttributes] = useState<UserAttributes | null>(null);
+  const [customerBranches, setCustomerBranches] = useState<CustomerBranch[]>([]);
+  const [branchError, setBranchError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -33,8 +44,20 @@ const Profile: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const attributes = await fetchUserAttributes();
-      setUserAttributes(attributes as UserAttributes);
+      const [attributesResult, branchesResult] = await Promise.allSettled([
+        fetchUserAttributes(),
+        branchApi<CustomerBranch[]>('/customer/branches'),
+      ]);
+      if (attributesResult.status === 'rejected') {
+        throw attributesResult.reason;
+      }
+      setUserAttributes(attributesResult.value as UserAttributes);
+      if (branchesResult.status === 'fulfilled') {
+        setCustomerBranches(branchesResult.value);
+        setBranchError(false);
+      } else {
+        setBranchError(true);
+      }
     } catch (err) {
       setError('Failed to load user information');
       console.error('Error fetching user attributes:', err);
@@ -62,8 +85,8 @@ const Profile: React.FC = () => {
               // After successful deletion, you might want to navigate to the sign-in screen
               // or handle the post-deletion state
               Alert.alert('Success', 'Your account has been deleted successfully.');
-            } catch (error) {
-              console.error('Error deleting account:', error);
+            } catch (deleteError) {
+              console.error('Error deleting account:', deleteError);
               Alert.alert('Error', 'Failed to delete account. Please try again.');
             } finally {
               setIsDeleting(false);
@@ -108,7 +131,7 @@ const Profile: React.FC = () => {
 
       <View style={styles.infoSection}>
         <Text style={styles.sectionTitle}>Account Information</Text>
-        
+
         <View style={styles.infoItem}>
           <Text style={styles.infoLabel}>Email</Text>
           <Text style={styles.infoValue}>{userAttributes?.email || 'Not provided'}</Text>
@@ -128,6 +151,32 @@ const Profile: React.FC = () => {
           <Text style={styles.infoLabel}>User ID</Text>
           <Text style={styles.infoValue}>{userAttributes?.sub || 'Not available'}</Text>
         </View>
+      </View>
+
+      <View style={styles.infoSection}>
+        <Text style={styles.sectionTitle}>My Locations</Text>
+        <View style={styles.infoItem}>
+          <Text style={styles.infoLabel}>Currently viewing</Text>
+          <Text style={styles.infoValue}>{branch.name}</Text>
+        </View>
+        <View style={styles.infoItem}>
+          <Text style={styles.infoLabel}>Customer at</Text>
+          <Text style={styles.infoValue}>
+            {branchError
+              ? 'Unable to load locations. Please try again.'
+              : customerBranches.length
+                ? customerBranches.map(({ branchId }) => BRANCHES[branchId].name).join(' · ')
+                : 'No branch activity yet'}
+          </Text>
+        </View>
+        <Text style={styles.branchHint}>
+          A location appears here after you submit a request or have a service there. Switching locations does not move your records.
+        </Text>
+        {branchError && (
+          <Pressable onPress={fetchUserData} style={styles.retryButton}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </Pressable>
+        )}
       </View>
 
       <View style={styles.infoSection}>
@@ -243,6 +292,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '500',
+  },
+  branchHint: {
+    color: '#A0A0A0',
+    fontSize: 13,
+    lineHeight: 19,
   },
   verifiedBadge: {
     color: '#4CAF50',
