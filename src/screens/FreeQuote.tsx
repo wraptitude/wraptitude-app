@@ -8,6 +8,7 @@ import {
   Pressable,
   Image,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
@@ -16,18 +17,24 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useBranch } from '../branch/BranchContext';
 import { branchApi, publicBranchApi } from '../branch/api';
 import { colors } from '../styles/theme';
+import { BRANCHES, BranchId } from '../branch/config';
 
 // Update the props interface
 interface FreeQuoteProps {
+  isGuestMode?: boolean;
   selectedService?: string;
   onGoBack?: () => void;  // Optional callback for going back
 }
 
 const FreeQuote: React.FC<FreeQuoteProps> = ({
+  isGuestMode = false,
   selectedService,
   onGoBack,
 }) => {
-  const { branchId, branch } = useBranch();
+  const account = useBranch();
+  const [guestBranchId, setGuestBranchId] = useState<BranchId | null>(null);
+  const branchId = isGuestMode ? (guestBranchId || account.branchId) : account.branchId;
+  const branch = BRANCHES[branchId];
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -43,6 +50,7 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [receipt, setReceipt] = useState<{id: string; branchId: BranchId} | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -78,6 +86,10 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
   ];
 
   const handleSubmit = async () => {
+    if (isGuestMode && !guestBranchId) {
+      setFormError('Please choose the branch to receive your quote request.');
+      return;
+    }
     if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
       setFormError('Please add your name, email and phone number.');
       return;
@@ -90,6 +102,17 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
       setFormError('Please enter a valid phone number.');
       return;
     }
+
+    const confirmed = await new Promise<boolean>(resolve => {
+      Alert.alert(
+        `Send to ${branch.name}?`,
+        `${branch.address}\n\nThis quote request will go to ${branch.name} only. It is not a confirmed booking.`,
+        [{text: 'Cancel', style: 'cancel', onPress: () => resolve(false)},
+         {text: `Send to ${branch.name}`, onPress: () => resolve(true)}],
+        {cancelable: true, onDismiss: () => resolve(false)},
+      );
+    });
+    if (!confirmed) return;
 
     try {
       setFormError(null);
@@ -121,11 +144,11 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
       };
       const session = await fetchAuthSession();
       const submit = session.tokens?.idToken ? branchApi : publicBranchApi;
-      await submit('/' + (session.tokens?.idToken ? 'customer' : 'public') + '/quotes', {
+      const result = await submit<{id: string; branchId: BranchId}>('/' + (session.tokens?.idToken ? 'customer' : 'public') + '/quotes', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-
+      setReceipt(result);
       setSubmitted(true);
 
     } catch (error) {
@@ -142,8 +165,9 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
         <View style={styles.successIcon}><Icon name="check" size={34} color={colors.text} /></View>
         <Text style={styles.successTitle}>Request sent</Text>
         <Text style={styles.successText}>
-          Your {branch.name} quote request is on its way. Our team will contact you using the details you provided.
+          Your {receipt ? BRANCHES[receipt.branchId].name : branch.name} quote request has been received. Our team will contact you to confirm the details before creating a service order.
         </Text>
+        {receipt && <Text selectable style={styles.successText}>Request ID: {receipt.id}</Text>}
         <Pressable
           style={styles.successButton}
           onPress={() => onGoBack ? onGoBack() : setSubmitted(false)}
@@ -179,6 +203,12 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.headerSection}>
+          {isGuestMode && <View>
+            <Text style={styles.description}>Choose the branch to receive this guest enquiry. This does not create an account.</Text>
+            {(['markham', 'vaughan'] as BranchId[]).map(id => <Pressable key={id} disabled={loading} onPress={() => setGuestBranchId(id)} accessibilityRole="radio" accessibilityState={{checked: guestBranchId === id}} style={styles.branchBadge}>
+              <Text style={styles.branchBadgeText}>{guestBranchId === id ? '● ' : '○ '}{BRANCHES[id].name}</Text>
+            </Pressable>)}
+          </View>}
           <View style={styles.branchBadge}>
             <Icon name="place" size={16} color={colors.redLight} />
             <Text style={styles.branchBadgeText}>{branch.name} location</Text>

@@ -9,11 +9,19 @@ sam build
 sam deploy --guided --profile wraptitude --region us-east-2
 ```
 
-After the stack is deployed, run `migrate_branch_data.py` once. The migration is idempotent and assigns legacy data to Markham.
+`migrate_branch_data.py` was the original legacy migration. Do not rerun it after enabling fixed-branch signup: it predates account branch selection. Use `backfill_account_branches.py` (dry-run, then `--apply`) for account membership reconciliation.
 
 The admin customer list uses `branchId-clientCreatedAt-index` for newest-first pagination. After deploying the index, backfill existing memberships once with `python3 backfill_client_created_at.py --apply` (run without `--apply` for a read-only count). New memberships receive this field automatically.
 
-Customer accounts are shared across branches, but customer-list membership is branch-specific. Existing accounts were assigned to Markham during migration. For new activity, an authenticated customer joins a branch only after submitting a quote or emergency request there, or when an admin creates a service for that customer. Merely switching the app's selected branch does not add membership. The same customer may belong to both branches. Anonymous quotes appear in the selected branch's quote list but cannot create customer-account membership. `GET /customer/branches` returns only the signed-in customer's branch memberships; the admin customer list is scoped to the requesting administrator's allowed branch.
+Customer accounts now have one fixed branch, selected at registration using the immutable Cognito `custom:home_branch` attribute. Existing accounts without the attribute are always Markham. The mobile app loads `/customer/account` before showing account data and has no branch switcher or device-selected branch cache. The backend resolves the account branch directly from Cognito, rejecting conflicting request parameters. Account creation immediately creates branch membership; a quote or order is not required. Anonymous quotes remain separate guest enquiries and do not create customer membership.
+
+### Fixed account branch rollout
+
+1. Back up the existing customer pool/client configuration and DynamoDB tables.
+2. Deploy this SAM stack, including `CustomerAccountSignup` and the API's narrowly scoped Cognito read permission.
+3. Run `configure_account_branch.py` (dry-run, then `--apply`). This adds an immutable schema attribute (cannot be deleted), preserves all other pool/client settings, and changes only the post-confirmation trigger. The old pre-signup trigger is preserved. The new trigger preserves account creation dates on retries and ignores password-reset confirmations.
+4. Run `backfill_account_branches.py`, review the counts, then run with `--apply`. Missing Cognito accounts are reported, not recreated. No orders or existing memberships are moved/deleted.
+5. Release the new app and admin UI. Verify Markham legacy login, both signup branches, matching admin customer lists, and rejection of cross-branch requests. Existing legacy API/image cutover remains a separate coordinated release task.
 
 ## App update prompts
 
@@ -24,3 +32,22 @@ Do not enable a force threshold before the required version and its store link a
 New service, quote, and emergency images are written to private buckets and returned only with short-lived signed URLs. Legacy images remain readable from the old buckets during the mobile-release transition.
 
 Do not remove the remaining legacy data APIs or old buckets' public-read policies until the mobile release using this API is available to customers. At cutover, copy legacy objects to the private buckets, update stored keys, verify counts, and then remove public access from the old buckets.
+
+## Branch order flow
+
+- A customer has one registered branch. A service order must match that branch;
+  the admin selector never reassigns customer accounts or orders.
+- Quote requests are enquiries, not service orders. Once confirmed, staff create
+  the service order from that branch's Clients view. Guest enquiries require the
+  customer to register/sign in before an account-linked service order is created.
+- The admin Orders view uses `GET /admin/services?branchId=...&pageSize=20&cursor=...`.
+  JWT group authorization is checked before every page. Only summary fields and
+  basic contact information for customers with matching orders are returned.
+- This endpoint uses one **bounded scan** of the existing service table, not a
+  full-table load. DynamoDB's limit counts evaluated rows, so a page may be empty
+  but still contain `nextCursor`. Clients must keep Load more available until the
+  cursor is null. Scan order is not chronological. A branch/date GSI is a future
+  scalability improvement; this change does not alter the production table schema.
+- Deploy the API before deploying the new admin Orders tab. Mobile tracking and
+  history continue using the existing authenticated customer endpoint.
+- Offline regression tests: `python3 -m unittest discover -s backend/branch-api -p 'test_*.py'`.

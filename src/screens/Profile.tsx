@@ -155,9 +155,9 @@ const Profile: React.FC = () => {
       </View>
 
       <View style={styles.infoSection}>
-        <Text style={styles.sectionTitle}>My Locations</Text>
+        <Text style={styles.sectionTitle}>My Branch</Text>
         <View style={styles.infoItem}>
-          <Text style={styles.infoLabel}>Currently viewing</Text>
+          <Text style={styles.infoLabel}>Registered branch</Text>
           <Text style={styles.infoValue}>{branch.name}</Text>
         </View>
         <View style={styles.infoItem}>
@@ -171,7 +171,7 @@ const Profile: React.FC = () => {
           </Text>
         </View>
         <Text style={styles.branchHint}>
-          A location appears here after you submit a request or have a service there. Switching locations does not move your records.
+          Your branch was selected when you registered and cannot be changed in the app. All existing customer accounts belong to Markham. Your requests and service orders go to your registered branch.
         </Text>
         {branchError && (
           <Pressable onPress={fetchUserData} style={styles.retryButton}>

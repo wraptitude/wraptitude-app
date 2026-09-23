@@ -17,6 +17,8 @@ dynamodb = boto3.resource("dynamodb")
 s3 = boto3.client("s3")
 lambda_client = boto3.client("lambda")
 sns = boto3.client("sns")
+cognito = boto3.client("cognito-idp")
+CUSTOMER_USER_POOL_ID = os.environ.get("CUSTOMER_USER_POOL_ID", "us-east-2_YkquiI7T9")
 
 SERVICE_TABLE = dynamodb.Table(os.environ["SERVICE_TABLE"])
 USER_TABLE = dynamodb.Table(os.environ["USER_TABLE"])
@@ -215,6 +217,34 @@ def user_by_id(user_id: str) -> dict[str, Any] | None:
     return USER_TABLE.get_item(Key={"userId": user_id}).get("Item")
 
 
+def account_branch(user_id: str) -> str:
+    """Immutable Cognito signup attribute, never a device setting or request field."""
+    try:
+        user = cognito.admin_get_user(UserPoolId=CUSTOMER_USER_POOL_ID, Username=user_id)
+    except cognito.exceptions.UserNotFoundException as error:
+        raise ApiError(404, "Customer account not found") from error
+    attributes = {item["Name"]: item["Value"] for item in user.get("UserAttributes", [])}
+    branch_id = attributes.get("custom:home_branch", "markham")
+    if branch_id not in BRANCHES:
+        raise ApiError(403, "Customer branch is not configured correctly")
+    return branch_id
+
+
+def customer_branch(event: dict[str, Any], payload: dict[str, Any] | None = None) -> str:
+    branch_id = account_branch(customer_id(event))
+    requested = (payload or {}).get("branchId") or (event.get("queryStringParameters") or {}).get("branchId")
+    if requested is not None and valid_branch(requested) != branch_id:
+        raise ApiError(403, "This account belongs to another branch")
+    return branch_id
+
+
+def customer_account(event: dict[str, Any]) -> dict[str, str]:
+    user_id = customer_id(event)
+    branch_id = customer_branch(event)
+    add_membership(user_id, branch_id, "account")
+    return {"userId": user_id, "branchId": branch_id}
+
+
 def add_membership(user_id: str, branch_id: str, source: str) -> None:
     if not user_id:
         return
@@ -372,12 +402,69 @@ def admin_clients(event: dict[str, Any]) -> Any:
         )
     clients = []
     for membership in memberships:
+        try:
+            registered_branch = account_branch(membership["userId"])
+        except ApiError as error:
+            if error.status_code != 404:
+                raise
+            # Retained historical profiles can outlive deleted Cognito accounts.
+            continue
+        if registered_branch != branch_id:
+            continue
         user = user_by_id(membership["userId"])
         if user:
             clients.append({**user, "branchId": branch_id, "branchJoinedAt": membership.get("createdAt")})
     if page_size is None:
         return sorted(clients, key=lambda item: item.get("createdAt", ""), reverse=True)
     return {"items": clients, "nextCursor": next_cursor}
+
+
+def admin_services(event: dict[str, Any]) -> dict[str, Any]:
+    """One bounded page of branch orders; never load the entire service table."""
+    branch_id = admin_branch(event)
+    query = event.get("queryStringParameters") or {}
+    try:
+        page_size = int(query.get("pageSize", "20"))
+        if not 1 <= page_size <= 50:
+            raise ValueError("Invalid page size")
+    except (ValueError, TypeError) as error:
+        raise ApiError(400, "pageSize must be between 1 and 50") from error
+    scan_args = {"FilterExpression": Attr("branchId").eq(branch_id), "Limit": page_size}
+    cursor = query.get("cursor")
+    if cursor:
+        try:
+            if not re.fullmatch(r"[A-Za-z0-9_-]{1,2048}", cursor):
+                raise ValueError("Invalid cursor")
+            decoded = json.loads(base64.urlsafe_b64decode(cursor + "=" * (-len(cursor) % 4)))
+            if (
+                not isinstance(decoded, dict)
+                or set(decoded) != {"branchId", "ID"}
+                or decoded["branchId"] != branch_id
+                or not isinstance(decoded["ID"], str)
+                or not decoded["ID"]
+            ):
+                raise ValueError("Invalid cursor")
+        except (ValueError, TypeError, binascii.Error) as error:
+            raise ApiError(400, "Invalid pagination cursor") from error
+        scan_args["ExclusiveStartKey"] = {"ID": decoded["ID"]}
+    result = SERVICE_TABLE.scan(**scan_args)
+    fields = ("ID", "branchId", "userID", "vehicleMake", "vehicleModel", "vehicleYear",
+              "serviceType", "createAt", "step5")
+    items = []
+    for item in result.get("Items", []):
+        ensure_record_branch(item, branch_id)
+        user = user_by_id(item["userID"]) or {}
+        items.append({**{field: item.get(field) for field in fields},
+                      "customerName": user.get("name", "Customer"),
+                      "customerEmail": user.get("email", "")})
+    last_key = result.get("LastEvaluatedKey")
+    next_cursor = (
+        base64.urlsafe_b64encode(json.dumps({**last_key, "branchId": branch_id}).encode())
+        .decode().rstrip("=") if last_key else None
+    )
+    # Scan Limit counts evaluated rows, not matching rows. An empty page may
+    # still have a cursor; callers must keep the Load more control available.
+    return {"items": items, "nextCursor": next_cursor}
 
 
 def services_for_user(user_id: str, branch_id: str) -> list[dict[str, Any]]:
@@ -395,6 +482,8 @@ def services_for_user(user_id: str, branch_id: str) -> list[dict[str, Any]]:
 
 def admin_client_services(event: dict[str, Any], user_id: str) -> list[dict[str, Any]]:
     branch_id = admin_branch(event)
+    if account_branch(user_id) != branch_id:
+        raise ApiError(404, "Client not found in this branch")
     membership = MEMBERSHIP_TABLE.get_item(Key={"branchId": branch_id, "userId": user_id}).get("Item")
     if not membership:
         raise ApiError(404, "Client not found in this branch")
@@ -421,6 +510,8 @@ def create_service(event: dict[str, Any]) -> dict[str, Any]:
     user_id = str(payload.get("userID") or "")
     if not user_id or not user_by_id(user_id):
         raise ApiError(400, "A valid userID is required")
+    if account_branch(user_id) != branch_id:
+        raise ApiError(403, "Orders must belong to the customer's registered branch")
     timestamp = now_iso()
     item = clean_service_payload(payload)
     item.update(
@@ -500,24 +591,12 @@ def list_branch_records(event: dict[str, Any], record_type: str) -> list[dict[st
 
 
 def customer_services(event: dict[str, Any]) -> list[dict[str, Any]]:
-    query = event.get("queryStringParameters") or {}
-    branch_id = valid_branch(query.get("branchId"))
+    branch_id = customer_branch(event)
     return services_for_user(customer_id(event), branch_id)
 
 
 def customer_branches(event: dict[str, Any]) -> list[dict[str, str]]:
-    user_id = customer_id(event)
-    memberships = []
-    for branch_id in BRANCHES:
-        membership = MEMBERSHIP_TABLE.get_item(
-            Key={"branchId": branch_id, "userId": user_id}
-        ).get("Item")
-        if membership:
-            memberships.append({
-                "branchId": branch_id,
-                "joinedAt": str(membership.get("createdAt") or ""),
-            })
-    return memberships
+    return [{"branchId": customer_branch(event)}]
 
 
 def store_base64_image(value: str, bucket: str, prefix: str) -> str:
@@ -537,7 +616,7 @@ def store_base64_image(value: str, bucket: str, prefix: str) -> str:
 
 def create_quote(event: dict[str, Any], authenticated: bool) -> dict[str, Any]:
     payload = parse_body(event)
-    branch_id = valid_branch(payload.get("branchId"))
+    branch_id = customer_branch(event, payload) if authenticated else valid_branch(payload.get("branchId"))
     user_id = customer_id(event) if authenticated else ""
     item = {
         "ID": str(uuid.uuid4()),
@@ -563,7 +642,7 @@ def create_quote(event: dict[str, Any], authenticated: bool) -> dict[str, Any]:
 
 def create_non_urgent(event: dict[str, Any]) -> dict[str, Any]:
     payload = parse_body(event)
-    branch_id = valid_branch(payload.get("branchId"))
+    branch_id = customer_branch(event, payload)
     user_id = customer_id(event)
     user = user_by_id(user_id) or {}
     item = {
@@ -595,7 +674,7 @@ def create_non_urgent(event: dict[str, Any]) -> dict[str, Any]:
 
 def create_urgent(event: dict[str, Any]) -> dict[str, Any]:
     payload = parse_body(event)
-    branch_id = valid_branch(payload.get("branchId"))
+    branch_id = customer_branch(event, payload)
     user_id = customer_id(event)
     user = user_by_id(user_id) or {}
     item = {
@@ -606,7 +685,7 @@ def create_urgent(event: dict[str, Any]) -> dict[str, Any]:
         "userEmail": user.get("email") or "",
         "userPhone": user.get("phone_number") or "",
         "serviceType": payload.get("serviceType") or "",
-        "servicePhoneNumber": payload.get("servicePhoneNumber") or BRANCHES[branch_id]["phone"],
+        "servicePhoneNumber": BRANCHES[branch_id]["phone"],
         "timestamp": now_iso(),
     }
     URGENT_TABLE.put_item(Item=item)
@@ -646,6 +725,8 @@ def route(event: dict[str, Any]) -> Any:
         return create_quote(event, False)
     if method == "GET" and path == "/customer/services":
         return customer_services(event)
+    if method == "GET" and path == "/customer/account":
+        return customer_account(event)
     if method == "GET" and path == "/customer/branches":
         return customer_branches(event)
     if method == "POST" and path == "/customer/quotes":
@@ -663,6 +744,8 @@ def route(event: dict[str, Any]) -> Any:
         return admin_client_services(event, client_match.group(1))
     if method == "POST" and path == "/admin/services":
         return create_service(event)
+    if method == "GET" and path == "/admin/services":
+        return admin_services(event)
     service_match = re.fullmatch(r"/admin/services/([^/]+)", path)
     if method == "PATCH" and service_match:
         return update_service(event, service_match.group(1))

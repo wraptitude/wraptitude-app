@@ -27,7 +27,7 @@ const exploreLinks: { title: string; subtitle: string; icon: string; screen: Das
   { title: 'Knowledge Base', subtitle: 'Answers and car care tips', icon: 'auto-stories', screen: 'knowledge' },
   { title: 'Gallery', subtitle: 'See our work', icon: 'collections', screen: 'gallery' },
   { title: 'News', subtitle: 'Stories and updates', icon: 'article', screen: 'news' },
-  { title: 'Contact Us', subtitle: 'Find your selected shop', icon: 'location-on', screen: 'contact' },
+  { title: 'Contact Us', subtitle: 'Contact your branch', icon: 'location-on', screen: 'contact' },
   { title: 'About Wraptitude', subtitle: 'Our team and story', icon: 'info-outline', screen: 'about' },
 ];
 
@@ -74,7 +74,7 @@ export default function HomeDashboard({ isGuestMode, onNavigate }: HomeDashboard
             <Icon name="place" size={22} color={colors.redLight} />
           </View>
           <View style={styles.locationCopy}>
-            <Text style={styles.locationLabel}>CURRENT LOCATION</Text>
+            <Text style={styles.locationLabel}>WRAPTITUDE LOCATION</Text>
             <Text style={styles.locationTitle}>{branch.name}</Text>
             <Text style={styles.locationAddress} numberOfLines={2}>{branch.address}</Text>
           </View>

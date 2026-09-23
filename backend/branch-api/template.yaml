@@ -14,6 +14,33 @@ Parameters:
     Default: https://main.dfik0czr5tmeb.amplifyapp.com
 
 Resources:
+  CustomerAccountSignup:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: wraptitudeCustomerAccountSignup
+      Runtime: python3.12
+      Handler: account_signup.lambda_handler
+      CodeUri: .
+      Timeout: 5
+      Environment:
+        Variables:
+          USER_TABLE: wraptitudeAppUser
+          MEMBERSHIP_TABLE: !Ref BranchMembershipTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: wraptitudeAppUser
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BranchMembershipTable
+
+  CustomerAccountSignupPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref CustomerAccountSignup
+      Action: lambda:InvokeFunction
+      Principal: cognito-idp.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+      SourceArn: !Sub arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CustomerUserPoolId}
+
   AdminUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -227,6 +254,7 @@ Resources:
       Environment:
         Variables:
           SERVICE_TABLE: wraptitudeAppService
+          CUSTOMER_USER_POOL_ID: !Ref CustomerUserPoolId
           USER_TABLE: wraptitudeAppUser
           QUOTE_TABLE: wraptitudeAppQuote
           NON_URGENT_TABLE: wraptitudeAppEmergencyServiceNonUrgentForm
@@ -243,6 +271,10 @@ Resources:
           NON_URGENT_TOPIC_ARN: arn:aws:sns:us-east-2:539247487854:wraptitudeAppEmergencyServiceNonUrgentForm
           ADMIN_ORIGIN: !Ref AdminOrigin
       Policies:
+        - Statement:
+            - Effect: Allow
+              Action: cognito-idp:AdminGetUser
+              Resource: !Sub arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CustomerUserPoolId}
         - DynamoDBCrudPolicy:
             TableName: wraptitudeAppService
         - DynamoDBCrudPolicy:

@@ -1,50 +1,50 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, PropsWithChildren, useContext, useEffect, useState } from 'react';
+import {ActivityIndicator, Pressable, Text, View} from 'react-native';
+import {branchApi} from './api';
+import {colors} from '../styles/theme';
 
 import { BRANCHES, BranchConfig, BranchId, DEFAULT_BRANCH_ID } from './config';
-
-const STORAGE_KEY = '@wraptitude/selected-branch';
 
 interface BranchContextValue {
   branchId: BranchId;
   branch: BranchConfig;
-  setBranchId: (branchId: BranchId) => void;
-  selectionVersion: number;
-  isReady: boolean;
 }
 
 const BranchContext = createContext<BranchContextValue | null>(null);
 
-export function BranchProvider({ children }: PropsWithChildren): React.JSX.Element {
-  const [branchId, setBranchIdState] = useState<BranchId>(DEFAULT_BRANCH_ID);
-  const [selectionVersion, setSelectionVersion] = useState(0);
-  const [isReady, setIsReady] = useState(false);
+export function BranchProvider({children, isGuestMode = false, onSignOut}: PropsWithChildren<{isGuestMode?: boolean; onSignOut?: () => void}>): React.JSX.Element {
+  const [branchId, setBranchId] = useState<BranchId | null>(null);
+  const [error, setError] = useState('');
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((stored) => {
-        if (stored === 'markham' || stored === 'vaughan') {
-          setBranchIdState(stored);
-        }
-      })
-      .finally(() => setIsReady(true));
-  }, []);
-
-  const setBranchId = (nextBranchId: BranchId) => {
-    if (nextBranchId === branchId) {
+    let cancelled = false;
+    setBranchId(null);
+    setError('');
+    if (isGuestMode) {
+      setBranchId(DEFAULT_BRANCH_ID);
       return;
     }
-    setBranchIdState(nextBranchId);
-    setSelectionVersion((version) => version + 1);
-    void AsyncStorage.setItem(STORAGE_KEY, nextBranchId);
-  };
+    branchApi<{branchId: BranchId}>('/customer/account')
+      .then(account => {
+        if (cancelled) return;
+        if (account.branchId !== 'markham' && account.branchId !== 'vaughan') throw new Error('Invalid account location');
+        setBranchId(account.branchId);
+      })
+      .catch(() => { if (!cancelled) setError('Unable to verify your account location. Please retry.'); });
+    return () => { cancelled = true; };
+  }, [isGuestMode, attempt]);
 
-  const value = useMemo(
-    () => ({ branchId, branch: BRANCHES[branchId], setBranchId, selectionVersion, isReady }),
-    [branchId, selectionVersion, isReady],
-  );
-
-  return <BranchContext.Provider value={value}>{isReady ? children : null}</BranchContext.Provider>;
+  if (!branchId) {
+    return <View style={{flex: 1, justifyContent: 'center', padding: 24, backgroundColor: colors.background}}>
+      {error ? <>
+        <Text style={{color: colors.text, marginBottom: 20}}>{error}</Text>
+        <Pressable onPress={() => setAttempt(value => value + 1)}><Text style={{color: colors.redLight, padding: 16}}>Retry</Text></Pressable>
+        {onSignOut && <Pressable onPress={onSignOut}><Text style={{color: colors.text, padding: 16}}>Sign out</Text></Pressable>}
+      </> : <ActivityIndicator color={colors.red} />}
+    </View>;
+  }
+  return <BranchContext.Provider value={{branchId, branch: BRANCHES[branchId]}}>{children}</BranchContext.Provider>;
 }
 
 export function useBranch(): BranchContextValue {

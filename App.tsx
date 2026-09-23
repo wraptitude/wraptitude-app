@@ -21,6 +21,7 @@ import { appStyles } from './src/styles/appStyles';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { BranchProvider } from './src/branch/BranchContext';
+import { BRANCHES, BranchId } from './src/branch/config';
 import VersionGate from './src/update/VersionGate';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { colors } from './src/styles/theme';
@@ -251,6 +252,7 @@ function App(): React.JSX.Element {
   };
 
   const CustomSignUp = () => {
+    const [homeBranch, setHomeBranch] = React.useState<BranchId | null>(null);
     const [phoneNumber, setPhoneNumber] = React.useState('');
     const [selectedCode, setSelectedCode] = React.useState('+1');
     const [password, setPassword] = React.useState('');
@@ -281,7 +283,7 @@ function App(): React.JSX.Element {
     };
 
     const handleSignUp = async () => {
-      if (!phoneNumber || !password || !confirmPassword || !email || !name) {
+      if (!phoneNumber || !password || !confirmPassword || !email || !name || !homeBranch) {
         RNAlert.alert('Error', 'Please fill in all fields');
         return;
       }
@@ -301,6 +303,7 @@ function App(): React.JSX.Element {
             userAttributes: {
               email: email,
               name: name,
+              'custom:home_branch': homeBranch,
             },
           },
         });
@@ -328,7 +331,15 @@ function App(): React.JSX.Element {
     return (
       <ScrollView style={appStyles.rootContainer} contentContainerStyle={appStyles.signUpContainer} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <Text style={appStyles.signUpTitle}>Create Account</Text>
-        <Text style={appStyles.formSubtitle}>Create one account for both Wraptitude locations.</Text>
+        <Text style={appStyles.formSubtitle}>Choose your Wraptitude location. Your requests and service orders will belong to this branch.</Text>
+        <Text style={appStyles.inputLabel}>Your branch (required)</Text>
+        {(['markham', 'vaughan'] as BranchId[]).map(id => (
+          <Pressable key={id} disabled={isLoading} accessibilityRole="radio" accessibilityState={{checked: homeBranch === id}} onPress={() => setHomeBranch(id)} style={[appStyles.input, {borderColor: homeBranch === id ? colors.red : colors.border}]}>
+            <Text style={appStyles.inputLabel}>{homeBranch === id ? '● ' : '○ '}{BRANCHES[id].name}</Text>
+            <Text style={appStyles.formSubtitle}>{BRANCHES[id].address}</Text>
+          </Pressable>
+        ))}
+        <Text style={appStyles.formSubtitle}>Your branch is fixed after registration. Existing customers belong to Markham.</Text>
 
         {/* Phone Number Input */}
         <Text style={appStyles.inputLabel}>Phone Number</Text>
@@ -652,7 +663,7 @@ function App(): React.JSX.Element {
       <View style={appStyles.rootContainer}>
         <ThemeProvider>
           <Authenticator.Provider>
-            <BranchProvider>
+            <BranchProvider isGuestMode={isGuestMode} onSignOut={handleSignOut}>
               <NavigationContainer>
                 <Stack.Navigator>
                   <Stack.Screen

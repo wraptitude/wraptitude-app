@@ -1,11 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, BackHandler, Image, Keyboard, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-import BranchSelector from '../branch/BranchSelector';
 import { useBranch } from '../branch/BranchContext';
-import { BranchId } from '../branch/config';
 import { colors } from '../styles/theme';
 import About from './About';
 import AIChatbot from './AIChatbot';
@@ -78,7 +76,7 @@ const protectedScreens = new Set<Screen>([
 ]);
 
 const Home: React.FC<HomeProps> = ({ route }) => {
-  const { branchId, selectionVersion, setBranchId } = useBranch();
+  const { branchId, branch } = useBranch();
   const [currentScreen, setCurrentScreen] = useState<Screen>('menu');
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [selectedService, setSelectedService] = useState<string | null>(null);
@@ -86,19 +84,8 @@ const Home: React.FC<HomeProps> = ({ route }) => {
   const [quoteSource, setQuoteSource] = useState<Screen>('menu');
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const previousSelectionVersion = useRef(selectionVersion);
   const isGuestMode = route.params.isGuestMode;
 
-  useEffect(() => {
-    if (previousSelectionVersion.current !== selectionVersion) {
-      previousSelectionVersion.current = selectionVersion;
-      setCurrentScreen('menu');
-      setSelectedPost(null);
-      setSelectedService(null);
-      setSelectedEmergencyService('');
-      setQuoteSource('menu');
-    }
-  }, [selectionVersion]);
 
   const handleSignOut = async () => {
     if (isSigningOut) {
@@ -131,23 +118,6 @@ const Home: React.FC<HomeProps> = ({ route }) => {
     setCurrentScreen(screen);
   };
 
-  const changeBranch = (nextBranchId: BranchId) => {
-    if (nextBranchId === branchId) {
-      return;
-    }
-    if (currentScreen === 'quote' || currentScreen === 'nonUrgentForm') {
-      Alert.alert(
-        'Switch location?',
-        'Your unfinished form will be cleared when you switch locations.',
-        [
-          { text: 'Keep editing', style: 'cancel' },
-          { text: 'Switch location', onPress: () => setBranchId(nextBranchId) },
-        ],
-      );
-    } else {
-      setBranchId(nextBranchId);
-    }
-  };
 
   const goBack = useCallback(() => {
     if (currentScreen === 'newsDetail') {
@@ -224,7 +194,7 @@ const Home: React.FC<HomeProps> = ({ route }) => {
           onSubmitSuccess={() => setCurrentScreen('menu')}
         />;
       case 'quote':
-        return <FreeQuote selectedService={selectedService ?? undefined} onGoBack={goBack} />;
+        return <FreeQuote isGuestMode={isGuestMode} selectedService={selectedService ?? undefined} onGoBack={goBack} />;
       case 'chatbot': return <AIChatbot />;
       default: return null;
     }
@@ -268,12 +238,12 @@ const Home: React.FC<HomeProps> = ({ route }) => {
           )}
         </View>
         <View style={styles.branchRow}>
-          <Text style={styles.branchLabel}>SELECT LOCATION</Text>
-          <BranchSelector onChange={changeBranch} />
+          <Text style={styles.branchLabel}>{isGuestMode ? 'BROWSING' : 'YOUR BRANCH'}</Text>
+          <Text style={styles.branchName}>{branch.name}</Text>
         </View>
       </View>
 
-      <View style={styles.body} key={`${currentScreen}:${selectionVersion}`}>
+      <View style={styles.body} key={`${currentScreen}:${branchId}`}>
         {renderScreen()}
       </View>
 
@@ -315,6 +285,7 @@ const styles = StyleSheet.create({
   signButton: { minHeight: 44, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' },
   signText: { color: colors.redLight, fontSize: 14, fontWeight: '700' },
   branchRow: { marginTop: 8 },
+  branchName: { color: colors.text, fontSize: 19, fontWeight: '700' },
   branchLabel: { color: colors.subtle, fontSize: 10, fontWeight: '800', letterSpacing: 1.5, marginBottom: 8 },
   body: { flex: 1 },
   bottomNav: { flexDirection: 'row', backgroundColor: colors.surface, borderTopColor: colors.border, borderTopWidth: 1, paddingTop: 8, paddingBottom: 5 },

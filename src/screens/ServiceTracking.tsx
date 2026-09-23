@@ -1,26 +1,36 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  Image,
   Pressable,
-  Dimensions,
   ActivityIndicator,
-  Platform,
   Animated,
   Easing,
   Alert,
 } from 'react-native';
-import { useAuthenticator } from '@aws-amplify/ui-react-native';
-import { post } from 'aws-amplify/api';
+import { Picker } from '@react-native-picker/picker';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import FastImage from 'react-native-fast-image';
 import { useBranch } from '../branch/BranchContext';
 import { branchApi } from '../branch/api';
+import { BRANCHES, BranchId } from '../branch/config';
+
+interface ServiceOrder {
+  ID: string;
+  branchId: BranchId;
+  createAt?: string;
+  serviceType?: string | string[];
+  vehicleMake?: string;
+  vehicleModel?: string;
+  vehicleYear?: string;
+  details?: string;
+  depositAmount?: string;
+  [field: string]: string | string[] | undefined;
+}
 
 interface ServiceStep {
   id: string;
@@ -96,8 +106,11 @@ const ServiceTracking: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadingImage, setLoadingImage] = useState(false);
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
+  const [orders, setOrders] = useState<ServiceOrder[]>([]);
+  const [selectedOrderId, setSelectedOrderId] = useState('');
+  const [loadError, setLoadError] = useState('');
   const [serviceDetails, setServiceDetails] = useState({
-    serviceType: '',
+    serviceType: '' as string | string[],
     vehicleMake: '',
     vehicleModel: '',
     vehicleYear: '',
@@ -109,7 +122,7 @@ const ServiceTracking: React.FC = () => {
   const progressBarWidth = useRef(new Animated.Value(0)).current;
 
   // Calculate overall progress
-  const calculateProgress = () => {
+  const calculateProgress = useCallback(() => {
     return steps.reduce((total, step) => {
       if (step.status === 'completed') {
         return total + step.weight;
@@ -118,11 +131,15 @@ const ServiceTracking: React.FC = () => {
       }
       return total;
     }, 0);
-  };
+  }, [steps]);
 
   useFocusEffect(
     React.useCallback(() => {
+      let cancelled = false;
       setSteps([]);
+      setOrders([]);
+      setSelectedOrderId('');
+      setLoadError('');
       setExpandedStep(null);
       setLoading(true);
       progressAnim.setValue(0);
@@ -131,68 +148,65 @@ const ServiceTracking: React.FC = () => {
 
       const getUserData = async () => {
         try {
-            const services = await branchApi<any[]>(`/customer/services?branchId=${branchId}`);
-
-            if (!services || services.length === 0) {
-              setSteps([]);
-              return;
+            const services = await branchApi<ServiceOrder[]>(`/customer/services?branchId=${branchId}`);
+            if (cancelled) return;
+            if (services.some(order => order.branchId !== branchId)) {
+              throw new Error('Order branch mismatch');
             }
-
-            const data = [...services].sort((a, b) =>
+            const sorted = [...services].sort((a, b) =>
               String(b.createAt || '').localeCompare(String(a.createAt || '')),
-            )[0];
-            // Set service details
-            setServiceDetails({
-              serviceType: data.serviceType || '',
-              vehicleMake: data.vehicleMake || '',
-              vehicleModel: data.vehicleModel || '',
-              vehicleYear: data.vehicleYear || '',
-              vehicleDetails: data.details || '',
-            });
-
-            const updatedSteps = [...INITIAL_STEPS];
-            
-            updatedSteps[0].status = data.step0 || 'completed';
-            updatedSteps[0].description = data.depositAmount ?  'Deposit payment received and confirmed: $' + data.depositAmount : 'Deposit payment received and confirmed';
-            updatedSteps[0].images = data.step0Img || '';
-            
-            updatedSteps[1].status = data.step1 || 'pending';
-            updatedSteps[1].images = data.step1Img || '';
-            
-            updatedSteps[2].status = data.step2 || 'pending';
-            updatedSteps[2].images = data.step2Img || '';
-            
-            updatedSteps[3].status = data.step3 || 'pending';
-            updatedSteps[3].images = data.step3Img || '';
-            
-            updatedSteps[4].status = data.step4 || 'pending';
-            updatedSteps[4].images = data.step4Img || '';
-            
-            updatedSteps[5].status = data.step5 || 'pending';
-            updatedSteps[5].images = data.step5Img || '';
-
-            setSteps(updatedSteps);
+            );
+            setOrders(sorted);
+            setSelectedOrderId(sorted[0]?.ID || '');
         } catch (error) {
+          if (cancelled) return;
           console.error('Error fetching data:', error);
           setSteps([]);
+          setLoadError(`Unable to load ${branch.name} orders. Reopen this page to try again.`);
           Alert.alert(
             'Error',
             `Failed to load ${branch.name} service tracking data. Please try again later.`
           );
         } finally {
-          setLoading(false);
+          if (!cancelled) setLoading(false);
         }
       };
 
       getUserData();
 
       return () => {
-        setSteps([]);
-        setExpandedStep(null);
-        setLoading(true);
+        cancelled = true;
       };
-    }, [branchId, branch.name])
+    }, [branchId, branch.name, progressAnim, progressTextAnim, progressBarWidth])
   );
+
+  useEffect(() => {
+    const data = orders.find(order => order.ID === selectedOrderId);
+    setExpandedStep(null);
+    if (!data) {
+      setSteps([]);
+      return;
+    }
+    setServiceDetails({
+      serviceType: data.serviceType || '',
+      vehicleMake: data.vehicleMake || '',
+      vehicleModel: data.vehicleModel || '',
+      vehicleYear: data.vehicleYear || '',
+      vehicleDetails: data.details || '',
+    });
+    setSteps(INITIAL_STEPS.map((step, index) => {
+      const value = data[`step${index}`];
+      const status = value === 'completed' || value === 'in_progress' ? value : 'pending';
+      return {
+        ...step,
+        status,
+        images: String(data[`step${index}Img`] || ''),
+        description: index === 0
+          ? (status === 'completed' ? `Deposit confirmed${data.depositAmount ? `: $${data.depositAmount}` : ''}` : 'Awaiting deposit confirmation')
+          : step.description,
+      };
+    }));
+  }, [orders, selectedOrderId]);
 
   useEffect(() => {
     // Animate progress counter
@@ -215,7 +229,7 @@ const ServiceTracking: React.FC = () => {
         useNativeDriver: false,
       }),
     ]).start();
-  }, [steps]);
+  }, [calculateProgress, progressBarWidth, progressTextAnim]);
 
   const renderImage = (imageUrl: string) => {
     if (!imageUrl) return null;
@@ -376,12 +390,7 @@ const ServiceTracking: React.FC = () => {
           useNativeDriver: true,
         }),
       ]).start();
-    }, [isExpanded]);
-
-    const rotate = rotateAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: ['0deg', '180deg'],
-    });
+    }, [isExpanded, cardHeight, rotateAnim, scaleAnim]);
 
     return (
       <Pressable
@@ -506,10 +515,9 @@ const ServiceTracking: React.FC = () => {
             style={styles.noDataGradient}
           > */}
             <Icon name="assignment-late" size={64} color="rgba(255, 255, 255, 0.1)" style={{textAlign: 'center'}}/>
-            <Text style={styles.noDataTitle}>No Active Services</Text>
+            <Text style={styles.noDataTitle}>{loadError ? 'Unable to load orders' : `No ${branch.name} orders`}</Text>
             <Text style={styles.noDataText}>
-              You currently don't have any active services being tracked.
-              Visit our service center or request a quote to get started.
+              {loadError || `Your account belongs to ${branch.name}. No service orders yet. A quote request becomes an order once confirmed by our team. Contact your branch if an order is missing.`}
             </Text>
             
             {/* <View style={styles.actionButtonContainer}>
@@ -532,6 +540,15 @@ const ServiceTracking: React.FC = () => {
 
   return (
     <ScrollView style={styles.container}>
+      <View style={styles.serviceDetailsContainer}>
+        <Text style={styles.serviceDetailsValue}>Service location: {BRANCHES[orders.find(order => order.ID === selectedOrderId)?.branchId || branchId].name}</Text>
+        <Text style={styles.serviceDetailsLabel}>Select your order</Text>
+        <Picker selectedValue={selectedOrderId} onValueChange={setSelectedOrderId} style={styles.orderPicker} itemStyle={styles.orderPickerItem} dropdownIconColor="#fff">
+          {orders.map(order => <Picker.Item key={order.ID} value={order.ID} color="#fff" label={`${order.vehicleYear || ''} ${order.vehicleMake || ''} ${order.vehicleModel || ''} · ${order.createAt ? new Date(order.createAt).toLocaleDateString() : 'Order'} · ${order.ID.slice(0, 8)}`} />)}
+        </Picker>
+        <Text selectable style={styles.serviceDetailsLabel}>Order ID: {selectedOrderId}</Text>
+        <Text style={styles.serviceDetailsLabel}>Orders belong to your registered branch: {branch.name}.</Text>
+      </View>
       <ServiceDetails />
       <ProgressBar />
       
@@ -544,9 +561,9 @@ const ServiceTracking: React.FC = () => {
   );
 };
 
-const { width } = Dimensions.get('window');
-
 const styles = StyleSheet.create({
+  orderPicker: { color: '#FFFFFF', backgroundColor: '#202024' },
+  orderPickerItem: { color: '#FFFFFF', fontSize: 14 },
   container: {
     flex: 1,
     backgroundColor: 'transparent',
