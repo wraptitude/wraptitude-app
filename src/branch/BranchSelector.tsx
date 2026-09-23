@@ -1,10 +1,16 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 import { BRANCHES, BranchId } from './config';
 import { useBranch } from './BranchContext';
+import { colors } from '../styles/theme';
 
-export default function BranchSelector(): React.JSX.Element {
+interface BranchSelectorProps {
+  onChange?: (branchId: BranchId) => void;
+}
+
+export default function BranchSelector({ onChange }: BranchSelectorProps): React.JSX.Element {
   const { branchId, setBranchId } = useBranch();
 
   return (
@@ -16,9 +22,12 @@ export default function BranchSelector(): React.JSX.Element {
             key={id}
             accessibilityRole="radio"
             accessibilityState={{ selected }}
-            onPress={() => setBranchId(id)}
+            accessibilityLabel={`${BRANCHES[id].name} location`}
+            accessibilityHint="Switches the location shown throughout the app"
+            onPress={() => (onChange || setBranchId)(id)}
             style={[styles.option, selected && styles.selectedOption]}
           >
+            {selected && <Icon name="place" size={16} color={colors.text} style={styles.icon} />}
             <Text style={[styles.label, selected && styles.selectedLabel]}>{BRANCHES[id].name}</Text>
           </Pressable>
         );
@@ -29,31 +38,34 @@ export default function BranchSelector(): React.JSX.Element {
 
 const styles = StyleSheet.create({
   container: {
-    alignSelf: 'center',
-    backgroundColor: 'rgba(255,255,255,0.09)',
-    borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 18,
+    alignSelf: 'stretch',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
-    marginTop: 6,
-    padding: 3,
+    padding: 4,
   },
   option: {
-    borderRadius: 14,
-    minWidth: 92,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    flex: 1,
+    borderRadius: 10,
+    minHeight: 42,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
   },
   selectedOption: {
-    backgroundColor: '#c70628',
+    backgroundColor: colors.red,
   },
   label: {
-    color: 'rgba(255,255,255,0.72)',
-    fontSize: 13,
-    fontWeight: '600',
+    color: colors.muted,
+    fontSize: 14,
+    fontWeight: '700',
     textAlign: 'center',
   },
   selectedLabel: {
-    color: '#FFFFFF',
+    color: colors.text,
   },
+  icon: { marginRight: 6 },
 });

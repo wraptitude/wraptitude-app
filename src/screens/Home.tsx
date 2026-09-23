@@ -1,50 +1,36 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  Animated,
-  Image,
-  ImageBackground,
-  ScrollView,
-  Linking,
-  StatusBar,
-  Platform,
-} from 'react-native';
-import { signOut } from 'aws-amplify/auth';
-import { useAuthenticator } from '@aws-amplify/ui-react-native';
-import ServiceTracking from './ServiceTracking';
-import ServiceHistory from './ServiceHistory';
-import KnowledgeBase from './KnowledgeBase';
-import ContactUs from './ContactUs';
-import Services from './Services';
-import Gallery from './Gallery';
-import About from './About';
-import News from './News';
-import NewsDetail from './NewsDetail';
-import EmergencyService from './EmergencyService';
-import EmergencyServiceUrgentNonUrgent from './EmergencyServiceUrgentNonUrgent';
-import NonUrgentForm from './NonUrgentForm';
-import FreeQuote from './FreeQuote';
-import Profile from './Profile';
-import AIChatbot from './AIChatbot';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, BackHandler, Image, Keyboard, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import LinearGradient from 'react-native-linear-gradient';
+
 import BranchSelector from '../branch/BranchSelector';
 import { useBranch } from '../branch/BranchContext';
+import { BranchId } from '../branch/config';
+import { colors } from '../styles/theme';
+import About from './About';
+import AIChatbot from './AIChatbot';
+import ContactUs from './ContactUs';
+import EmergencyService from './EmergencyService';
+import EmergencyServiceUrgentNonUrgent from './EmergencyServiceUrgentNonUrgent';
+import FreeQuote from './FreeQuote';
+import Gallery from './Gallery';
+import HomeDashboard, { DashboardScreen } from './HomeDashboard';
+import KnowledgeBase from './KnowledgeBase';
+import News from './News';
+import NewsDetail from './NewsDetail';
+import NonUrgentForm from './NonUrgentForm';
+import Profile from './Profile';
+import ServiceHistory from './ServiceHistory';
+import ServiceTracking from './ServiceTracking';
+import Services from './Services';
 
 interface HomeProps {
   route: {
     params: {
-      onSignOut: () => void;
+      onSignOut: () => Promise<void> | void;
       isGuestMode: boolean;
     };
   };
-  navigation: any;
 }
 
 interface BlogPost {
@@ -58,857 +44,286 @@ interface BlogPost {
   content: string;
 }
 
-type Screen = 'menu' | 'tracking' | 'history' | 'services' | 'knowledge' | 'gallery' | 'about' | 'contact' | 'profile' | 'news' | 'newsDetail' | 'emergency' | 'emergencyUrgentNonUrgent' | 'nonUrgentForm' | 'quote' | 'chatbot';
+type Screen = DashboardScreen | 'menu' | 'profile' | 'newsDetail' | 'emergencyUrgentNonUrgent' | 'nonUrgentForm';
+type MainTab = 'menu' | 'tracking' | 'quote' | 'profile';
 
-const Home: React.FC<HomeProps> = ({ route, navigation }) => {
-  const { toSignIn } = useAuthenticator();
-  const { selectionVersion } = useBranch();
-  const [isSigningOut, setIsSigningOut] = useState(false);
+const screenTitles: Record<Screen, string> = {
+  menu: 'Home',
+  tracking: 'Service Tracking',
+  history: 'Service History',
+  services: 'Our Services',
+  knowledge: 'Knowledge Base',
+  gallery: 'Gallery',
+  about: 'About Us',
+  contact: 'Contact Us',
+  profile: 'My Profile',
+  news: 'News',
+  newsDetail: 'News',
+  emergency: 'Emergency Service',
+  emergencyUrgentNonUrgent: 'Emergency Service',
+  nonUrgentForm: 'Emergency Request',
+  quote: 'Free Quote',
+  chatbot: 'AI Assistant',
+};
+
+const tabs: { screen: MainTab; label: string; icon: string }[] = [
+  { screen: 'menu', label: 'Home', icon: 'home' },
+  { screen: 'tracking', label: 'Tracking', icon: 'directions-car' },
+  { screen: 'quote', label: 'Quote', icon: 'request-quote' },
+  { screen: 'profile', label: 'Profile', icon: 'person' },
+];
+
+const protectedScreens = new Set<Screen>([
+  'tracking', 'history', 'emergency', 'emergencyUrgentNonUrgent', 'nonUrgentForm', 'profile',
+]);
+
+const Home: React.FC<HomeProps> = ({ route }) => {
+  const { branchId, selectionVersion, setBranchId } = useBranch();
   const [currentScreen, setCurrentScreen] = useState<Screen>('menu');
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
-  const [activeTab, setActiveTab] = useState('home');
   const [selectedService, setSelectedService] = useState<string | null>(null);
-  const [quoteSourceScreen, setQuoteSourceScreen] = useState<Screen>('menu');
-  const [selectedEmergencyService, setSelectedEmergencyService] = useState<string>('');
-  const [scrollY, setScrollY] = useState(0);
-
-  // Animation refs for buttons
-  const buttonScales: Record<string, Animated.Value> = {
-    tracking: useRef(new Animated.Value(1)).current,
-    history: useRef(new Animated.Value(1)).current,
-    profile: useRef(new Animated.Value(1)).current,
-    knowledge: useRef(new Animated.Value(1)).current,
-    contact: useRef(new Animated.Value(1)).current,
-    services: useRef(new Animated.Value(1)).current,
-    gallery: useRef(new Animated.Value(1)).current,
-    about: useRef(new Animated.Value(1)).current,
-    news: useRef(new Animated.Value(1)).current,
-    emergency: useRef(new Animated.Value(1)).current,
-    quote: useRef(new Animated.Value(1)).current,
-    chatbot: useRef(new Animated.Value(1)).current,
-  };
-
-  const screenOpacity = useRef(new Animated.Value(1)).current;
-  const screenTranslateY = useRef(new Animated.Value(0)).current;
-  const headerOpacity = useRef(new Animated.Value(1)).current;
+  const [selectedEmergencyService, setSelectedEmergencyService] = useState('');
+  const [quoteSource, setQuoteSource] = useState<Screen>('menu');
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const previousSelectionVersion = useRef(selectionVersion);
+  const isGuestMode = route.params.isGuestMode;
 
   useEffect(() => {
-    // Animate header opacity based on scroll position
-    if (currentScreen === 'menu') {
-      Animated.timing(headerOpacity, {
-        toValue: scrollY > 20 ? 0.95 : 1,
-        duration: 150,
-        useNativeDriver: true,
-      }).start();
+    if (previousSelectionVersion.current !== selectionVersion) {
+      previousSelectionVersion.current = selectionVersion;
+      setCurrentScreen('menu');
+      setSelectedPost(null);
+      setSelectedService(null);
+      setSelectedEmergencyService('');
+      setQuoteSource('menu');
     }
-  }, [scrollY, currentScreen]);
-
-  const animatePress = (scale: Animated.Value) => {
-    Animated.sequence([
-      Animated.timing(scale, {
-        toValue: 0.96,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scale, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const handleScreenTransition = (screen: Screen) => {
-    // Check if user is trying to access protected features while in guest mode
-    const protectedScreens: Screen[] = ['tracking', 'history', 'emergency', 'emergencyUrgentNonUrgent', 'nonUrgentForm', 'profile'];
-    
-    if (route.params.isGuestMode && protectedScreens.includes(screen)) {
-      // Show login prompt for protected features
-      Alert.alert(
-        'Login Required',
-        'Please sign in to access this feature.',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel'
-          },
-          {
-            text: 'Sign In',
-            // onPress: () => navigation.navigate('Auth')
-            onPress: handleSignOut
-          }
-        ]
-      );
-      return;
-    }
-    
-    // Continue with normal screen transition for public features or authenticated users
-    if (screen === 'quote') {
-      setQuoteSourceScreen(currentScreen);
-    } else if (screen === 'emergencyUrgentNonUrgent' || screen === 'nonUrgentForm') {
-      // We don't change quoteSourceScreen here
-    }
-    
-    Animated.parallel([
-      Animated.timing(screenOpacity, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(screenTranslateY, {
-        toValue: 10,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setCurrentScreen(screen);
-      screenOpacity.setValue(0);
-      screenTranslateY.setValue(-10);
-      Animated.parallel([
-        Animated.timing(screenOpacity, {
-          toValue: 1,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(screenTranslateY, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    });
-  };
+  }, [selectionVersion]);
 
   const handleSignOut = async () => {
+    if (isSigningOut) {
+      return;
+    }
+    setIsSigningOut(true);
     try {
-      route.params.onSignOut();
-      await signOut();
-      console.log('Signed out');
-    } catch (error) {
-      console.error('Error signing out:', error);
+      await route.params.onSignOut();
+    } catch {
+      Alert.alert('Unable to sign out', 'Please try again.');
+    } finally {
+      setIsSigningOut(false);
     }
   };
 
-  const handleEmergencyCall = async () => {
-    try {
-      await Linking.openURL('tel:4373401121');
-    } catch (error) {
+  const navigateTo = (screen: Screen) => {
+    if (isGuestMode && protectedScreens.has(screen)) {
+      Alert.alert('Sign in required', 'Sign in to view your services or request emergency help.', [
+        { text: 'Not now', style: 'cancel' },
+        { text: 'Sign in', onPress: () => { handleSignOut().catch(() => undefined); } },
+      ]);
+      return;
+    }
+    if (screen === 'quote' && currentScreen !== 'quote') {
+      setQuoteSource(currentScreen);
+      if (currentScreen !== 'services') {
+        setSelectedService(null);
+      }
+    }
+    setCurrentScreen(screen);
+  };
+
+  const changeBranch = (nextBranchId: BranchId) => {
+    if (nextBranchId === branchId) {
+      return;
+    }
+    if (currentScreen === 'quote' || currentScreen === 'nonUrgentForm') {
       Alert.alert(
-        'Error',
-        'Unable to make the call. Please dial 437-340-1121 directly.',
-        [{ text: 'OK', style: 'default' }]
+        'Switch location?',
+        'Your unfinished form will be cleared when you switch locations.',
+        [
+          { text: 'Keep editing', style: 'cancel' },
+          { text: 'Switch location', onPress: () => setBranchId(nextBranchId) },
+        ],
       );
+    } else {
+      setBranchId(nextBranchId);
     }
   };
 
-  const menuItems = [
-    { id: 'tracking', icon: 'directions-car', title: 'Service Tracking', description: 'Track your vehicle service progress' },
-    { id: 'history', icon: 'history', title: 'Service History', description: 'View your past services' },
-    { id: 'emergency', icon: 'warning', title: 'Emergency Service', description: 'Call for emergency service' },
-    { id: 'services', icon: 'build', title: 'Our Services', description: 'Explore our professional services' },
-    { id: 'knowledge', icon: 'book', title: 'Knowledge Base', description: 'Learn about car films' },
-    { id: 'chatbot', icon: 'chat', title: 'AI Assistant', description: 'Chat with our AI assistant' },
-    { id: 'news', icon: 'newspaper', title: 'News', description: 'Latest updates' },
-    { id: 'about', icon: 'person', title: 'About Us', description: 'Learn more about Wraptitude' },
-    { id: 'quote', icon: 'calculate', title: 'Free Quote', description: 'Get an instant quote for your vehicle' },
-    { id: 'contact', icon: 'phone', title: 'Contact Us', description: 'Get in touch' },
-    { id: 'profile', icon: 'person', title: 'Profile', description: 'Manage your account' },
-  ];
+  const goBack = useCallback(() => {
+    if (currentScreen === 'newsDetail') {
+      setCurrentScreen('news');
+    } else if (currentScreen === 'quote') {
+      setCurrentScreen(quoteSource);
+    } else if (currentScreen === 'emergencyUrgentNonUrgent') {
+      setCurrentScreen('emergency');
+    } else if (currentScreen === 'nonUrgentForm') {
+      setCurrentScreen('emergencyUrgentNonUrgent');
+    } else {
+      setCurrentScreen('menu');
+    }
+  }, [currentScreen, quoteSource]);
 
-  const renderFooterIcon = (iconName: string, isActive: boolean) => {
-    const getIconColor = () => {
-      if (isActive) return '#FFFFFF';
-      return 'rgba(255, 255, 255, 0.7)';
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (currentScreen === 'menu') {
+        return false;
+      }
+      goBack();
+      return true;
+    });
+    return () => subscription.remove();
+  }, [currentScreen, goBack]);
+
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+    return () => {
+      show.remove();
+      hide.remove();
     };
-
-    switch (iconName) {
-      case 'home':
-        return <Icon name="home" size={24} color={getIconColor()} />;
-      case 'profile':
-        return <Icon name="person" size={24} color={getIconColor()} />;
-      case 'quote':
-        return <Icon name="calculate" size={24} color={getIconColor()} />;
-      case 'tracking':
-        return <Icon name="directions-car" size={24} color={getIconColor()} />;
-      default:
-        return <Icon name="home" size={24} color={getIconColor()} />;
-    }
-  };
+  }, []);
 
   const renderScreen = () => {
-    const content = () => {
-      switch (currentScreen) {
-        case 'tracking':
-          return <ServiceTracking />;
-        case 'history':
-          return <ServiceHistory />;
-        case 'knowledge':
-          return <KnowledgeBase />;
-        case 'chatbot':
-          return <AIChatbot />;
-        case 'contact':
-          return <ContactUs />;
-        case 'profile':
-          return <Profile />;
-        case 'services':
-          return <Services onGetQuote={handleGetQuote} />;
-        case 'gallery':
-          return <Gallery />;
-        case 'about':
-          return <About />;
-        case 'news':
-          return (
-            <News
-              onPostPress={(post) => {
-                setSelectedPost(post);
-                handleScreenTransition('newsDetail');
-              }}
-            />
-          );
-        case 'newsDetail':
-          return <NewsDetail post={selectedPost!} />;
-        case 'emergency':
-          return <EmergencyService onServiceSelect={handleEmergencyServiceSelect} />;
-        case 'emergencyUrgentNonUrgent':
-          return (
-            <EmergencyServiceUrgentNonUrgent 
-              serviceId={selectedEmergencyService}
-              onNonUrgentSelect={handleNonUrgentSelect}
-              onGoBack={() => setCurrentScreen('emergency')}
-            />
-          );
-        case 'nonUrgentForm':
-          return (
-            <NonUrgentForm 
-              serviceId={selectedEmergencyService}
-              onGoBack={() => setCurrentScreen('emergencyUrgentNonUrgent')}
-              onSubmitSuccess={() => setCurrentScreen('menu')}
-            />
-          );
-        case 'quote':
-          return (
-            <FreeQuote 
-              selectedService={selectedService ?? undefined}
-              onGoBack={() => {
-                setCurrentScreen(quoteSourceScreen);
-              }}
-            />
-          );
-        case 'profile':
-          return <Profile />;
-        default:
-          return (
-            <View style={styles.menuContainer}>
-              {menuItems.map((item) => {
-                // Check if this is a protected feature
-                const isProtected = ['tracking', 'history', 'emergency', 'profile'].includes(item.id);
-                const isLocked = isProtected && route.params.isGuestMode;
-                
-                return (
-                  <Animated.View 
-                    key={item.id} 
-                    style={[
-                      { 
-                        transform: [{ scale: buttonScales[item.id] || new Animated.Value(1) }],
-                        marginBottom: 10,
-                        opacity: isLocked ? 0.7 : 1, // Dim protected features in guest mode
-                      }
-                    ]}
-                  >
-                    <Pressable
-                      style={({pressed}) => [
-                        styles.menuButton,
-                        item.id === 'emergency' && styles.emergencyButton,
-                        item.id === 'quote' && styles.quoteButton,
-                        pressed && styles.menuButtonPressed
-                      ]}
-                      onPress={() => {
-                        animatePress(buttonScales[item.id]);
-                        handleScreenTransition(item.id as Screen);
-                      }}
-                      accessibilityLabel={item.title}
-                    >
-                      <LinearGradient
-                        colors={
-                          item.id === 'emergency' 
-                            ? ['rgba(217, 42, 42, 0.4)', 'rgba(199, 6, 40, 0.7)'] 
-                            : item.id === 'quote'
-                              ? ['rgba(37, 118, 235, 0.4)', 'rgba(59, 130, 246, 0.7)']
-                              : ['rgba(15, 15, 15, 0.7)', 'rgba(10, 10, 10, 0.85)']
-                        }
-                        style={styles.menuButtonGradient}
-                      >
-                        <View style={[
-                          styles.iconContainer, 
-                          item.id === 'emergency' && styles.emergencyIconContainer,
-                          item.id === 'quote' && styles.quoteIconContainer
-                        ]}>
-                          <LinearGradient
-                            colors={
-                              item.id === 'emergency' 
-                                ? ['rgba(255, 150, 150, 0.2)', 'rgba(199, 6, 40, 0.3)'] 
-                                : item.id === 'quote'
-                                  ? ['rgba(150, 190, 255, 0.2)', 'rgba(59, 130, 246, 0.3)']
-                                  : ['rgba(50, 50, 50, 0.3)', 'rgba(40, 40, 40, 0.5)']
-                            }
-                            style={styles.iconGradient}
-                          >
-                            <Icon 
-                              name={item.icon === 'emergency' ? 'warning' : item.icon} 
-                              size={26} 
-                              color={
-                                item.id === 'emergency' 
-                                  ? '#ff9494' 
-                                  : item.id === 'quote'
-                                    ? '#a8cbff'
-                                    : '#FFFFFF'
-                              } 
-                            />
-                          </LinearGradient>
-                        </View>
-                        <Text style={[
-                          styles.menuTitle,
-                          (item.id === 'emergency' || item.id === 'quote') && styles.specialMenuTitle
-                        ]}>
-                          {item.title}
-                        </Text>
-                        <Text style={styles.menuDescription}>{item.description}</Text>
-                        
-                        {/* Show lock icon for protected features in guest mode */}
-                        {isLocked && (
-                          <View style={styles.lockIconContainer}>
-                            <Icon name="lock" size={18} color="#FFFFFF" />
-                          </View>
-                        )}
-                      </LinearGradient>
-                    </Pressable>
-                  </Animated.View>
-                );
-              })}
-            </View>
-          );
-      }
-    };
-
-    return (
-      <Animated.View
-        style={{
-          flex: 1,
-          opacity: screenOpacity,
-          transform: [{ translateY: screenTranslateY }],
-        }}
-      >
-        <React.Fragment key={selectionVersion}>{content()}</React.Fragment>
-      </Animated.View>
-    );
-  };
-
-  const handleGetQuote = (serviceType: string) => {
-    setSelectedService(serviceType);
-    handleScreenTransition('quote');
-  };
-
-  const handleEmergencyServiceSelect = (serviceId: string) => {
-    setSelectedEmergencyService(serviceId);
-    handleScreenTransition('emergencyUrgentNonUrgent');
-  };
-
-  const handleNonUrgentSelect = () => {
-    handleScreenTransition('nonUrgentForm');
+    switch (currentScreen) {
+      case 'menu':
+        return <HomeDashboard isGuestMode={isGuestMode} onNavigate={navigateTo} />;
+      case 'tracking': return <ServiceTracking />;
+      case 'history': return <ServiceHistory />;
+      case 'services':
+        return <Services onGetQuote={(service) => {
+          setSelectedService(service);
+          setQuoteSource('services');
+          setCurrentScreen('quote');
+        }} />;
+      case 'knowledge': return <KnowledgeBase />;
+      case 'gallery': return <Gallery />;
+      case 'about': return <About />;
+      case 'contact': return <ContactUs />;
+      case 'profile': return <Profile />;
+      case 'news':
+        return <News onPostPress={(post) => {
+          setSelectedPost(post);
+          setCurrentScreen('newsDetail');
+        }} />;
+      case 'newsDetail': return selectedPost ? <NewsDetail post={selectedPost} /> : null;
+      case 'emergency':
+        return <EmergencyService onServiceSelect={(service) => {
+          setSelectedEmergencyService(service);
+          setCurrentScreen('emergencyUrgentNonUrgent');
+        }} />;
+      case 'emergencyUrgentNonUrgent':
+        return <EmergencyServiceUrgentNonUrgent
+          serviceId={selectedEmergencyService}
+          onNonUrgentSelect={() => setCurrentScreen('nonUrgentForm')}
+          onGoBack={() => setCurrentScreen('emergency')}
+        />;
+      case 'nonUrgentForm':
+        return <NonUrgentForm
+          serviceId={selectedEmergencyService}
+          onGoBack={() => setCurrentScreen('emergencyUrgentNonUrgent')}
+          onSubmitSuccess={() => setCurrentScreen('menu')}
+        />;
+      case 'quote':
+        return <FreeQuote selectedService={selectedService ?? undefined} onGoBack={goBack} />;
+      case 'chatbot': return <AIChatbot />;
+      default: return null;
+    }
   };
 
   if (isSigningOut) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator color="#c70628" size="large" />
-      </View>
-    );
+    return <View style={styles.loading}><ActivityIndicator color={colors.red} size="large" /></View>;
   }
 
+  const activeTab = tabs.find((tab) => tab.screen === currentScreen)?.screen;
+
   return (
-    <ImageBackground
-      source={require('../assets/images/1.jpg')}
-      style={styles.container}
-      blurRadius={8}
-      resizeMode="cover"
-    >
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="transparent"
-        translucent
-      />
-      <View style={styles.overlay}>
-        <View style={styles.mainContainer}>
-          {/* Header with glass effect */}
-          <Animated.View 
-            style={[
-              styles.header,
-              { 
-                opacity: headerOpacity,
-                backgroundColor: scrollY > 20 ? 'rgba(10, 10, 10, 0.85)' : 'transparent',
-                borderBottomWidth: scrollY > 20 ? 1 : 0,
-              }
-            ]}
-          >
-            <View style={styles.headerContent}>
-              {currentScreen === 'menu' ? (
-                <>
-                  <View style={styles.logoContainer}>
-                    <Image
-                      source={require('../assets/images/wraptitude-logo.webp')}
-                      style={styles.logo}
-                      resizeMode="contain"
-                    />
-                  </View>
-                  <Pressable 
-                    style={({pressed}) => [
-                      styles.signOutButton,
-                      pressed && styles.signOutButtonPressed
-                    ]} 
-                    onPress={handleSignOut}
-                  >
-                    {/* <Icon name="logout" size={22} color="#FFFFFF" />
-                     <Icon name="login" size={22} color="#FFFFFF" /> */}
-                     {route.params.isGuestMode ? (
-                      <Text style={styles.signOutText}>Sign In</Text>
-                     ) : (
-                      <Text style={styles.signOutText}>Sign Out</Text>
-                     )}
-                  </Pressable>
-                </>
-              ) : (
-                <>
-                  <Pressable
-                    style={({pressed}) => [
-                      styles.backButton,
-                      pressed && styles.backButtonPressed
-                    ]}
-                    onPress={() => {
-                      let target: Screen = 'menu';
-                      if (currentScreen === 'newsDetail') {
-                        target = 'news';
-                      } else if (currentScreen === 'quote') {
-                        target = quoteSourceScreen;
-                      } else if (currentScreen === 'emergencyUrgentNonUrgent') {
-                        target = 'emergency';
-                      } else if (currentScreen === 'nonUrgentForm') {
-                        target = 'emergencyUrgentNonUrgent';
-                      }
-                      handleScreenTransition(target);
-                    }}
-                  >
-                    <Icon name="arrow-back-ios" size={20} color="#FFFFFF" />
-                  </Pressable>
-                  <Text style={styles.screenTitle}>
-                    {currentScreen === 'newsDetail' 
-                      ? 'News' 
-                      : currentScreen === 'emergencyUrgentNonUrgent' || currentScreen === 'nonUrgentForm'
-                        ? 'Emergency Service'
-                        : menuItems.find((item) => item.id === currentScreen)?.title}
-                  </Text>
-                </>
-              )}
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} translucent={false} />
+      <View style={styles.header}>
+        <View style={styles.headerRow}>
+          {currentScreen === 'menu' ? (
+            <Image source={require('../assets/images/wraptitude-logo.webp')} style={styles.logo} resizeMode="contain" />
+          ) : (
+            <View style={styles.detailHeading}>
+              <Pressable
+                style={styles.backButton}
+                onPress={goBack}
+                accessibilityRole="button"
+                accessibilityLabel="Go back"
+              >
+                <Icon name="arrow-back" size={23} color={colors.text} />
+              </Pressable>
+              <Text style={styles.screenTitle} numberOfLines={1}>{screenTitles[currentScreen]}</Text>
             </View>
-            <BranchSelector />
-          </Animated.View>
-
-          <View style={styles.contentContainer}>
-            <ScrollView
-              style={styles.scrollContainer}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scrollContent}
-              onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
-              scrollEventThrottle={16}
-            >
-              {renderScreen()}
-            </ScrollView>
-          </View>
-
-          {/* Footer with glass effect */}
-          <View style={styles.footerNav}>
+          )}
+          {currentScreen === 'menu' && (
             <Pressable
-              style={[styles.footerTab, activeTab === 'home' && styles.footerTabActive]}
-              onPress={() => {
-                setActiveTab('home');
-                handleScreenTransition('menu');
-              }}
+              style={styles.signButton}
+              onPress={() => { handleSignOut().catch(() => undefined); }}
+              accessibilityRole="button"
+              accessibilityLabel={isGuestMode ? 'Sign in' : 'Sign out'}
             >
-              <View style={styles.footerIcon}>
-                {renderFooterIcon('home', activeTab === 'home')}
-              </View>
-              <Text style={[
-                styles.footerText, 
-                activeTab === 'home' && styles.footerTextActive
-              ]}>
-                Home
-              </Text>
+              <Text style={styles.signText}>{isGuestMode ? 'Sign in' : 'Sign out'}</Text>
             </Pressable>
-            
-            <Pressable
-              style={[styles.footerTab, activeTab === 'tracking' && styles.footerTabActive]}
-              onPress={() => {
-                if (route.params.isGuestMode) {
-                  // Show login prompt
-                  Alert.alert(
-                    'Login Required',
-                    'Please sign in to access tracking features.',
-                    [
-                      {
-                        text: 'Cancel',
-                        style: 'cancel'
-                      },
-                      {
-                        text: 'Sign In',
-                        // onPress: () => navigation.navigate('Auth')
-                        onPress: handleSignOut
-                      }
-                    ]
-                  );
-                  return;
-                }
-                setActiveTab('tracking');
-                handleScreenTransition('tracking');
-              }}
-            >
-              <View style={styles.footerIcon}>
-                {renderFooterIcon('tracking', activeTab === 'tracking')}
-                {route.params.isGuestMode && (
-                  <View style={styles.footerLockIcon}>
-                    <Icon name="lock" size={10} color="#FFFFFF" />
-                  </View>
-                )}
-              </View>
-              <Text style={[
-                styles.footerText, 
-                activeTab === 'tracking' && styles.footerTextActive
-              ]}>
-                Tracking
-              </Text>
-            </Pressable>
-            
-            <Pressable
-              style={[styles.footerTab, activeTab === 'quote' && styles.footerTabActive]}
-              onPress={() => {
-                setActiveTab('quote');
-                handleScreenTransition('quote');
-              }}
-            >
-              <View style={styles.footerIcon}>
-                {renderFooterIcon('quote', activeTab === 'quote')}
-              </View>
-              <Text style={[
-                styles.footerText, 
-                activeTab === 'quote' && styles.footerTextActive
-              ]}>
-                Quote
-              </Text>
-            </Pressable>
-            
-            <Pressable
-              style={[styles.footerTab, activeTab === 'profile' && styles.footerTabActive]}
-              onPress={() => {
-                if (route.params.isGuestMode) {
-                  // Show login prompt
-                  Alert.alert(
-                    'Login Required',
-                    'Please sign in to access your profile.',
-                    [
-                      {
-                        text: 'Cancel',
-                        style: 'cancel'
-                      },
-                      {
-                        text: 'Sign In',
-                        // onPress: () => navigation.navigate('Auth')
-                        onPress: handleSignOut
-                      }
-                    ]
-                  );
-                  return;
-                }
-                setActiveTab('profile');
-                handleScreenTransition('profile');
-              }}
-            >
-              <View style={styles.footerIcon}>
-                {renderFooterIcon('profile', activeTab === 'profile')}
-                {route.params.isGuestMode && (
-                  <View style={styles.footerLockIcon}>
-                    <Icon name="lock" size={10} color="#FFFFFF" />
-                  </View>
-                )}
-              </View>
-              <Text style={[
-                styles.footerText, 
-                activeTab === 'profile' && styles.footerTextActive
-              ]}>
-                Profile
-              </Text>
-            </Pressable>
-          </View>
+          )}
+        </View>
+        <View style={styles.branchRow}>
+          <Text style={styles.branchLabel}>SELECT LOCATION</Text>
+          <BranchSelector onChange={changeBranch} />
         </View>
       </View>
-    </ImageBackground>
+
+      <View style={styles.body} key={`${currentScreen}:${selectionVersion}`}>
+        {renderScreen()}
+      </View>
+
+      {!keyboardVisible && <View style={styles.bottomNav} accessibilityRole="tablist">
+        {tabs.map((tab) => {
+          const active = activeTab === tab.screen;
+          const locked = isGuestMode && (tab.screen === 'tracking' || tab.screen === 'profile');
+          return (
+            <Pressable
+              key={tab.screen}
+              style={styles.bottomTab}
+              onPress={() => navigateTo(tab.screen)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={locked ? `${tab.label}, sign in required` : tab.label}
+            >
+              <View style={[styles.tabIconWrap, active && styles.activeIconWrap]}>
+                <Icon name={tab.icon} size={23} color={active ? colors.text : colors.muted} />
+                {locked && <Icon name="lock" size={11} color={colors.redLight} style={styles.tabLock} />}
+              </View>
+              <Text style={[styles.tabLabel, active && styles.activeTabLabel]}>{tab.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>}
+    </SafeAreaView>
   );
 };
 
-const { width, height } = Dimensions.get('window');
-const buttonWidth = (width - 48) / 2;
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  mainContainer: {
-    flex: 1,
-    paddingTop: 44, // Manual padding for status bar
-  },
-  header: {
-    paddingVertical: 12,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
-    position: 'absolute',
-    top: 44,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  logoContainer: {
-    flex: 1,
-  },
-  logo: {
-    width: 140,
-    height: 40,
-  },
-  backButton: {
-    padding: 10,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backButtonPressed: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  backButtonText: {
-    fontSize: 20,
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  screenTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    flex: 1,
-    textAlign: 'center',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  signOutButton: {
-    padding: 10,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  signOutButtonPressed: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  signOutText: {
-    color: '#c70628',
-    fontSize: 16,
-    fontWeight: '600',
-    // letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  contentContainer: {
-    flex: 1,
-    marginTop: 92, // Account for header and branch selector
-  },
-  scrollContainer: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 100, // Extra padding to clear footer
-    paddingTop: 20,
-  },
-  menuContainer: {
-    padding: 16,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  menuButton: {
-    width: buttonWidth,
-    height: buttonWidth * 1.1,
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    elevation: 4,
-  },
-  menuButtonGradient: {
-    flex: 1,
-    // padding: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    // borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 16,
-  },
-  menuButtonPressed: {
-    opacity: 0.9,
-    transform: [{scale: 0.98}],
-  },
-  emergencyButton: {
-    shadowColor: '#c70628',
-    shadowOpacity: 0.3,
-  },
-  quoteButton: {
-    shadowColor: '#3b82f6',
-    shadowOpacity: 0.3,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4,
-  },
-  emergencyIconContainer: {
-    backgroundColor: 'rgba(199, 6, 40, 0.1)',
-    borderColor: 'rgba(255, 125, 125, 0.3)',
-    borderWidth: 1,
-    shadowColor: '#c70628',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-  },
-  quoteIconContainer: {
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    borderColor: 'rgba(159, 200, 255, 0.3)',
-    borderWidth: 1,
-    shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-  },
-  menuTitle: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 6,
-    letterSpacing: 0.2,
-  },
-  specialMenuTitle: {
-    fontWeight: '700',
-  },
-  menuDescription: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: '#040404',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  footerNav: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(10, 10, 10, 0.9)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-    paddingVertical: 12,
-    paddingBottom: Platform.OS === 'ios' ? 28 : 16, // Account for iOS home indicator
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  footerTab: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-  },
-  footerTabActive: {
-    // No visible styles - using indicator instead
-  },
-  footerIcon: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 26,
-    marginBottom: 4,
-  },
-  footerText: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  footerTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  iconGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  disabledButton: {
-    opacity: 0.7,
-  },
-  lockIconContainer: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  disabledFooterTab: {
-    opacity: 0.7,
-  },
-  footerLockIcon: {
-    position: 'absolute',
-    top: -5,
-    right: -5,
-    backgroundColor: '#c70628',
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  safeArea: { flex: 1, backgroundColor: colors.background },
+  loading: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' },
+  header: { backgroundColor: colors.background, borderBottomColor: colors.border, borderBottomWidth: 1, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
+  headerRow: { height: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  logo: { width: 150, height: 38 },
+  detailHeading: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  backButton: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, marginRight: 12 },
+  screenTitle: { color: colors.text, fontSize: 19, fontWeight: '700', flex: 1 },
+  signButton: { minHeight: 44, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' },
+  signText: { color: colors.redLight, fontSize: 14, fontWeight: '700' },
+  branchRow: { marginTop: 8 },
+  branchLabel: { color: colors.subtle, fontSize: 10, fontWeight: '800', letterSpacing: 1.5, marginBottom: 8 },
+  body: { flex: 1 },
+  bottomNav: { flexDirection: 'row', backgroundColor: colors.surface, borderTopColor: colors.border, borderTopWidth: 1, paddingTop: 8, paddingBottom: 5 },
+  bottomTab: { flex: 1, minHeight: 58, alignItems: 'center', justifyContent: 'center' },
+  tabIconWrap: { width: 52, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  activeIconWrap: { backgroundColor: colors.red },
+  tabLock: { position: 'absolute', top: 0, right: 7 },
+  tabLabel: { color: colors.muted, fontSize: 11, fontWeight: '600', marginTop: 3 },
+  activeTabLabel: { color: colors.text },
 });
 
 export default Home;
