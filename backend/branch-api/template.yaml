@@ -256,6 +256,12 @@ Resources:
             Method: ANY
             Auth:
               Authorizer: CustomerAuthorizer
+        CustomerPreflight:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BranchApi
+            Path: /customer/{proxy+}
+            Method: OPTIONS
         AdminApi:
           Type: HttpApi
           Properties:
@@ -264,6 +270,12 @@ Resources:
             Method: ANY
             Auth:
               Authorizer: AdminAuthorizer
+        AdminPreflight:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BranchApi
+            Path: /admin/{proxy+}
+            Method: OPTIONS
 
 Outputs:
   ApiUrl:

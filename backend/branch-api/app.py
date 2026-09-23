@@ -549,6 +549,8 @@ def send_invoice(event: dict[str, Any]) -> dict[str, Any]:
 
 def route(event: dict[str, Any]) -> Any:
     method, path = request_details(event)
+    if method == "OPTIONS" and path.startswith(("/admin/", "/customer/")):
+        return {}
     if method == "GET" and path == "/public/branches":
         return list(BRANCHES.values())
     if method == "POST" and path == "/public/quotes":
