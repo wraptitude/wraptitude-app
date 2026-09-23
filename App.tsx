@@ -15,7 +15,6 @@ import {
   ActivityIndicator,
   ImageBackground,
 } from 'react-native';
-import SplashScreen from 'react-native-splash-screen';
 import {
   Colors,
   DebugInstructions,
@@ -40,6 +39,7 @@ import EmergencyService from './src/screens/EmergencyService';
 import EmergencyServiceUrgentNonUrgent from './src/screens/EmergencyServiceUrgentNonUrgent';
 import NonUrgentForm from './src/screens/NonUrgentForm';
 import { BranchProvider } from './src/branch/BranchContext';
+import VersionGate from './src/update/VersionGate';
 
 // Configure Amplify
 Amplify.configure(awsconfig);
@@ -144,12 +144,6 @@ function App(): React.JSX.Element {
   };
 
   const safePadding = '5%';
-
-  useEffect(() => {
-    if (Platform.OS === 'android') {
-      SplashScreen.hide();
-    }
-  }, []);
 
   const components = {
     Header() {
@@ -814,4 +808,10 @@ function App(): React.JSX.Element {
 
 }
 
-export default App;
+export default function RootApp(): React.JSX.Element {
+  return (
+    <VersionGate>
+      <App />
+    </VersionGate>
+  );
+}

@@ -24,6 +24,7 @@ QUOTE_TABLE = dynamodb.Table(os.environ["QUOTE_TABLE"])
 NON_URGENT_TABLE = dynamodb.Table(os.environ["NON_URGENT_TABLE"])
 URGENT_TABLE = dynamodb.Table(os.environ["URGENT_TABLE"])
 MEMBERSHIP_TABLE = dynamodb.Table(os.environ["MEMBERSHIP_TABLE"])
+VERSION_POLICY_TABLE = dynamodb.Table(os.environ["VERSION_POLICY_TABLE"])
 
 SERVICE_BUCKET = os.environ["PRIVATE_SERVICE_BUCKET"]
 QUOTE_BUCKET = os.environ["PRIVATE_QUOTE_BUCKET"]
@@ -308,6 +309,20 @@ def admin_me(event: dict[str, Any]) -> dict[str, Any]:
         "name": user_claims.get("name") or user_claims.get("email"),
         "branches": allowed,
         "isSuperAdmin": set(allowed) == set(BRANCHES),
+    }
+
+
+def app_version_policy(event: dict[str, Any]) -> dict[str, Any]:
+    platform = str((event.get("queryStringParameters") or {}).get("platform") or "").lower()
+    if platform not in {"ios", "android"}:
+        raise ApiError(400, "platform must be ios or android")
+    item = VERSION_POLICY_TABLE.get_item(Key={"platform": platform}).get("Item") or {}
+    return {
+        "enabled": item.get("enabled") is True,
+        "minimumVersion": str(item.get("minimumVersion") or ""),
+        "latestVersion": str(item.get("latestVersion") or ""),
+        "storeUrl": str(item.get("storeUrl") or ""),
+        "message": str(item.get("message") or ""),
     }
 
 
@@ -625,6 +640,8 @@ def route(event: dict[str, Any]) -> Any:
         return {}
     if method == "GET" and path == "/public/branches":
         return list(BRANCHES.values())
+    if method == "GET" and path == "/public/app-version":
+        return app_version_policy(event)
     if method == "POST" and path == "/public/quotes":
         return create_quote(event, False)
     if method == "GET" and path == "/customer/services":

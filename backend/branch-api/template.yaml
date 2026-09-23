@@ -110,6 +110,22 @@ Resources:
       SSESpecification:
         SSEEnabled: true
 
+  AppVersionPolicyTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: wraptitudeAppVersionPolicy
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: platform
+          AttributeType: S
+      KeySchema:
+        - AttributeName: platform
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+
   PrivateServiceBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -216,6 +232,7 @@ Resources:
           NON_URGENT_TABLE: wraptitudeAppEmergencyServiceNonUrgentForm
           URGENT_TABLE: wraptitudeAppEmergencyServiceUrgentRecord
           MEMBERSHIP_TABLE: !Ref BranchMembershipTable
+          VERSION_POLICY_TABLE: !Ref AppVersionPolicyTable
           PRIVATE_SERVICE_BUCKET: !Ref PrivateServiceBucket
           PRIVATE_QUOTE_BUCKET: !Ref PrivateQuoteBucket
           PRIVATE_EMERGENCY_BUCKET: !Ref PrivateEmergencyBucket
@@ -238,6 +255,8 @@ Resources:
             TableName: wraptitudeAppEmergencyServiceUrgentRecord
         - DynamoDBCrudPolicy:
             TableName: !Ref BranchMembershipTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref AppVersionPolicyTable
         - S3CrudPolicy:
             BucketName: wraptitude-service
         - S3CrudPolicy:
@@ -299,6 +318,8 @@ Outputs:
     Value: !Ref AdminUserPoolClient
   MembershipTableName:
     Value: !Ref BranchMembershipTable
+  AppVersionPolicyTableName:
+    Value: !Ref AppVersionPolicyTable
   PrivateServiceBucketName:
     Value: !Ref PrivateServiceBucket
   PrivateQuoteBucketName:
