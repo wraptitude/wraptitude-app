@@ -87,11 +87,24 @@ Resources:
           AttributeType: S
         - AttributeName: userId
           AttributeType: S
+        - AttributeName: clientCreatedAt
+          AttributeType: S
       KeySchema:
         - AttributeName: branchId
           KeyType: HASH
         - AttributeName: userId
           KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: branchId-clientCreatedAt-index
+          KeySchema:
+            - AttributeName: branchId
+              KeyType: HASH
+            - AttributeName: clientCreatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - createdAt
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
       SSESpecification:

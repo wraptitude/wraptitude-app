@@ -1,4 +1,5 @@
 import base64
+import binascii
 import json
 import os
 import re
@@ -88,6 +89,16 @@ class ApiError(Exception):
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def normalized_created_at(value: Any, fallback: str) -> str:
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc).isoformat()
+    except ValueError:
+        return fallback
 
 
 def response(status_code: int, body: Any) -> dict[str, Any]:
@@ -207,14 +218,19 @@ def add_membership(user_id: str, branch_id: str, source: str) -> None:
     if not user_id:
         return
     timestamp = now_iso()
+    user = user_by_id(user_id)
+    client_created_at = normalized_created_at((user or {}).get("createdAt"), timestamp)
     MEMBERSHIP_TABLE.update_item(
         Key={"branchId": branch_id, "userId": user_id},
         UpdateExpression=(
-            "SET createdAt = if_not_exists(createdAt, :created), lastActiveAt = :active "
+            "SET createdAt = if_not_exists(createdAt, :created), "
+            "clientCreatedAt = if_not_exists(clientCreatedAt, :client_created), "
+            "lastActiveAt = :active "
             "ADD sources :sources"
         ),
         ExpressionAttributeValues={
             ":created": timestamp,
+            ":client_created": client_created_at,
             ":active": timestamp,
             ":sources": {source},
         },
@@ -295,18 +311,58 @@ def admin_me(event: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def admin_clients(event: dict[str, Any]) -> list[dict[str, Any]]:
+def admin_clients(event: dict[str, Any]) -> Any:
     branch_id = admin_branch(event)
-    memberships = query_all(
-        MEMBERSHIP_TABLE,
-        KeyConditionExpression=Key("branchId").eq(branch_id),
-    )
+    query = event.get("queryStringParameters") or {}
+    page_size = query.get("pageSize")
+    cursor = query.get("cursor")
+    if page_size is None:
+        if cursor:
+            raise ApiError(400, "pageSize is required with cursor")
+        memberships = query_all(
+            MEMBERSHIP_TABLE,
+            KeyConditionExpression=Key("branchId").eq(branch_id),
+        )
+        next_cursor = None
+    else:
+        if not str(page_size).isdecimal() or not 1 <= int(page_size) <= 50:
+            raise ApiError(400, "pageSize must be between 1 and 50")
+        query_args: dict[str, Any] = {
+            "IndexName": "branchId-clientCreatedAt-index",
+            "KeyConditionExpression": Key("branchId").eq(branch_id),
+            "ScanIndexForward": False,
+            "Limit": int(page_size),
+        }
+        if cursor:
+            try:
+                if not re.fullmatch(r"[A-Za-z0-9_-]{1,2048}", cursor):
+                    raise ValueError("Invalid cursor")
+                start_key = json.loads(base64.urlsafe_b64decode(cursor + "=" * (-len(cursor) % 4)))
+                if (
+                    not isinstance(start_key, dict)
+                    or set(start_key) != {"branchId", "userId", "clientCreatedAt"}
+                    or start_key["branchId"] != branch_id
+                    or not all(isinstance(value, str) and value for value in start_key.values())
+                ):
+                    raise ValueError("Invalid cursor")
+            except (ValueError, binascii.Error) as error:
+                raise ApiError(400, "Invalid pagination cursor") from error
+            query_args["ExclusiveStartKey"] = start_key
+        result = MEMBERSHIP_TABLE.query(**query_args)
+        memberships = result.get("Items", [])
+        last_key = result.get("LastEvaluatedKey")
+        next_cursor = (
+            base64.urlsafe_b64encode(json.dumps(last_key).encode()).decode().rstrip("=")
+            if last_key else None
+        )
     clients = []
     for membership in memberships:
         user = user_by_id(membership["userId"])
         if user:
             clients.append({**user, "branchId": branch_id, "branchJoinedAt": membership.get("createdAt")})
-    return sorted(clients, key=lambda item: item.get("createdAt", ""), reverse=True)
+    if page_size is None:
+        return sorted(clients, key=lambda item: item.get("createdAt", ""), reverse=True)
+    return {"items": clients, "nextCursor": next_cursor}
 
 
 def services_for_user(user_id: str, branch_id: str) -> list[dict[str, Any]]:
