@@ -1,15 +1,10 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Image,
-  Dimensions,
-} from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
-// Add props interface
+import { useBranch } from '../branch/BranchContext';
+import { colors } from '../styles/theme';
+
 interface ServicesProps {
   onGetQuote?: (serviceType: string) => void;
 }
@@ -18,284 +13,97 @@ const services = [
   {
     id: 'tinting',
     title: 'Window Tinting',
-    description: 'Professional window tinting service that blocks UV rays, reduces glare, and enhances privacy.',
-    features: [
-      'UV Protection: blocks up to 99% of harmful UV rays',
-      'Heat Reduction: keeps your car cool',
-      'Privacy & Security: enhanced privacy for passengers',
-      'Glare Reduction: improved driving safety',
-    ],
-    image: require('../assets/images/tinting.webp'), // Add your service image
-    // duration: '2-4 hours',
-    // warranty: '5 years',
+    description: 'Stay cooler, reduce glare and give every drive a more private feel.',
+    features: ['UV protection', 'Heat reduction', 'More privacy', 'Less glare'],
+    image: require('../assets/images/tinting.webp'),
   },
   {
     id: 'wrap',
     title: 'Vinyl Wrap',
-    description: 'Transform your vehicle with our premium vinyl wrapping service. Choose from a wide range of colors and finishes.',
-    features: [
-      'Paint Protection: shields original paint',
-      'Customization: unlimited color options',
-      'Reversible: removable without damage',
-      'Cost-effective: compared to repainting',
-    ],
-    image: require('../assets/images/wrap.webp'), // Add your service image
-    // duration: '3-5 days',
-    // warranty: '3 years',
+    description: 'Give your car a new look with a finish that feels entirely yours.',
+    features: ['Colour options', 'Original paint protection', 'Reversible finish', 'Custom styling'],
+    image: require('../assets/images/wrap.webp'),
   },
   {
     id: 'ceramic',
     title: 'Ceramic Coating',
-    description: 'Long-lasting protection that maintains your vehicle\'s shine and provides superior protection.',
-    features: [
-      'Hydrophobic: water and dirt resistant',
-      'UV Protection: prevents paint oxidation',
-      'Chemical Resistant: protects against contaminants',
-      'Enhanced Gloss: maintains showroom shine',
-    ],
-    image: require('../assets/images/ceramic.webp'), // Add your service image
-    // duration: '2-3 days',
-    // warranty: '5 years',
+    description: 'Add long-lasting shine and make everyday care easier.',
+    features: ['Hydrophobic finish', 'UV protection', 'Easier cleaning', 'Enhanced gloss'],
+    image: require('../assets/images/ceramic.webp'),
   },
   {
     id: 'ppf',
     title: 'Paint Protection Film (PPF)',
-    description: 'Ultimate protection against rock chips, scratches, and environmental damage.',
-    features: [
-      'Self-Healing: repairs minor scratches',
-      'Impact Protection: guards against rock chips',
-      'Invisible Shield: virtually undetectable',
-      'Preserves Value: maintains vehicle condition',
-    ],
-    image: require('../assets/images/ppf.webp'), // Add your service image
-    // duration: '2-3 days',
-    // warranty: '10 years',
+    description: 'A nearly invisible layer designed to protect the finish you love.',
+    features: ['Rock-chip protection', 'Minor-scratch resistance', 'Clear appearance', 'Preserved finish'],
+    image: require('../assets/images/ppf.webp'),
   },
 ];
 
 const Services: React.FC<ServicesProps> = ({ onGetQuote }) => {
-  const handleGetQuote = (serviceType: string) => {
-    if (onGetQuote) {
-      onGetQuote(serviceType);
-    }
-  };
+  const { branch } = useBranch();
 
   return (
-    <View style={styles.container}>
-      <ScrollView 
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.mainTitle}>Our Professional Services</Text>
-        
-        {services.map((service) => (
-          <View key={service.id} style={styles.serviceCard}>
-            <Image
-              source={service.image}
-              style={styles.serviceImage}
-              resizeMode="cover"
-            />
-            
-            <View style={styles.serviceContent}>
-              <Text style={styles.serviceTitle}>{service.title}</Text>
-              <Text style={styles.serviceDescription}>{service.description}</Text>
-              
-              {/* <View style={styles.serviceInfo}>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Duration</Text>
-                  <Text style={styles.infoValue}>{service.duration}</Text>
-                </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Warranty</Text>
-                  <Text style={styles.infoValue}>{service.warranty}</Text>
-                </View>
-              </View> */}
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.intro}>
+        <Text style={styles.eyebrow}>AVAILABLE IN {branch.name.toUpperCase()}</Text>
+        <Text style={styles.title}>Made for your drive.</Text>
+        <Text style={styles.subtitle}>Explore our services and tell us what you have in mind.</Text>
+      </View>
 
-              <Text style={styles.featuresTitle}>Key Features:</Text>
-              {service.features.map((feature, index) => (
-                <View key={index} style={styles.featureItem}>
-                  <Text style={styles.featureBullet}>•</Text>
+      {services.map((service) => (
+        <View key={service.id} style={styles.card}>
+          <Image source={service.image} style={styles.image} resizeMode="cover" />
+          <View style={styles.cardContent}>
+            <Text style={styles.serviceTitle}>{service.title}</Text>
+            <Text style={styles.description}>{service.description}</Text>
+            <View style={styles.features}>
+              {service.features.map((feature) => (
+                <View key={feature} style={styles.feature}>
+                  <Icon name="check-circle" size={17} color={colors.redLight} />
                   <Text style={styles.featureText}>{feature}</Text>
                 </View>
               ))}
-
-              <Pressable 
-                style={({ pressed }) => [
-                  styles.quoteButton,
-                  pressed && styles.buttonPressed
-                ]}
-                onPress={() => handleGetQuote(service.title)}
-              >
-                <View style={styles.buttonContent}>
-                  <Text style={styles.quoteButtonText}>GET A QUOTE</Text>
-                  {/* <Text style={styles.buttonSubtext}>Free Consultation</Text> */}
-                </View>
-              </Pressable>
             </View>
+            <Pressable
+              style={({ pressed }) => [styles.quoteButton, pressed && styles.pressed]}
+              onPress={() => onGetQuote?.(service.title)}
+              disabled={!onGetQuote}
+              accessibilityRole="button"
+              accessibilityLabel={`Get a quote for ${service.title}`}
+            >
+              <Text style={styles.quoteButtonText}>Get a free quote</Text>
+              <Icon name="arrow-forward" size={19} color={colors.text} />
+            </Pressable>
           </View>
-        ))}
-      </ScrollView>
-    </View>
+        </View>
+      ))}
+    </ScrollView>
   );
 };
 
-const { width } = Dimensions.get('window');
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  content: {
-    flex: 1,
-    paddingBottom: 100, // Space for footer
-  },
-  mainTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    padding: 20,
-    textAlign: 'center',
-    letterSpacing: 1,
-  },
-  serviceCard: {
-    backgroundColor: 'rgba(40, 40, 40, 0.9)',
-    borderRadius: 16,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  serviceImage: {
-    width: '100%',
-    height: 200,
-  },
-  serviceContent: {
-    padding: 20,
-  },
-  serviceTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 12,
-    letterSpacing: 0.5,
-  },
-  serviceDescription: {
-    fontSize: 15,
-    color: '#A0A0A0',
-    lineHeight: 22,
-    marginBottom: 20,
-  },
-  serviceInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: 'rgba(26, 26, 26, 0.8)',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  infoItem: {
-    alignItems: 'center',
-  },
-  infoLabel: {
-    color: '#A0A0A0',
-    fontSize: 14,
-    marginBottom: 4,
-    fontWeight: '500',
-  },
-  infoValue: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  featuresTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 12,
-    letterSpacing: 0.5,
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 10,
-    paddingVertical: 4,
-  },
-  featureBullet: {
-    color: '#c70628',
-    fontSize: 16,
-    marginRight: 8,
-    marginTop: -2,
-  },
-  featureText: {
-    color: '#A0A0A0',
-    fontSize: 15,
-    flex: 1,
-    lineHeight: 22,
-  },
-  quoteButton: {
-    backgroundColor: '#c70628',
-    borderRadius: 8,
-    padding: 15,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  quoteButtonText: {
-    color: '#FFFFFF',
-    // fontSize: 16,
-    fontWeight: '600',
-  },
-  // quoteButton: {
-  //   backgroundColor: '#c70628',
-  //   borderRadius: 12,
-  //   paddingVertical: 16,
-  //   paddingHorizontal: 24,
-  //   alignItems: 'center',
-  //   marginTop: 24,
-  //   borderWidth: 1.5,
-  //   borderColor: '#FFFFFF',
-  //   shadowColor: '#000',
-  //   shadowOffset: { width: 0, height: 4 },
-  //   shadowOpacity: 0.3,
-  //   shadowRadius: 6,
-  //   elevation: 8,
-  // },
-  buttonContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // quoteButtonText: {
-  //   color: '#FFFFFF',
-  //   fontSize: 18,
-  //   fontWeight: '700',
-  //   letterSpacing: 1,
-  //   textTransform: 'uppercase',
-  //   marginBottom: 4,
-  //   textShadowColor: 'rgba(0, 0, 0, 0.3)',
-  //   textShadowOffset: { width: 0, height: 2 },
-  //   textShadowRadius: 2,
-  // },
-  buttonSubtext: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 13,
-    fontWeight: '500',
-    letterSpacing: 0.5,
-  },
-  buttonPressed: {
-    opacity: 0.9,
-    backgroundColor: '#b30523',
-    borderColor: 'rgba(255, 255, 255, 1)',
-    transform: [{ scale: 0.98 }],
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { paddingHorizontal: 16, paddingTop: 24, paddingBottom: 28 },
+  intro: { marginBottom: 22 },
+  eyebrow: { color: colors.redLight, fontSize: 11, fontWeight: '800', letterSpacing: 1.6, marginBottom: 9 },
+  title: { color: colors.text, fontSize: 29, fontWeight: '800', lineHeight: 35 },
+  subtitle: { color: colors.muted, fontSize: 15, lineHeight: 22, marginTop: 9 },
+  card: { backgroundColor: colors.surface, borderRadius: 20, borderColor: colors.border, borderWidth: 1, overflow: 'hidden', marginBottom: 18 },
+  image: { width: '100%', height: 186 },
+  cardContent: { padding: 18 },
+  serviceTitle: { color: colors.text, fontSize: 22, fontWeight: '800' },
+  description: { color: colors.muted, fontSize: 14, lineHeight: 21, marginTop: 8 },
+  features: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 16, marginBottom: 12 },
+  feature: { width: '50%', flexDirection: 'row', alignItems: 'center', minHeight: 32, paddingRight: 7 },
+  featureText: { color: colors.text, fontSize: 12, marginLeft: 6, flexShrink: 1 },
+  quoteButton: { backgroundColor: colors.red, minHeight: 50, borderRadius: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
+  quoteButtonText: { color: colors.text, fontSize: 15, fontWeight: '700' },
+  pressed: { opacity: 0.8 },
 });
 
-export default Services; 
+export default Services;

@@ -1,21 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Pressable,
-  Image,
   ActivityIndicator,
-  Animated,
-  Easing,
 } from 'react-native';
-import { fetchUserAttributes } from 'aws-amplify/auth';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import FastImage from 'react-native-fast-image';
+import { useBranch } from '../branch/BranchContext';
+import { branchApi } from '../branch/api';
+import { BRANCHES, BranchId } from '../branch/config';
 interface ServiceRecord {
   id: string;
+  branchId: BranchId;
   cost: string;
   createAt: string;
   details: string;
@@ -39,50 +39,30 @@ interface ServiceRecord {
 }
 
 const ServiceHistory: React.FC = () => {
+  const { branchId, branch } = useBranch();
   const [serviceHistory, setServiceHistory] = useState<ServiceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [expandedRecord, setExpandedRecord] = useState<string | null>(null);
   const [loadingImage, setLoadingImage] = useState(false);
 
-  useEffect(() => {
-    fetchServiceHistory();
-  }, []);
+  const requestVersion = useRef(0);
 
-  const fetchServiceHistory = async () => {
+  const fetchServiceHistory = useCallback(async () => {
+    const version = ++requestVersion.current;
     try {
       setLoading(true);
       setError(null);
+      setServiceHistory([]);
+      setExpandedRecord(null);
       
-      // Get user ID from Amplify
-      const userAttributes = await fetchUserAttributes();
-      const userId = userAttributes.sub;
-      setUserId(userId);
-      
-      // Make API call
-      const response = await fetch('https://v3l0ylwh6a.execute-api.us-east-2.amazonaws.com/PROD/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        },
-        body: JSON.stringify({
-          userID: userId
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch service history');
+      const serviceRecords = await branchApi<ServiceRecord[]>(
+        `/customer/services?branchId=${branchId}`,
+      );
+      if (version !== requestVersion.current) return;
+      if (serviceRecords.some(record => record.branchId !== branchId)) {
+        throw new Error('Order branch mismatch. Please reload.');
       }
-
-      const responseData = await response.json();
-      // Parse the nested body string into an object
-      const parsedBody = JSON.parse(responseData.body);
-      // Extract the data array from the parsed body
-      const serviceRecords = parsedBody.data;
       
       // Transform the data to match our interface (ID -> id)
       const transformedRecords = serviceRecords.map((record: any) => ({
@@ -90,14 +70,20 @@ const ServiceHistory: React.FC = () => {
         id: record.ID, // Map ID to id
       }));
 
-      setServiceHistory(transformedRecords);
+      setServiceHistory(transformedRecords.sort((a, b) => String(b.createAt || '').localeCompare(String(a.createAt || ''))));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      if (version !== requestVersion.current) return;
+      setError(err instanceof Error ? err.message : `Unable to load ${branch.name} service history`);
       console.error('Error fetching service history:', err);
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
-  };
+  }, [branchId, branch.name]);
+
+  useEffect(() => {
+    void fetchServiceHistory();
+    return () => { requestVersion.current += 1; };
+  }, [fetchServiceHistory]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -194,7 +180,7 @@ const ServiceHistory: React.FC = () => {
     const imageKey = `${recordId}-${stepNumber}`;
     
     return (
-      <View style={styles.imageContainer}>
+      <View key={imageKey} style={styles.imageContainer}>
         {loadingImage && (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color="#ffffff" />
@@ -231,6 +217,8 @@ const ServiceHistory: React.FC = () => {
         > */}
           <View style={styles.cardHeader}>
             <View style={styles.serviceInfoContainer}>
+              <Text style={styles.serviceType}>{BRANCHES[record.branchId].name}</Text>
+              <Text selectable style={styles.date}>Order ID: {record.id}</Text>
               <Text style={styles.serviceType}>
                 {getDisplayServiceType(record.serviceType)}
               </Text>
@@ -396,6 +384,7 @@ const ServiceHistory: React.FC = () => {
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
+      <Text style={styles.noRecordsText}>Your account belongs to {branch.name}. All your service orders are managed by this branch. Contact the team if an order is missing.</Text>
       {serviceHistory.length === 0 ? (
         <View style={styles.noRecordsContainer}>
           {/* <LinearGradient
@@ -403,10 +392,9 @@ const ServiceHistory: React.FC = () => {
             style={styles.noRecordsGradient}
           > */}
             <Icon name="history" size={48} color="#9CA3AF" />
-            <Text style={styles.noRecordsTitle}>No Service History</Text>
+            <Text style={styles.noRecordsTitle}>No {branch.name} orders</Text>
             <Text style={styles.noRecordsText}>
-              You haven't completed any services yet.
-              Book a service to get started with Wraptitude.
+              No service orders at this location yet. Quote requests appear here only after our team confirms and creates a service order.
             </Text>
           {/* </LinearGradient> */}
         </View>
@@ -708,4 +696,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ServiceHistory; 
+export default ServiceHistory;

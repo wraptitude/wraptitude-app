@@ -17,6 +17,8 @@ import {
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { fetchUserAttributes } from 'aws-amplify/auth';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useBranch } from '../branch/BranchContext';
+import { branchApi } from '../branch/api';
 
 // Define props interface
 interface NonUrgentFormProps {
@@ -45,6 +47,7 @@ const NonUrgentForm: React.FC<NonUrgentFormProps> = ({
   onGoBack,
   onSubmitSuccess
 }) => {
+  const { branchId, branch } = useBranch();
   const selectedService = emergencyServices.find(s => s.id === serviceId);
 
   const [details, setDetails] = useState('');
@@ -86,7 +89,8 @@ const NonUrgentForm: React.FC<NonUrgentFormProps> = ({
   const handleTakePhoto = async () => {
     try {
       const result = await launchCamera({ mediaType: 'photo', quality: 0.7 });
-      if (result.assets && result.assets[0]) setPhoto({ uri: result.assets[0].uri });
+      const uri = result.assets?.[0]?.uri;
+      if (uri) setPhoto({ uri });
     } catch {
       Alert.alert('Error', 'Failed to take photo. Please try again.');
     }
@@ -95,7 +99,8 @@ const NonUrgentForm: React.FC<NonUrgentFormProps> = ({
   const handlePickImage = async () => {
     try {
       const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.7 });
-      if (result.assets && result.assets[0]) setPhoto({ uri: result.assets[0].uri });
+      const uri = result.assets?.[0]?.uri;
+      if (uri) setPhoto({ uri });
     } catch {
       Alert.alert('Error', 'Failed to pick image. Please try again.');
     }
@@ -147,25 +152,19 @@ const NonUrgentForm: React.FC<NonUrgentFormProps> = ({
         reader.readAsDataURL(blob);
       });
 
-      const apiResponse = await fetch('https://x58qaqacwc.execute-api.us-east-2.amazonaws.com/PROD', {
+      await branchApi('/customer/emergencies/non-urgent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: userAttributes.sub,
-          name: userAttributes.name,
-          email: userAttributes.email,
-          phone: userAttributes.phone_number,
+          branchId,
           serviceType: `Emergency - ${selectedService?.title} (Non-Urgent)`,
           image: imageBase64,
           details,
         }),
       });
 
-      if (!apiResponse.ok) throw new Error('Failed to submit report');
-
       Alert.alert(
         'Report Submitted',
-        'Thank you for your report. We will review and respond within 2 business days.',
+        `Your report was sent to our ${branch.name} team. We will respond within 2 business days.`,
         [{ text: 'OK', onPress: onSubmitSuccess }]
       );
     } catch {
@@ -547,4 +546,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default NonUrgentForm; 
+export default NonUrgentForm;
