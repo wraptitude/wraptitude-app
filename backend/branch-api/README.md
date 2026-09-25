@@ -40,14 +40,52 @@ Do not remove the remaining legacy data APIs or old buckets' public-read policie
 - Quote requests are enquiries, not service orders. Once confirmed, staff create
   the service order from that branch's Clients view. Guest enquiries require the
   customer to register/sign in before an account-linked service order is created.
-- The admin Orders view uses `GET /admin/services?branchId=...&pageSize=20&cursor=...`.
+- The admin Orders view uses `GET /admin/services?branchId=...&pageSize=20&sort=newest&cursor=...`.
   JWT group authorization is checked before every page. Only summary fields and
   basic contact information for customers with matching orders are returned.
-- This endpoint uses one **bounded scan** of the existing service table, not a
-  full-table load. DynamoDB's limit counts evaluated rows, so a page may be empty
-  but still contain `nextCursor`. Clients must keep Load more available until the
-  cursor is null. Scan order is not chronological. A branch/date GSI is a future
-  scalability improvement; this change does not alter the production table schema.
+- With `sort=newest`, Orders query `branchId-chronologicalKey-index` descending.
+  Quotes use the same index on their own table with `pageSize=20`. Both return
+  `{items, nextCursor}`. Newest means order `createAt`, quote `submittedAt`, or
+  client registration `createdAt`, not last edited time. Canonical UTC sort keys
+  include a record-ID tie breaker. Unknown dates sort last. Original dates remain
+  unchanged. The UI displays Toronto local date/time, including timezone.
+- Requests without `sort=newest` retain the old bounded scan for compatibility
+  during deployment. Quotes without `pageSize` retain the legacy array response.
 - Deploy the API before deploying the new admin Orders tab. Mobile tracking and
   history continue using the existing authenticated customer endpoint.
 - Offline regression tests: `python3 -m unittest discover -s backend/branch-api -p 'test_*.py'`.
+
+### Newest-first index rollout (requires production approval)
+
+The service and quote tables predate this SAM stack. Do not declare new table
+resources with those names or recreate them. The indexes incur additional storage
+and write charges. Deploy the frontend **last**, after all checks below pass.
+
+1. Confirm the AWS account is `539247487854`, region `us-east-2`. Back up
+   `wraptitudeAppService` and `wraptitudeAppQuote` and wait for AVAILABLE. Save
+   the current SAM template and original Lambda packages for rollback.
+2. Deploy the API through SAM. New writes now include `chronologicalKey`; the
+   old admin still uses its compatible read paths while indexes are prepared.
+3. Keep legacy mobile writers index-compatible until their separate retirement.
+   `legacy_sorting_compat.build_package` prepares narrowly patched packages for
+   `wraptitudeAppPostQuote`, `wraptitudeAppInsertService`, and
+   `wraptitudeAppEditService`. Back up each original package and deploy with its
+   current `RevisionId` to reject concurrent changes. Preserve all configuration,
+   layers, dependencies and permissions. Legacy new records remain Markham;
+   edits preserve stored branch and creation date. Do not enable a new frontend
+   while any active writer can omit the new keys.
+4. Run `python3 backend/branch-api/backfill_chronological_keys.py` for a read-only
+   audit. Review missing branches and invalid dates. Backfill only sort metadata
+   with `--apply --create-indexes`; this adds an ALL-projection GSI to each table
+   without changing its existing keys/indexes/billing mode. Conditional updates
+   protect concurrent edits and deletes. Wait for both indexes to become ACTIVE.
+5. Run the audit again. Resolve any missing keys/conflicts, verify the index row
+   counts against each branch, and test multi-page descending timestamps,
+   cross-branch rejection, and empty Vaughan results through the API. New rows
+   can take a moment to appear because GSIs are eventually consistent.
+6. Deploy the admin frontend and verify all three tabs and Load more. No mobile
+   release or password change is needed for this admin display change.
+
+Rollback: restore the previous frontend first. Preserve the additive indexes and
+sort metadata; they are harmless to the old UI. Do not restore table backups over
+live data or delete records to roll back a UI change.

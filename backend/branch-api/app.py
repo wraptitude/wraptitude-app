@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 
 import boto3
 from boto3.dynamodb.conditions import Attr, Key
+from sort_keys import ORDER_INDEX, chronological_key
 
 
 dynamodb = boto3.resource("dynamodb")
@@ -421,6 +422,19 @@ def admin_clients(event: dict[str, Any]) -> Any:
 
 def admin_services(event: dict[str, Any]) -> dict[str, Any]:
     """One bounded page of branch orders; never load the entire service table."""
+    # Keep old bounded scan cursors valid during the backend-first rollout.
+    # The current admin requests sort=newest and never uses this legacy path.
+    if (event.get("queryStringParameters") or {}).get("sort") == "newest":
+        branch_id, result = ordered_branch_page(event, SERVICE_TABLE)
+        fields = ("ID", "branchId", "userID", "vehicleMake", "vehicleModel", "vehicleYear",
+                  "serviceType", "createAt", "step5")
+        items = []
+        for item in result["items"]:
+            user = user_by_id(item["userID"]) or {}
+            items.append({**{field: item.get(field) for field in fields},
+                          "customerName": user.get("name", "Customer"),
+                          "customerEmail": user.get("email", "")})
+        return {**result, "items": items}
     branch_id = admin_branch(event)
     query = event.get("queryStringParameters") or {}
     try:
@@ -465,6 +479,54 @@ def admin_services(event: dict[str, Any]) -> dict[str, Any]:
     # Scan Limit counts evaluated rows, not matching rows. An empty page may
     # still have a cursor; callers must keep the Load more control available.
     return {"items": items, "nextCursor": next_cursor}
+
+
+def ordered_branch_page(event: dict[str, Any], table: Any) -> tuple[str, dict[str, Any]]:
+    """Query one branch in globally descending order, including across pages."""
+    branch_id = admin_branch(event)
+    query = event.get("queryStringParameters") or {}
+    size = str(query.get("pageSize", "20"))
+    if not size.isdecimal() or not 1 <= int(size) <= 50:
+        raise ApiError(400, "pageSize must be between 1 and 50")
+    args = {
+        "IndexName": ORDER_INDEX,
+        "KeyConditionExpression": Key("branchId").eq(branch_id),
+        "ScanIndexForward": False,
+        "Limit": int(size),
+    }
+    cursor = query.get("cursor")
+    if cursor:
+        try:
+            if not isinstance(cursor, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,2048}", cursor):
+                raise ValueError("Invalid cursor")
+            decoded = json.loads(base64.urlsafe_b64decode(cursor + "=" * (-len(cursor) % 4)))
+            if (not isinstance(decoded, dict)
+                    or set(decoded) != {"branchId", "ID", "chronologicalKey"}
+                    or decoded["branchId"] != branch_id
+                    or not all(isinstance(value, str) and value for value in decoded.values())):
+                raise ValueError("Invalid cursor")
+        except (ValueError, TypeError, binascii.Error) as error:
+            raise ApiError(400, "Invalid pagination cursor. Please refresh.") from error
+        args["ExclusiveStartKey"] = decoded
+    result = table.query(**args)
+    items = [ensure_record_branch(item, branch_id) for item in result.get("Items", [])]
+    last_key = result.get("LastEvaluatedKey")
+    next_cursor = (base64.urlsafe_b64encode(json.dumps(last_key).encode()).decode().rstrip("=")
+                   if last_key else None)
+    return branch_id, {"items": items, "nextCursor": next_cursor}
+
+
+def admin_quotes(event: dict[str, Any]) -> Any:
+    if "pageSize" not in (event.get("queryStringParameters") or {}):
+        # Compatibility for an already-open pre-pagination admin tab.
+        return sorted(list_branch_records(event, "quotes"),
+                      key=lambda item: chronological_key(item.get("submittedAt"), item["ID"]),
+                      reverse=True)
+    _branch_id, page = ordered_branch_page(event, QUOTE_TABLE)
+    return {**page, "items": [
+        sign_item_images(item, QUOTE_BUCKET, LEGACY_QUOTE_BUCKET, "quotes")
+        for item in page["items"]
+    ]}
 
 
 def services_for_user(user_id: str, branch_id: str) -> list[dict[str, Any]]:
@@ -523,6 +585,7 @@ def create_service(event: dict[str, Any]) -> dict[str, Any]:
             "editAt": timestamp,
         }
     )
+    item["chronologicalKey"] = chronological_key(item["createAt"], item["ID"])
     SERVICE_TABLE.put_item(Item=item)
     add_membership(user_id, branch_id, "service")
     return sign_item_images(item, SERVICE_BUCKET, LEGACY_SERVICE_BUCKET, "service")
@@ -536,6 +599,7 @@ def update_service(event: dict[str, Any], service_id: str) -> dict[str, Any]:
     updated["ID"] = service_id
     updated["branchId"] = branch_id
     updated["editAt"] = now_iso()
+    updated["chronologicalKey"] = chronological_key(existing.get("createAt"), service_id)
     SERVICE_TABLE.put_item(Item=updated)
     return sign_item_images(updated, SERVICE_BUCKET, LEGACY_SERVICE_BUCKET, "service")
 
@@ -634,6 +698,7 @@ def create_quote(event: dict[str, Any], authenticated: bool) -> dict[str, Any]:
     }
     if user_id:
         item["userId"] = user_id
+    item["chronologicalKey"] = chronological_key(item["submittedAt"], item["ID"])
     QUOTE_TABLE.put_item(Item=item)
     if user_id:
         add_membership(user_id, branch_id, "quote")
@@ -754,7 +819,7 @@ def route(event: dict[str, Any]) -> Any:
     if method == "POST" and path == "/admin/uploads/presign":
         return presign_service_upload(event)
     if method == "GET" and path == "/admin/quotes":
-        return list_branch_records(event, "quotes")
+        return admin_quotes(event)
     if method == "GET" and path == "/admin/emergencies":
         return list_branch_records(event, "emergencies")
     if method == "POST" and path == "/admin/invoices/send":
