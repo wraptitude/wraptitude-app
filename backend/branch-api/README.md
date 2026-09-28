@@ -126,3 +126,34 @@ Deploy the table and scoped GetItem/PutItem permissions before deploying the
 allocator and admin frontend. Package `invoice_numbers.py` with `app.py`.
 Missing configuration, authorization failures and exhausted retries fail closed;
 the frontend must never fall back to a locally generated invoice number.
+
+## Admin news
+
+The admin **News** tab uploads JPG/PNG/WebP covers (8 MB maximum) and saves
+articles as drafts or publishes them to the shared mobile news feed. Branch
+admins can edit articles owned by their branch; superadmins can edit all articles,
+including the imported legacy articles. Published articles are visible to both
+branches. Drafts from another branch are hidden. Saving a published article as a
+draft removes it from the feed. The article date controls ordering, not scheduling.
+Concurrent edits fail with 409; reload the article before retrying.
+
+`/admin/news` supports GET and POST, `/admin/news/{id}` supports PATCH, and
+`/admin/news/uploads/presign` supports POST. These reuse the admin JWT authorizer
+and require an authorized `branchId`. The retained `${StackName}-news` table uses
+conditional revisions. Covers live under `news/{branch}/` in the existing private
+service bucket. Upload signatures constrain content type and length; publishing
+also verifies the object. The public reader can sign only news image keys.
+
+The existing mobile URL remains unchanged. Its `wraptitudeAppGetAllNews` Lambda
+runs `news_feed.lambda_handler` with `news.py`, `NEWS_TABLE` and
+`NEWS_IMAGE_BUCKET`. It returns the existing `{statusCode, body, headers}`
+envelope, with `body` containing a JSON array of up to 50 published posts, newest
+article date first. Image links last one hour and are refreshed when news reloads.
+
+Rollout order: back up both Lambda packages/configurations and the legacy feed;
+deploy the additive table and narrowly scoped reader policy; seed all legacy
+articles with their original public fields and `status=published`; verify them;
+then switch the legacy reader using its current Lambda RevisionId. Deploy the
+admin frontend last. Never replace customer, order or invoice data during this
+rollout. For rollback, restore the prior admin build and legacy reader package and
+configuration; retain the news table and uploaded covers for recovery.

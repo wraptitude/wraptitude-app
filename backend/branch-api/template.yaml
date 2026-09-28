@@ -16,6 +16,10 @@ Parameters:
   AdminOrigin:
     Type: String
     Default: https://main.dfik0czr5tmeb.amplifyapp.com
+  LegacyNewsRoleName:
+    Type: String
+    Default: wraptitudeAppGetAllNews-role-wwbf6bc5
+    Description: Existing role for the news API used by installed mobile apps.
 
 Resources:
   CustomerAccountSignup:
@@ -181,6 +185,51 @@ Resources:
       SSESpecification:
         SSEEnabled: true
 
+  NewsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Editable articles replace the hardcoded feed while retaining existing news.
+        must:
+          - Return only published articles through the public mobile feed.
+          - Preserve articles on stack deletion or replacement.
+    Properties:
+      TableName: !Sub '${AWS::StackName}-news'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+
+  LegacyNewsReadPolicy:
+    Type: AWS::IAM::Policy
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Installed apps keep their existing news URL and Lambda function.
+        must:
+          - Limit image reads to news objects; customer service images stay private.
+    Properties:
+      PolicyName: WraptitudeManagedNewsRead
+      Roles:
+        - !Ref LegacyNewsRoleName
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: dynamodb:Scan
+            Resource: !GetAtt NewsTable.Arn
+          - Effect: Allow
+            Action: s3:GetObject
+            Resource: !Sub '${PrivateServiceBucket.Arn}/news/*'
+
   PrivateServiceBucket:
     Type: AWS::S3::Bucket
     Metadata:
@@ -287,6 +336,12 @@ Resources:
 
   BranchApiFunction:
     Type: AWS::Serverless::Function
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Authenticated admin news editing shares existing branch authorization and upload infrastructure.
+        must:
+          - Authorize the selected branch before reading drafts or writing articles.
+          - Retain all existing customer, order, invoice and upload routes.
     Properties:
       FunctionName: wraptitudeBranchApi
       Runtime: python3.12
@@ -312,10 +367,17 @@ Resources:
           LEGACY_EMERGENCY_BUCKET: wraptitude-emergency-service-non-urgent-form
           INVOICE_EMAIL_FUNCTION: send_invoice_email
           INVOICE_NUMBER_TABLE: !Ref InvoiceNumberTable
+          NEWS_TABLE: !Ref NewsTable
           NON_URGENT_TOPIC_ARN: arn:aws:sns:us-east-2:539247487854:wraptitudeAppEmergencyServiceNonUrgentForm
           ADMIN_ORIGIN: !Ref AdminOrigin
       Policies:
         - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:Scan
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+              Resource: !GetAtt NewsTable.Arn
             - Effect: Allow
               Action:
                 - dynamodb:GetItem

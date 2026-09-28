@@ -13,6 +13,7 @@ import boto3
 from boto3.dynamodb.conditions import Attr, Key
 from sort_keys import ORDER_INDEX, chronological_key
 from invoice_numbers import allocate_invoice_number, InvoiceNumberBusy, InvoiceBranchMismatch
+from news import NewsStore, NewsError
 
 
 dynamodb = boto3.resource("dynamodb")
@@ -877,6 +878,22 @@ def route(event: dict[str, Any]) -> Any:
         return create_urgent(event)
     if method == "GET" and path == "/admin/me":
         return admin_me(event)
+    if path == "/admin/news" or path.startswith("/admin/news/"):
+        payload = parse_body(event) if method in {"POST", "PATCH"} else {}
+        branch_id = admin_branch(event, payload)
+        super_admin = "super-admin" in parse_groups(claims(event).get("cognito:groups"))
+        if not os.environ.get("NEWS_TABLE"):
+            raise ApiError(503, "News management is not configured.")
+        news = NewsStore(dynamodb.Table(os.environ["NEWS_TABLE"]), s3, SERVICE_BUCKET)
+        if path == "/admin/news" and method == "GET":
+            return news.list_admin(branch_id, super_admin)
+        if path == "/admin/news" and method == "POST":
+            return news.save(payload, branch_id, super_admin)
+        if path == "/admin/news/uploads/presign" and method == "POST":
+            return news.presign(payload, branch_id)
+        news_match = re.fullmatch(r"/admin/news/([a-zA-Z0-9-]+)", path)
+        if news_match and method == "PATCH":
+            return news.save(payload, branch_id, super_admin, news_match.group(1))
     if method == "GET" and path == "/admin/clients":
         return admin_clients(event)
     client_match = re.fullmatch(r"/admin/clients/([^/]+)/services", path)
@@ -908,7 +925,7 @@ def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
     try:
         result = route(event)
         return response(200, {"data": result})
-    except ApiError as error:
+    except (ApiError, NewsError) as error:
         return response(error.status_code, {"message": error.message})
     except Exception as error:
         print(json.dumps({"error": type(error).__name__, "message": str(error)}))
