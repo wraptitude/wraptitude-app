@@ -9,18 +9,30 @@ import {
   Alert,
 } from 'react-native';
 import { fetchUserAttributes, deleteUser } from 'aws-amplify/auth';
+import { branchApi } from '../branch/api';
+import { useBranch } from '../branch/BranchContext';
+import { BRANCHES, BranchId } from '../branch/config';
+import { colors } from '../styles/theme';
 
 interface UserAttributes {
-  email: string;
-  email_verified: boolean;
-  name: string;
-  phone_number: string;
-  sub: string;
-  [key: string]: any;
+  email?: string;
+  email_verified?: string;
+  name?: string;
+  phone_number?: string;
+  sub?: string;
+  [key: string]: string | undefined;
+}
+
+interface CustomerBranch {
+  branchId: BranchId;
+  joinedAt: string;
 }
 
 const Profile: React.FC = () => {
+  const { branch } = useBranch();
   const [userAttributes, setUserAttributes] = useState<UserAttributes | null>(null);
+  const [customerBranches, setCustomerBranches] = useState<CustomerBranch[]>([]);
+  const [branchError, setBranchError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -33,8 +45,20 @@ const Profile: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const attributes = await fetchUserAttributes();
-      setUserAttributes(attributes as UserAttributes);
+      const [attributesResult, branchesResult] = await Promise.allSettled([
+        fetchUserAttributes(),
+        branchApi<CustomerBranch[]>('/customer/branches'),
+      ]);
+      if (attributesResult.status === 'rejected') {
+        throw attributesResult.reason;
+      }
+      setUserAttributes(attributesResult.value as UserAttributes);
+      if (branchesResult.status === 'fulfilled') {
+        setCustomerBranches(branchesResult.value);
+        setBranchError(false);
+      } else {
+        setBranchError(true);
+      }
     } catch (err) {
       setError('Failed to load user information');
       console.error('Error fetching user attributes:', err);
@@ -62,8 +86,8 @@ const Profile: React.FC = () => {
               // After successful deletion, you might want to navigate to the sign-in screen
               // or handle the post-deletion state
               Alert.alert('Success', 'Your account has been deleted successfully.');
-            } catch (error) {
-              console.error('Error deleting account:', error);
+            } catch (deleteError) {
+              console.error('Error deleting account:', deleteError);
               Alert.alert('Error', 'Failed to delete account. Please try again.');
             } finally {
               setIsDeleting(false);
@@ -96,7 +120,7 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.profileHeader}>
         <View style={styles.avatarContainer}>
           <Text style={styles.avatarText}>
@@ -108,7 +132,7 @@ const Profile: React.FC = () => {
 
       <View style={styles.infoSection}>
         <Text style={styles.sectionTitle}>Account Information</Text>
-        
+
         <View style={styles.infoItem}>
           <Text style={styles.infoLabel}>Email</Text>
           <Text style={styles.infoValue}>{userAttributes?.email || 'Not provided'}</Text>
@@ -128,6 +152,32 @@ const Profile: React.FC = () => {
           <Text style={styles.infoLabel}>User ID</Text>
           <Text style={styles.infoValue}>{userAttributes?.sub || 'Not available'}</Text>
         </View>
+      </View>
+
+      <View style={styles.infoSection}>
+        <Text style={styles.sectionTitle}>My Branch</Text>
+        <View style={styles.infoItem}>
+          <Text style={styles.infoLabel}>Registered branch</Text>
+          <Text style={styles.infoValue}>{branch.name}</Text>
+        </View>
+        <View style={styles.infoItem}>
+          <Text style={styles.infoLabel}>Customer at</Text>
+          <Text style={styles.infoValue}>
+            {branchError
+              ? 'Unable to load locations. Please try again.'
+              : customerBranches.length
+                ? customerBranches.map(({ branchId }) => BRANCHES[branchId].name).join(' · ')
+                : 'No branch activity yet'}
+          </Text>
+        </View>
+        <Text style={styles.branchHint}>
+          Your branch was selected when you registered and cannot be changed in the app. All existing customer accounts belong to Markham. Your requests and service orders go to your registered branch.
+        </Text>
+        {branchError && (
+          <Pressable onPress={fetchUserData} style={styles.retryButton}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </Pressable>
+        )}
       </View>
 
       <View style={styles.infoSection}>
@@ -159,15 +209,16 @@ const Profile: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: colors.background,
   },
+  content: { paddingBottom: 28 },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   loadingText: {
-    color: '#FFFFFF',
+    color: colors.text,
     marginTop: 12,
     fontSize: 16,
   },
@@ -178,16 +229,16 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   errorText: {
-    color: '#FF4444',
+    color: colors.redLight,
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#333333',
+    backgroundColor: colors.surfaceRaised,
     paddingVertical: 12,
     paddingHorizontal: 24,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   retryButtonText: {
     color: '#FFFFFF',
@@ -196,13 +247,14 @@ const styles = StyleSheet.create({
   },
   profileHeader: {
     alignItems: 'center',
-    padding: 24,
+    paddingTop: 28,
+    paddingBottom: 12,
   },
   avatarContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#c70628',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: colors.red,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -213,36 +265,42 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   nameText: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: 'bold',
+    color: colors.text,
+    fontSize: 25,
+    fontWeight: '800',
   },
   infoSection: {
-    backgroundColor: 'rgba(40, 40, 40, 0.9)',
-    borderRadius: 12,
-    margin: 16,
-    padding: 16,
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    marginHorizontal: 16,
+    marginTop: 14,
+    padding: 18,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: colors.border,
   },
   sectionTitle: {
-    color: '#FFFFFF',
+    color: colors.text,
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 16,
   },
   infoItem: {
     marginBottom: 16,
   },
   infoLabel: {
-    color: '#A0A0A0',
+    color: colors.muted,
     fontSize: 14,
     marginBottom: 4,
   },
   infoValue: {
-    color: '#FFFFFF',
+    color: colors.text,
     fontSize: 16,
     fontWeight: '500',
+  },
+  branchHint: {
+    color: colors.muted,
+    fontSize: 13,
+    lineHeight: 19,
   },
   verifiedBadge: {
     color: '#4CAF50',
@@ -266,10 +324,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#4CAF50',
   },
   deleteButton: {
-    backgroundColor: '#FF4444',
+    backgroundColor: colors.redTint,
+    borderWidth: 1,
+    borderColor: '#76303D',
     paddingVertical: 12,
     paddingHorizontal: 24,
-    borderRadius: 8,
+    minHeight: 50,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 8,
   },
@@ -277,10 +338,10 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   deleteButtonText: {
-    color: '#FFFFFF',
+    color: colors.redLight,
     fontSize: 16,
     fontWeight: '600',
   },
 });
 
-export default Profile; 
+export default Profile;

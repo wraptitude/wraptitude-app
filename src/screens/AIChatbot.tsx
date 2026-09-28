@@ -9,9 +9,10 @@ import {
   Animated,
   Platform,
   Keyboard,
-  Dimensions,
+  KeyboardAvoidingView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useBranch } from '../branch/BranchContext';
 
 interface Message {
   id: string;
@@ -31,31 +32,12 @@ const WELCOME_MESSAGE: Message = {
 };
 
 
-// windowHeight - statusBar(44) - headerMarginTop(44) - scrollPaddingTop(20) - scrollPaddingBottom(100)
-const WINDOW_HEIGHT = Dimensions.get('window').height;
-const CHROME_HEIGHT = 44 + 44 + 20 + 100;
-
 const AIChatbot: React.FC = () => {
+  const { branchId, branch } = useBranch();
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
-
-  useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-    const showSub = Keyboard.addListener(showEvent, (e) => {
-      setKeyboardHeight(e.endCoordinates.height);
-    });
-    const hideSub = Keyboard.addListener(hideEvent, () => {
-      setKeyboardHeight(0);
-    });
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
 
   // Typing indicator animation
   const dot1Opacity = useRef(new Animated.Value(0.3)).current;
@@ -63,7 +45,9 @@ const AIChatbot: React.FC = () => {
   const dot3Opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
-    if (!isLoading) return;
+    if (!isLoading) {
+      return;
+    }
 
     const animateDot = (dot: Animated.Value, delay: number) =>
       Animated.loop(
@@ -98,7 +82,7 @@ const AIChatbot: React.FC = () => {
       dot2Opacity.setValue(0.3);
       dot3Opacity.setValue(0.3);
     };
-  }, [isLoading]);
+  }, [isLoading, dot1Opacity, dot2Opacity, dot3Opacity]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -110,7 +94,9 @@ const AIChatbot: React.FC = () => {
 
   const handleSend = async () => {
     const trimmed = inputText.trim();
-    if (!trimmed || isLoading) return;
+    if (!trimmed || isLoading) {
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -133,15 +119,13 @@ const AIChatbot: React.FC = () => {
       const response = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({messages: conversationHistory}),
+        body: JSON.stringify({messages: conversationHistory, branchId}),
       });
-      console.log('response', response);
-      if (!response.ok) throw new Error('Failed to get response');
-      console.log('response ok');
+      if (!response.ok) {
+        throw new Error('Failed to get response');
+      }
       const data = await response.json();
-      console.log('data', JSON.stringify(data));
       const parsedBody = typeof data.body === 'string' ? JSON.parse(data.body) : data;
-      console.log('parsedBody', parsedBody);
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -158,7 +142,7 @@ const AIChatbot: React.FC = () => {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content:
-          "I'm sorry, I'm having trouble connecting right now. Please try again or contact us directly at (437) 340-1121.",
+          `I'm sorry, I'm having trouble connecting right now. Please try again or contact our ${branch.name} location at ${branch.phone}.`,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -203,7 +187,9 @@ const AIChatbot: React.FC = () => {
   };
 
   const renderTypingIndicator = () => {
-    if (!isLoading) return null;
+    if (!isLoading) {
+      return null;
+    }
     return (
       <View style={[styles.messageBubbleWrapper, styles.aiBubbleWrapper]}>
         <View style={styles.aiAvatar}>
@@ -226,13 +212,12 @@ const AIChatbot: React.FC = () => {
     );
   };
 
-  // When keyboard is open, shrink container so input stays visible above keyboard
-  const chatHeight = keyboardHeight > 0
-    ? WINDOW_HEIGHT - 44 - 44 - 20 - keyboardHeight
-    : WINDOW_HEIGHT - CHROME_HEIGHT;
-
   return (
-    <View style={[styles.container, {height: chatHeight}]}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
+    >
       <ScrollView
         ref={scrollViewRef}
         style={styles.messageList}
@@ -278,12 +263,13 @@ const AIChatbot: React.FC = () => {
           />
         </Pressable>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: 'transparent',
   },
   messageList: {

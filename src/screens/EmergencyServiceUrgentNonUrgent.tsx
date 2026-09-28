@@ -9,9 +9,12 @@ import {
   ScrollView, 
   Animated, 
   Dimensions,
+  AlertButton,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { fetchUserAttributes } from 'aws-amplify/auth';
+import { useBranch } from '../branch/BranchContext';
+import { branchApi } from '../branch/api';
 
 // Define props interface
 interface EmergencyServiceUrgentNonUrgentProps {
@@ -44,8 +47,12 @@ const EmergencyServiceUrgentNonUrgent: React.FC<EmergencyServiceUrgentNonUrgentP
   onNonUrgentSelect, 
   onGoBack 
 }) => {
+  const { branchId, branch } = useBranch();
   const selectedService = emergencyServices.find(s => s.id === serviceId);
-  const [userAttributes, setUserAttributes] = useState(null);
+  const phoneNumbers = branchId === 'vaughan' || serviceId === 'other'
+    ? [branch.phone]
+    : selectedService?.phoneNumbers || [];
+  const [userAttributes, setUserAttributes] = useState<Record<string, string | undefined> | null>(null);
   
   // Animation refs for buttons
   const urgentButtonScale = useRef(new Animated.Value(1)).current;
@@ -78,17 +85,13 @@ const EmergencyServiceUrgentNonUrgent: React.FC<EmergencyServiceUrgentNonUrgentP
     ]).start();
   };
 
-  const sendReferenceApi = async (phoneNumber) => {
+  const sendReferenceApi = async (phoneNumber: string) => {
     if (!userAttributes) return;
     try {
-      await fetch('https://rlnduprsc5.execute-api.us-east-2.amazonaws.com/PROD', {
+      await branchApi('/customer/emergencies/urgent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: userAttributes.sub,
-          userName: userAttributes.name,
-          userEmail: userAttributes.email,
-          userPhone: userAttributes.phone_number,
+          branchId,
           serviceType: selectedService?.title,
           servicePhoneNumber: phoneNumber,
         }),
@@ -98,7 +101,7 @@ const EmergencyServiceUrgentNonUrgent: React.FC<EmergencyServiceUrgentNonUrgentP
     }
   };
 
-  const makePhoneCall = async (phoneNumber) => {
+  const makePhoneCall = async (phoneNumber: string) => {
     try {
       const supported = await Linking.canOpenURL(`tel:${phoneNumber.replace(/-/g, '')}`);
       
@@ -137,23 +140,23 @@ const EmergencyServiceUrgentNonUrgent: React.FC<EmergencyServiceUrgentNonUrgentP
   const handleCall = async () => {
     animatePress(urgentButtonScale);
     
-    if (!selectedService?.phoneNumbers || selectedService.phoneNumbers.length === 0) {
+    if (phoneNumbers.length === 0) {
       Alert.alert('Error', 'No phone number available for this service.');
       return;
     }
 
-    if (selectedService.phoneNumbers.length === 1) {
-      await makePhoneCall(selectedService.phoneNumbers[0]);
+    if (phoneNumbers.length === 1) {
+      await makePhoneCall(phoneNumbers[0]);
     } else {
       Alert.alert(
         'Choose a number to call',
         '',
-        selectedService.phoneNumbers.map(num => ({
+        ([...phoneNumbers.map(num => ({
           text: num,
           onPress: async () => {
             await makePhoneCall(num);
           },
-        })).concat({ text: 'Cancel', style: 'cancel' })
+        })), { text: 'Cancel', style: 'cancel' }] as AlertButton[])
       );
     }
   };
@@ -209,7 +212,7 @@ const EmergencyServiceUrgentNonUrgent: React.FC<EmergencyServiceUrgentNonUrgentP
                   <Text style={styles.buttonDescription}>For immediate assistance</Text>
                 </View>
               </View>
-              {selectedService?.phoneNumbers?.map((num, idx) => (
+              {phoneNumbers.map((num, idx) => (
                 <Text style={styles.phoneNumber} key={idx}>{num}</Text>
               ))}
             </Pressable>

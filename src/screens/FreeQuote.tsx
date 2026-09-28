@@ -6,27 +6,35 @@ import {
   ScrollView,
   TextInput,
   Pressable,
-  Alert,
   Image,
   ActivityIndicator,
-  Dimensions,
+  Alert,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { useAuthenticator } from '@aws-amplify/ui-react-native';
-import { fetchUserAttributes } from 'aws-amplify/auth';
+import { fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useBranch } from '../branch/BranchContext';
+import { branchApi, publicBranchApi } from '../branch/api';
+import { colors } from '../styles/theme';
+import { BRANCHES, BranchId } from '../branch/config';
 
 // Update the props interface
 interface FreeQuoteProps {
+  isGuestMode?: boolean;
   selectedService?: string;
   onGoBack?: () => void;  // Optional callback for going back
 }
 
-const FreeQuote: React.FC<FreeQuoteProps> = ({ 
+const FreeQuote: React.FC<FreeQuoteProps> = ({
+  isGuestMode = false,
   selectedService,
-  onGoBack 
+  onGoBack,
 }) => {
+  const account = useBranch();
+  const [guestBranchId, setGuestBranchId] = useState<BranchId | null>(null);
+  const branchId = isGuestMode ? (guestBranchId || account.branchId) : account.branchId;
+  const branch = BRANCHES[branchId];
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -40,17 +48,22 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
   });
 
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [receipt, setReceipt] = useState<{id: string; branchId: BranchId} | null>(null);
 
   useEffect(() => {
     (async () => {
-      const userAttributes = await fetchUserAttributes();
-      if (userAttributes) {
+      try {
+        const userAttributes = await fetchUserAttributes();
         setFormData(prevData => ({
           ...prevData,
           name: userAttributes.name || '',
           email: userAttributes.email || '',
           phone: userAttributes.phone_number?.replace('+1', '') || '',
         }));
+      } catch {
+        // Guest quotes collect contact details in the form.
       }
     })();
   }, []);
@@ -60,7 +73,7 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
     if (selectedService) {
       setFormData(prev => ({
         ...prev,
-        serviceType: selectedService
+        serviceType: selectedService,
       }));
     }
   }, [selectedService]);
@@ -73,17 +86,36 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
   ];
 
   const handleSubmit = async () => {
-    // Validate required fields
-    if (!formData.name || !formData.email || !formData.phone) {
-      Alert.alert(
-        'Missing Information',
-        'Please fill in all required fields (Name, Email, Phone)',
-        [{ text: 'OK' }]
-      );
+    if (isGuestMode && !guestBranchId) {
+      setFormError('Please choose the branch to receive your quote request.');
+      return;
+    }
+    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
+      setFormError('Please add your name, email and phone number.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      setFormError('Please enter a valid email address.');
+      return;
+    }
+    if (formData.phone.replace(/\D/g, '').length < 10) {
+      setFormError('Please enter a valid phone number.');
       return;
     }
 
+    const confirmed = await new Promise<boolean>(resolve => {
+      Alert.alert(
+        `Send to ${branch.name}?`,
+        `${branch.address}\n\nThis quote request will go to ${branch.name} only. It is not a confirmed booking.`,
+        [{text: 'Cancel', style: 'cancel', onPress: () => resolve(false)},
+         {text: `Send to ${branch.name}`, onPress: () => resolve(true)}],
+        {cancelable: true, onDismiss: () => resolve(false)},
+      );
+    });
+    if (!confirmed) return;
+
     try {
+      setFormError(null);
       setLoading(true);
 
       // Convert image to base64 if it exists
@@ -97,58 +129,67 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
           reader.readAsDataURL(blob);
         });
       }
-      
-      const response = await fetch('https://xb4ot97nih.execute-api.us-east-2.amazonaws.com/PROD', {
+
+      const payload = {
+        branchId,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        vehicleMake: formData.vehicleMake,
+        vehicleModel: formData.vehicleModel,
+        vehicleYear: formData.vehicleYear,
+        serviceType: formData.serviceType,
+        message: formData.message,
+        image: imageBase64,
+      };
+      const session = await fetchAuthSession();
+      const submit = session.tokens?.idToken ? branchApi : publicBranchApi;
+      const result = await submit<{id: string; branchId: BranchId}>('/' + (session.tokens?.idToken ? 'customer' : 'public') + '/quotes', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          vehicleMake: formData.vehicleMake,
-          vehicleModel: formData.vehicleModel,
-          vehicleYear: formData.vehicleYear,
-          serviceType: formData.serviceType,
-          message: formData.message,
-          image: imageBase64, // Send base64 string
-        }),
+        body: JSON.stringify(payload),
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to submit quote request: ${response.status} ${errorText}`);
-      }
-
-      Alert.alert(
-        'Quote Request Sent',
-        'Thank you for your interest! We will contact you shortly with a detailed quote.',
-        [{ text: 'OK' }]
-      );
+      setReceipt(result);
+      setSubmitted(true);
 
     } catch (error) {
-      Alert.alert(
-        'Error',
-        'Failed to submit quote request. Please try again later.',
-        [{ text: 'OK' }]
-      );
+      setFormError('Your request could not be sent. Please try again.');
       console.error('Error submitting quote:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  if (submitted) {
+    return (
+      <View style={styles.successContainer}>
+        <View style={styles.successIcon}><Icon name="check" size={34} color={colors.text} /></View>
+        <Text style={styles.successTitle}>Request sent</Text>
+        <Text style={styles.successText}>
+          Your {receipt ? BRANCHES[receipt.branchId].name : branch.name} quote request has been received. Our team will contact you to confirm the details before creating a service order.
+        </Text>
+        {receipt && <Text selectable style={styles.successText}>Request ID: {receipt.id}</Text>}
+        <Pressable
+          style={styles.successButton}
+          onPress={() => onGoBack ? onGoBack() : setSubmitted(false)}
+          accessibilityRole="button"
+        >
+          <Text style={styles.successButtonText}>{onGoBack ? 'Continue exploring' : 'Start another quote'}</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   const handleImagePick = async () => {
     const result = await launchImageLibrary({
       mediaType: 'photo',
-      quality: 0.01,
+      quality: 0.1,
     });
 
-    if (result.assets && result.assets[0]) {
+    const uri = result.assets?.[0]?.uri;
+    if (uri) {
       setFormData(prev => ({
         ...prev,
-        image: { uri: result.assets[0].uri }
+        image: { uri },
       }));
     }
   };
@@ -159,13 +200,31 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.headerSection}>
-          <Text style={styles.title}>GET YOUR FREE QUOTE</Text>
+          {isGuestMode && <View>
+            <Text style={styles.description}>Choose the branch to receive this guest enquiry. This does not create an account.</Text>
+            {(['markham', 'vaughan'] as BranchId[]).map(id => <Pressable key={id} disabled={loading} onPress={() => setGuestBranchId(id)} accessibilityRole="radio" accessibilityState={{checked: guestBranchId === id}} style={styles.branchBadge}>
+              <Text style={styles.branchBadgeText}>{guestBranchId === id ? '● ' : '○ '}{BRANCHES[id].name}</Text>
+            </Pressable>)}
+          </View>}
+          <View style={styles.branchBadge}>
+            <Icon name="place" size={16} color={colors.redLight} />
+            <Text style={styles.branchBadgeText}>{branch.name} location</Text>
+          </View>
+          <Text style={styles.title}>Tell us about your car.</Text>
           <Text style={styles.description}>
-            Fill out the form below and we'll provide you with a detailed quote for your vehicle enhancement needs.
+            Share a few details and our {branch.name} team will get back to you with a free quote.
           </Text>
         </View>
+
+        {formError && (
+          <View style={styles.errorBanner} accessibilityRole="alert">
+            <Icon name="error-outline" size={19} color={colors.redLight} />
+            <Text style={styles.errorText}>{formError}</Text>
+          </View>
+        )}
 
         {/* Form Sections as Cards */}
         <View style={styles.formSectionsContainer}>
@@ -175,7 +234,7 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
               <Icon name="person" size={20} color="#FFFFFF" />
               <Text style={styles.sectionTitle}>Personal Information</Text>
             </View>
-            
+
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Name <Text style={styles.required}>*</Text></Text>
               <TextInput
@@ -184,6 +243,7 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
                 placeholderTextColor="rgba(255, 255, 255, 0.5)"
                 value={formData.name}
                 onChangeText={(text) => setFormData({ ...formData, name: text })}
+                autoComplete="name"
               />
             </View>
 
@@ -197,6 +257,7 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
                 value={formData.email}
                 onChangeText={(text) => setFormData({ ...formData, email: text })}
                 autoCapitalize="none"
+                autoComplete="email"
               />
             </View>
 
@@ -209,6 +270,7 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
                 keyboardType="phone-pad"
                 value={formData.phone}
                 onChangeText={(text) => setFormData({ ...formData, phone: text })}
+                autoComplete="tel"
               />
             </View>
           </View>
@@ -219,7 +281,7 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
               <Icon name="directions-car" size={20} color="#FFFFFF" />
               <Text style={styles.sectionTitle}>Vehicle Information</Text>
             </View>
-            
+
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Vehicle Make</Text>
               <TextInput
@@ -261,7 +323,7 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
               <Icon name="build" size={20} color="#FFFFFF" />
               <Text style={styles.sectionTitle}>Service Details</Text>
             </View>
-            
+
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Service Type</Text>
               <View style={styles.pickerContainer}>
@@ -297,11 +359,11 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Vehicle Image</Text>
+              <Text style={styles.label}>Vehicle Image <Text style={styles.optional}>(optional)</Text></Text>
               <Pressable
                 style={({ pressed }) => [
                   styles.imageUploadButton,
-                  pressed && styles.buttonPressed
+                  pressed && styles.buttonPressed,
                 ]}
                 onPress={handleImagePick}
               >
@@ -325,7 +387,7 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
             style={({ pressed }) => [
               styles.submitButton,
               pressed && styles.buttonPressed,
-              loading && styles.buttonDisabled
+              loading && styles.buttonDisabled,
             ]}
             onPress={handleSubmit}
             disabled={loading}
@@ -348,8 +410,6 @@ const FreeQuote: React.FC<FreeQuoteProps> = ({
   );
 };
 
-const { width } = Dimensions.get('window');
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -359,38 +419,40 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 100, // Space for footer
+    paddingBottom: 30,
   },
   headerSection: {
-    padding: 20,
-    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 14,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 12,
-    letterSpacing: 1,
-    textAlign: 'center',
+    fontSize: 29,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 10,
+    lineHeight: 35,
   },
   description: {
-    fontSize: 14,
-    color: '#A0A0A0',
-    textAlign: 'center',
-    lineHeight: 20,
-    maxWidth: '90%',
+    fontSize: 15,
+    color: colors.muted,
+    lineHeight: 22,
   },
+  branchBadge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', backgroundColor: colors.redTint, borderRadius: 9, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 13 },
+  branchBadgeText: { color: colors.redLight, fontSize: 12, fontWeight: '700', marginLeft: 4 },
+  errorBanner: { marginHorizontal: 16, marginBottom: 2, borderWidth: 1, borderColor: '#71313D', backgroundColor: colors.redTint, borderRadius: 12, padding: 13, flexDirection: 'row', alignItems: 'center' },
+  errorText: { flex: 1, color: colors.text, fontSize: 14, lineHeight: 20, marginLeft: 10 },
   formSectionsContainer: {
     padding: 16,
     gap: 16,
   },
   formCard: {
-    backgroundColor: 'rgba(40, 40, 40, 0.9)',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    padding: 18,
     gap: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: colors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -414,21 +476,23 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#A0A0A0',
-    fontWeight: '500',
+    color: colors.text,
+    fontWeight: '600',
     marginBottom: 6,
   },
+  optional: { color: colors.muted, fontWeight: '400' },
   required: {
     color: '#c70628',
   },
   input: {
-    backgroundColor: 'rgba(26, 26, 26, 0.8)',
-    borderRadius: 8,
+    backgroundColor: colors.surfaceRaised,
+    borderRadius: 11,
     padding: 12,
-    color: '#FFFFFF',
+    minHeight: 50,
+    color: colors.text,
     fontSize: 15,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: colors.border,
   },
   textArea: {
     height: 100,
@@ -469,9 +533,10 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   submitButton: {
-    backgroundColor: '#c70628',
-    borderRadius: 8,
+    backgroundColor: colors.red,
+    borderRadius: 12,
     padding: 16,
+    minHeight: 54,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
@@ -520,6 +585,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  successContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 28 },
+  successIcon: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.red, alignItems: 'center', justifyContent: 'center', marginBottom: 22 },
+  successTitle: { color: colors.text, fontSize: 28, fontWeight: '800' },
+  successText: { color: colors.muted, fontSize: 16, lineHeight: 24, textAlign: 'center', marginTop: 12, marginBottom: 26 },
+  successButton: { backgroundColor: colors.red, minHeight: 52, width: '100%', borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  successButtonText: { color: colors.text, fontSize: 16, fontWeight: '700' },
 });
 
-export default FreeQuote; 
+export default FreeQuote;

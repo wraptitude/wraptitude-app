@@ -12,6 +12,7 @@ import {
   Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useBranch } from '../branch/BranchContext';
 
 // Define the interface for props
 interface EmergencyServiceProps {
@@ -36,8 +37,9 @@ const emergencyServices = [
 ];
 
 const EmergencyService: React.FC<EmergencyServiceProps> = ({ onServiceSelect }) => {
+  const { branch } = useBranch();
   // Animation refs for buttons
-  const buttonScales = {
+  const buttonScales: Record<string, Animated.Value> = {
     collision: useRef(new Animated.Value(1)).current,
     other: useRef(new Animated.Value(1)).current,
     call: useRef(new Animated.Value(1)).current,
@@ -60,11 +62,11 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({ onServiceSelect }) 
 
   const handleEmergencyCall = async () => {
     try {
-      await Linking.openURL('tel:4373401121');
+      await Linking.openURL(`tel:${branch.phoneDial}`);
     } catch (error) {
       Alert.alert(
         'Error',
-        'Unable to make the call. Please dial 437-340-1121 directly.',
+        `Unable to make the call. Please dial ${branch.phone} directly.`,
         [{ text: 'OK', style: 'default' }]
       );
     }
@@ -132,7 +134,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({ onServiceSelect }) 
               }}
             >
               <Icon name="call" size={24} color="#FFFFFF" style={styles.callIcon} />
-              <Text style={styles.callButtonText}>437-340-1121</Text>
+              <Text style={styles.callButtonText}>{branch.phone}</Text>
             </Pressable>
           </Animated.View>
         </View>
@@ -320,4 +322,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EmergencyService; 
+export default EmergencyService;

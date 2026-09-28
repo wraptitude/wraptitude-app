@@ -12,7 +12,6 @@ import RenderHtml, {
   HTMLContentModel,
 } from 'react-native-render-html';
 import VideoComponent from './VideoComponent';
-import useEffect from 'react';
 
 interface BlogPost {
   id: string;
@@ -27,6 +26,7 @@ interface BlogPost {
 
 interface NewsDetailProps {
   post: BlogPost;
+  onBack?: () => void;
 }
 
 const customHTMLElementModels = {
@@ -37,7 +37,7 @@ const customHTMLElementModels = {
     isTranslatableTextual: false,
     isVoid: false,
     isOpaque: false,
-  })
+  } as any)
 };
 // ✅ Define renderer for video
 const customRenderers = {
