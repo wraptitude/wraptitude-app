@@ -57,6 +57,24 @@ class SortedListTests(unittest.TestCase):
         self.assertEqual([r['ID'] for r in first['items'] + second['items']], ['a', 'b', 'c'])
         self.assertIsNone(second['nextCursor'])
 
+    def test_orders_without_customer_links_do_not_break_either_listing(self):
+        for sort, operation in [('newest', self.services.query), ('', self.services.scan)]:
+            for user_fields in [{}, {'userID': None}, {'userID': ''}]:
+                with self.subTest(sort=sort, user_fields=user_fields):
+                    operation.return_value = {'Items': [{
+                        'ID': 'legacy-order', 'branchId': 'vaughan',
+                        'createAt': '2026-09-25T10:00:00Z', **user_fields,
+                    }]}
+                    with patch.object(app, 'user_by_id') as lookup:
+                        result = app.route(event(sort=sort, pageSize='20'))
+                    lookup.assert_not_called()
+                    self.assertEqual(len(result['items']), 1)
+                    order = result['items'][0]
+                    self.assertEqual(order['ID'], 'legacy-order')
+                    self.assertEqual(order['createAt'], '2026-09-25T10:00:00Z')
+                    self.assertEqual(order['customerName'], 'Customer')
+                    self.assertEqual(order['customerEmail'], '')
+
     def test_wrong_branch_and_malformed_cursor_fail_before_read(self):
         valid_key = {'branchId': 'vaughan', 'ID': 'a', 'chronologicalKey': chronological_key('2026-09-25', 'a')}
         for path, table in [('/admin/services', self.services), ('/admin/quotes', self.quotes)]:

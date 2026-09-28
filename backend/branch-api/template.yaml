@@ -2,6 +2,10 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: Authenticated multi-branch API for Wraptitude mobile and admin applications.
 
+Metadata:
+  AWSToolsMetrics:
+    AWSAgentToolkit: aws-cloudformation@3
+
 Parameters:
   CustomerUserPoolId:
     Type: String
@@ -153,10 +157,49 @@ Resources:
       SSESpecification:
         SSEEnabled: true
 
+  InvoiceNumberTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Both branches share a durable invoice sequence with one assignment per service order.
+        must:
+          - Commit each number and its order assignment in one conditional transaction.
+          - Retain the ledger on replacement or stack deletion so invoice numbers are never reused.
+    Properties:
+      TableName: !Sub '${AWS::StackName}-invoices'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+
   PrivateServiceBucket:
     Type: AWS::S3::Bucket
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Admin browsers upload service images directly with short-lived signed PUT URLs.
+        must:
+          - Allow the configured AdminOrigin and Content-Type header for browser PUT requests.
+          - Keep images private; CORS does not replace signed URL authorization.
     Properties:
       BucketName: !Sub wraptitude-service-private-${AWS::AccountId}-${AWS::Region}
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - !Ref AdminOrigin
+            AllowedMethods:
+              - PUT
+            AllowedHeaders:
+              - Content-Type
+            MaxAge: 600
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -268,10 +311,16 @@ Resources:
           LEGACY_QUOTE_BUCKET: wraptitude-quote
           LEGACY_EMERGENCY_BUCKET: wraptitude-emergency-service-non-urgent-form
           INVOICE_EMAIL_FUNCTION: send_invoice_email
+          INVOICE_NUMBER_TABLE: !Ref InvoiceNumberTable
           NON_URGENT_TOPIC_ARN: arn:aws:sns:us-east-2:539247487854:wraptitudeAppEmergencyServiceNonUrgentForm
           ADMIN_ORIGIN: !Ref AdminOrigin
       Policies:
         - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+              Resource: !GetAtt InvoiceNumberTable.Arn
             - Effect: Allow
               Action: cognito-idp:AdminGetUser
               Resource: !Sub arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CustomerUserPoolId}

@@ -12,9 +12,11 @@ from urllib.parse import urlparse
 import boto3
 from boto3.dynamodb.conditions import Attr, Key
 from sort_keys import ORDER_INDEX, chronological_key
+from invoice_numbers import allocate_invoice_number, InvoiceNumberBusy, InvoiceBranchMismatch
 
 
 dynamodb = boto3.resource("dynamodb")
+invoice_db = boto3.client("dynamodb")
 s3 = boto3.client("s3")
 lambda_client = boto3.client("lambda")
 sns = boto3.client("sns")
@@ -36,6 +38,7 @@ LEGACY_SERVICE_BUCKET = os.environ["LEGACY_SERVICE_BUCKET"]
 LEGACY_QUOTE_BUCKET = os.environ["LEGACY_QUOTE_BUCKET"]
 LEGACY_EMERGENCY_BUCKET = os.environ["LEGACY_EMERGENCY_BUCKET"]
 INVOICE_EMAIL_FUNCTION = os.environ.get("INVOICE_EMAIL_FUNCTION", "")
+INVOICE_NUMBER_TABLE = os.environ.get("INVOICE_NUMBER_TABLE", "")
 NON_URGENT_TOPIC_ARN = os.environ.get("NON_URGENT_TOPIC_ARN", "")
 ADMIN_ORIGIN = os.environ.get("ADMIN_ORIGIN", "https://main.dfik0czr5tmeb.amplifyapp.com")
 
@@ -357,6 +360,31 @@ def app_version_policy(event: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def client_vehicles(user: dict[str, Any], branch_id: str) -> list[dict[str, str]]:
+    """Summarize this customer's branch orders, retaining legacy profile vehicles."""
+    orders = query_all(
+        SERVICE_TABLE,
+        IndexName="userID-index",
+        KeyConditionExpression=Key("userID").eq(user["userId"]),
+        FilterExpression=Attr("branchId").eq(branch_id),
+        ProjectionExpression="ID, branchId, createAt, vehicleMake, vehicleModel, vehicleYear",
+    )
+    orders.sort(key=lambda item: chronological_key(item.get("createAt"), item["ID"]), reverse=True)
+    vehicles = []
+    seen = set()
+    for source in [*orders, user]:
+        # Check the returned branch as well as the database filter.
+        if source is not user and source.get("branchId") != branch_id:
+            continue
+        vehicle = {field: " ".join(str(source.get(field) or "").split())
+                   for field in ("vehicleYear", "vehicleMake", "vehicleModel")}
+        identity = tuple(value.casefold() for value in vehicle.values())
+        if any(identity) and identity not in seen:
+            seen.add(identity)
+            vehicles.append(vehicle)
+    return vehicles
+
+
 def admin_clients(event: dict[str, Any]) -> Any:
     branch_id = admin_branch(event)
     query = event.get("queryStringParameters") or {}
@@ -414,14 +442,39 @@ def admin_clients(event: dict[str, Any]) -> Any:
             continue
         user = user_by_id(membership["userId"])
         if user:
-            clients.append({**user, "branchId": branch_id, "branchJoinedAt": membership.get("createdAt")})
+            clients.append({**user, "branchId": branch_id, "branchJoinedAt": membership.get("createdAt"),
+                            "vehicles": client_vehicles(user, branch_id)})
     if page_size is None:
         return sorted(clients, key=lambda item: item.get("createdAt", ""), reverse=True)
     return {"items": clients, "nextCursor": next_cursor}
 
 
+def admin_search_term(event: dict[str, Any]) -> str:
+    admin_branch(event)
+    value = (event.get("queryStringParameters") or {}).get("search") or ""
+    if not isinstance(value, str) or len(value) > 100:
+        raise ApiError(400, "Search must be 100 characters or fewer")
+    return " ".join(value.split()).casefold()
+
+
+def matches_contact_search(item: dict[str, Any], search: str) -> bool:
+    if not search:
+        return True
+    text_fields = ("customerName", "customerEmail", "name", "userName", "email", "userEmail")
+    if any(search in " ".join(str(item.get(field) or "").split()).casefold() for field in text_fields):
+        return True
+    if not re.fullmatch(r"[\d\s()+.\-]+", search):
+        return False
+    digits = re.sub(r"\D", "", search)
+    phone_fields = ("customerPhone", "phone", "userPhone")
+    return bool(digits) and any(
+        digits in re.sub(r"\D", "", str(item.get(field) or "")) for field in phone_fields
+    )
+
+
 def admin_services(event: dict[str, Any]) -> dict[str, Any]:
     """One bounded page of branch orders; never load the entire service table."""
+    search = admin_search_term(event)
     # Keep old bounded scan cursors valid during the backend-first rollout.
     # The current admin requests sort=newest and never uses this legacy path.
     if (event.get("queryStringParameters") or {}).get("sort") == "newest":
@@ -430,11 +483,12 @@ def admin_services(event: dict[str, Any]) -> dict[str, Any]:
                   "serviceType", "createAt", "step5")
         items = []
         for item in result["items"]:
-            user = user_by_id(item["userID"]) or {}
+            user = (user_by_id(item["userID"]) or {}) if item.get("userID") else {}
             items.append({**{field: item.get(field) for field in fields},
                           "customerName": user.get("name", "Customer"),
-                          "customerEmail": user.get("email", "")})
-        return {**result, "items": items}
+                          "customerEmail": user.get("email", ""),
+                          "customerPhone": user.get("phone_number", "")})
+        return {**result, "items": [item for item in items if matches_contact_search(item, search)]}
     branch_id = admin_branch(event)
     query = event.get("queryStringParameters") or {}
     try:
@@ -467,10 +521,11 @@ def admin_services(event: dict[str, Any]) -> dict[str, Any]:
     items = []
     for item in result.get("Items", []):
         ensure_record_branch(item, branch_id)
-        user = user_by_id(item["userID"]) or {}
+        user = (user_by_id(item["userID"]) or {}) if item.get("userID") else {}
         items.append({**{field: item.get(field) for field in fields},
                       "customerName": user.get("name", "Customer"),
-                      "customerEmail": user.get("email", "")})
+                      "customerEmail": user.get("email", ""),
+                      "customerPhone": user.get("phone_number", "")})
     last_key = result.get("LastEvaluatedKey")
     next_cursor = (
         base64.urlsafe_b64encode(json.dumps({**last_key, "branchId": branch_id}).encode())
@@ -478,7 +533,7 @@ def admin_services(event: dict[str, Any]) -> dict[str, Any]:
     )
     # Scan Limit counts evaluated rows, not matching rows. An empty page may
     # still have a cursor; callers must keep the Load more control available.
-    return {"items": items, "nextCursor": next_cursor}
+    return {"items": [item for item in items if matches_contact_search(item, search)], "nextCursor": next_cursor}
 
 
 def ordered_branch_page(event: dict[str, Any], table: Any) -> tuple[str, dict[str, Any]]:
@@ -517,15 +572,16 @@ def ordered_branch_page(event: dict[str, Any], table: Any) -> tuple[str, dict[st
 
 
 def admin_quotes(event: dict[str, Any]) -> Any:
+    search = admin_search_term(event)
     if "pageSize" not in (event.get("queryStringParameters") or {}):
         # Compatibility for an already-open pre-pagination admin tab.
-        return sorted(list_branch_records(event, "quotes"),
+        return sorted((item for item in list_branch_records(event, "quotes") if matches_contact_search(item, search)),
                       key=lambda item: chronological_key(item.get("submittedAt"), item["ID"]),
                       reverse=True)
     _branch_id, page = ordered_branch_page(event, QUOTE_TABLE)
     return {**page, "items": [
         sign_item_images(item, QUOTE_BUCKET, LEGACY_QUOTE_BUCKET, "quotes")
-        for item in page["items"]
+        for item in page["items"] if matches_contact_search(item, search)
     ]}
 
 
@@ -758,6 +814,25 @@ def create_urgent(event: dict[str, Any]) -> dict[str, Any]:
     return {"id": item["ID"], "branchId": branch_id}
 
 
+def invoice_number(event: dict[str, Any]) -> dict[str, Any]:
+    payload = parse_body(event)
+    branch_id = admin_branch(event, payload)
+    service_id = payload.get("serviceId")
+    if not isinstance(service_id, str) or not service_id.strip() or len(service_id) > 256:
+        raise ApiError(400, "A valid serviceId is required")
+    ensure_record_branch(
+        SERVICE_TABLE.get_item(Key={"ID": service_id}, ConsistentRead=True).get("Item"), branch_id,
+    )
+    if not INVOICE_NUMBER_TABLE:
+        raise ApiError(503, "Invoice numbering is not configured")
+    try:
+        return allocate_invoice_number(invoice_db, INVOICE_NUMBER_TABLE, service_id, branch_id)
+    except InvoiceNumberBusy as error:
+        raise ApiError(503, str(error)) from error
+    except InvoiceBranchMismatch as error:
+        raise ApiError(409, "Invoice belongs to a different branch") from error
+
+
 def send_invoice(event: dict[str, Any]) -> dict[str, Any]:
     payload = parse_body(event)
     branch_id = admin_branch(event, payload)
@@ -824,6 +899,8 @@ def route(event: dict[str, Any]) -> Any:
         return list_branch_records(event, "emergencies")
     if method == "POST" and path == "/admin/invoices/send":
         return send_invoice(event)
+    if method == "POST" and path == "/admin/invoices/number":
+        return invoice_number(event)
     raise ApiError(404, "Route not found")
 
 

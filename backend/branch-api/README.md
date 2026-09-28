@@ -31,6 +31,13 @@ Do not enable a force threshold before the required version and its store link a
 
 New service, quote, and emergency images are written to private buckets and returned only with short-lived signed URLs. Legacy images remain readable from the old buckets during the mobile-release transition.
 
+Admin service images upload directly from the browser to `PrivateServiceBucket`
+using `/admin/uploads/presign`. The bucket must allow CORS `PUT` requests with
+the `Content-Type` header from `AdminOrigin`; API Gateway CORS alone does not
+cover S3 uploads. Keep this origin aligned with the admin website and retain
+the bucket's public-access block. The browser must send the same content type
+used to sign the upload URL. Image previews use signed GET URLs.
+
 Do not remove the remaining legacy data APIs or old buckets' public-read policies until the mobile release using this API is available to customers. At cutover, copy legacy objects to the private buckets, update stored keys, verify counts, and then remove public access from the old buckets.
 
 ## Branch order flow
@@ -54,6 +61,15 @@ Do not remove the remaining legacy data APIs or old buckets' public-read policie
 - Deploy the API before deploying the new admin Orders tab. Mobile tracking and
   history continue using the existing authenticated customer endpoint.
 - Offline regression tests: `python3 -m unittest discover -s backend/branch-api -p 'test_*.py'`.
+
+Orders and Quotes accept an optional `search` query (up to 100 characters).
+Search matches partial names/emails case-insensitively and phone digits regardless
+of spaces, brackets or dashes. Order contact fields come from the linked customer.
+Search filters each bounded branch page while preserving its chronological cursor;
+an empty result page may still have more matches later. The admin automatically
+continues past empty search pages and offers Load more after matching pages.
+Changing or clearing the search starts from the newest page. Quote images are
+signed only for matching results, and every page retains branch authorization.
 
 ### Newest-first index rollout (requires production approval)
 
@@ -89,3 +105,24 @@ and write charges. Deploy the frontend **last**, after all checks below pass.
 Rollback: restore the previous frontend first. Preserve the additive indexes and
 sort metadata; they are harmless to the old UI. Do not restore table backups over
 live data or delete records to roll back a UI change.
+# Shared invoice numbering
+
+`POST /admin/invoices/number` takes `serviceId` and `branchId`. It requires an
+admin authorized for that branch and an existing order in that branch. Both
+branches share `INV-000001`, `INV-000002`, etc. in first-allocation order, without
+an annual reset. First PDF preview/download reserves a number and Toronto invoice
+date for the order; retries, email attachments and reprints reuse that identity.
+Previously downloaded invoices are not renumbered or imported.
+
+`INVOICE_NUMBER_TABLE` points to the retained, encrypted DynamoDB ledger with
+point-in-time recovery enabled. `COUNTER#global` and `INVOICE#<serviceId>` are
+written together in a conditional transaction. No number is consumed by a losing
+concurrent request. Order edits/deletions do not remove ledger entries or recycle
+numbers. Do not reset/delete the counter or assignments after invoices have been
+issued; disaster recovery must restore them together. Previewed or deleted orders
+can leave reserved numbers absent from the set of downloaded invoices.
+
+Deploy the table and scoped GetItem/PutItem permissions before deploying the
+allocator and admin frontend. Package `invoice_numbers.py` with `app.py`.
+Missing configuration, authorization failures and exhausted retries fail closed;
+the frontend must never fall back to a locally generated invoice number.
